@@ -1,0 +1,26 @@
+RAPZO BAGS - ACTUALIZACIONES AUTOMATICAS
+========================================
+
+IMPORTANTE
+----------
+Un addon de World of Warcraft no puede descargar ni reemplazar sus propios
+archivos mientras el juego esta ejecutandose. La actualizacion automatica debe
+hacerla una aplicacion externa de addons.
+
+METODO RECOMENDADO: GITHUB RELEASES + WOWUP
+-------------------------------------------
+1. Publicar RapzoBags en un repositorio de GitHub.
+2. Cada version debe tener un tag/release (por ejemplo v3.0.0-alpha2).
+3. El release debe adjuntar el ZIP empaquetado de RapzoBags con las carpetas
+   RapzoBags_Core, RapzoBags_Tooltip, RapzoBags_Search, RapzoBags_Collections,
+   RapzoBags_Vendor y RapzoBags_Config en la raiz del ZIP.
+4. En WowUp: Get Addons > Install from URL > pegar la URL del repositorio.
+5. En My Addons: clic derecho sobre RapzoBags > Auto Update.
+
+Una vez configurado, WowUp puede detectar los nuevos GitHub Releases y aplicar
+las actualizaciones sin tener que descargar y copiar manualmente cada ZIP.
+
+NOTA
+----
+Mientras el repositorio de GitHub no exista y no tenga releases empaquetados,
+no hay una fuente remota desde la que un actualizador pueda obtener versiones.

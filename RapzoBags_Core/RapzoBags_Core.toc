@@ -1,0 +1,11 @@
+## Interface: 120100
+## Title: Rapzo Bags: Core
+## Notes: Nucleo obligatorio: base de datos, escaneo de bolsas/bancos y orden de bolsas.
+## Author: Rapzo
+## Version: 3.0.0-alpha3
+## IconTexture: Interface\AddOns\RapzoBags_Core\Media\RapzoBagsIcon.tga
+## SavedVariables: RapzoBagsDB
+## Category: Inventory
+
+Core.lua
+Scanner.lua
