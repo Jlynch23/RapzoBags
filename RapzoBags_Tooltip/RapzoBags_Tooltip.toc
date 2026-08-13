@@ -2,7 +2,7 @@
 ## Title: Rapzo Bags: Tooltip
 ## Notes: Tooltip avanzado con expansion, tipo, Item ID y cantidades por personaje.
 ## Author: Rapzo
-## Version: 3.0.0-alpha3
+## Version: 3.0.0-alpha4
 ## IconTexture: Interface\AddOns\RapzoBags_Core\Media\RapzoBagsIcon.tga
 ## Dependencies: RapzoBags_Core
 ## Category: Inventory

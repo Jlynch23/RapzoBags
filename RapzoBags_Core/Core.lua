@@ -5,7 +5,7 @@ _G.RapzoBags = RB
 
 RB.name = "RapzoBags"
 RB.coreAddonName = addonName or "RapzoBags_Core"
-RB.version = "3.0.0-alpha1"
+RB.version = "3.0.0-alpha4"
 RB.prefix = "|cff38bdf8Rapzo Bags|r"
 RB.modules = RB.modules or {}
 RB.commands = RB.commands or {}

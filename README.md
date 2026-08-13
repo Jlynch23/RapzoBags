@@ -21,15 +21,17 @@ Copy the six `RapzoBags_*` folders directly into:
 
 ## Development version
 
-Current development line: **3.0.0-alpha3** for WoW Retail 12.1.0.
+Current development line: **3.0.0-alpha4** for WoW Retail 12.1.0.
+
+Alpha4: vendor filter bar alignment cleaned up; removed the redundant `Rapzo:` prefix and aligned filters with the merchant item grid.
 
 ## Releases / WowUp
 
 Release packages are generated automatically when a tag beginning with `v` is pushed, for example:
 
 ```bash
-git tag v3.0.0-alpha3
-git push origin v3.0.0-alpha3
+git tag v3.0.0-alpha4
+git push origin v3.0.0-alpha4
 ```
 
 GitHub Actions will create a ZIP containing only the six addon folders and attach it to the GitHub Release.

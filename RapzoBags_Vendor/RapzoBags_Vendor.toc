@@ -2,7 +2,7 @@
 ## Title: Rapzo Bags: Vendor
 ## Notes: Vendedor extendido 4x5, filtros y marcado de objetos obtenidos.
 ## Author: Rapzo
-## Version: 3.0.0-alpha3
+## Version: 3.0.0-alpha4
 ## IconTexture: Interface\AddOns\RapzoBags_Core\Media\RapzoBagsIcon.tga
 ## Dependencies: RapzoBags_Core
 ## OptionalDeps: RapzoBags_Collections

@@ -32,6 +32,7 @@ local FIRST_Y = -69
 local COLUMN_GAP = 12
 local ROW_GAP = 8
 local FILTER_BAR_EXTRA_HEIGHT = 30
+local FILTER_BUTTON_GAP = 4
 
 local VALID_FILTERS = {
     all = true,
@@ -337,20 +338,25 @@ function Vendor:CreateFilterBar()
     if self.filterBar or not MerchantFrame then return self.filterBar end
 
     local bar = CreateFrame("Frame", "RapzoBagsVendorFilterBar", MerchantFrame)
-    bar:SetSize(470, 24)
-    bar:SetPoint("TOPLEFT", MerchantFrame, "TOPLEFT", 180, -38)
+    local barWidth = 0
+    for index, def in ipairs(FILTER_BUTTONS) do
+        barWidth = barWidth + def.width
+        if index > 1 then
+            barWidth = barWidth + FILTER_BUTTON_GAP
+        end
+    end
+    bar:SetSize(barWidth, 24)
+    -- Align the filters with the first merchant item column. This keeps the
+    -- Blizzard dropdown on the right clear and avoids a floating prefix label.
+    bar:SetPoint("TOPLEFT", MerchantFrame, "TOPLEFT", FIRST_X, -38)
     bar.buttons = {}
-
-    local label = bar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    label:SetPoint("RIGHT", bar, "LEFT", -6, 0)
-    label:SetText("|cff38bdf8Rapzo:|r")
 
     local previous
     for _, def in ipairs(FILTER_BUTTONS) do
         local button = CreateFrame("Button", nil, bar, "UIPanelButtonTemplate")
         button:SetSize(def.width, 22)
         if previous then
-            button:SetPoint("LEFT", previous, "RIGHT", 4, 0)
+            button:SetPoint("LEFT", previous, "RIGHT", FILTER_BUTTON_GAP, 0)
         else
             button:SetPoint("LEFT", bar, "LEFT", 0, 0)
         end
