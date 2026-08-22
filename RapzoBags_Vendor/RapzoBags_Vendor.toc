@@ -9,3 +9,4 @@
 ## Category: Inventory
 
 Vendor.lua
+MerchantLayoutFix.lua
