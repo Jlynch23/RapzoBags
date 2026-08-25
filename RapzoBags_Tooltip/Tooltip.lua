@@ -82,6 +82,65 @@ local function isMerchantTooltip(tooltip)
     return false
 end
 
+-- mUI adds its own blue/yellow item ID line to item tooltips and does not
+-- currently expose a setting to disable only that line. When RapzoBags is
+-- responsible for Item ID metadata, keep mUI's styling/NPC/spell IDs intact
+-- but skip only mUI's item ID callback to avoid duplicate IDs.
+local function shouldRapzoBagsOwnItemID()
+    local db = RB:EnsureDB()
+    return db
+        and db.settings
+        and RB:IsFeatureEnabled("tooltip")
+        and db.settings.tooltip
+        and db.settings.showItemID ~= false
+end
+
+local function patchMUIItemID()
+    local mui = rawget(_G, "mUI")
+    if not mui or type(mui.GetModule) ~= "function" then
+        return false
+    end
+
+    local ok, style = pcall(mui.GetModule, mui, "mUI.Tooltips.Style", true)
+    if not ok or not style or type(style.OnTooltipSetItem) ~= "function" then
+        return false
+    end
+
+    if style.OnTooltipSetItem == style.__RapzoBagsOnTooltipSetItem then
+        return true
+    end
+
+    local originalOnTooltipSetItem = style.OnTooltipSetItem
+    local wrappedOnTooltipSetItem = function(self, tooltip)
+        if shouldRapzoBagsOwnItemID() then
+            return
+        end
+        return originalOnTooltipSetItem(self, tooltip)
+    end
+
+    style.__RapzoBagsOnTooltipSetItem = wrappedOnTooltipSetItem
+    style.OnTooltipSetItem = wrappedOnTooltipSetItem
+    return true
+end
+
+local muiCompatFrame = CreateFrame("Frame")
+muiCompatFrame:RegisterEvent("ADDON_LOADED")
+muiCompatFrame:RegisterEvent("PLAYER_LOGIN")
+muiCompatFrame:SetScript("OnEvent", function(self, event)
+    if patchMUIItemID() then
+        self:UnregisterEvent("ADDON_LOADED")
+    end
+
+    if event == "PLAYER_LOGIN" then
+        -- Re-apply after all addon initialization in case mUI rebuilt the
+        -- tooltip module between ADDON_LOADED and PLAYER_LOGIN.
+        patchMUIItemID()
+        self:UnregisterEvent("PLAYER_LOGIN")
+    end
+end)
+
+patchMUIItemID()
+
 function Tooltip:GetItemMetadata(itemID)
     itemID = tonumber(itemID)
     if not itemID then return nil end
