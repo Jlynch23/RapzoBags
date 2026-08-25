@@ -11,6 +11,7 @@ Vendor.initialized = false
 Vendor.ready = false
 Vendor.extraSlots = {}
 Vendor.originalSlotPoints = {}
+Vendor.originalBuyBackPoint = nil
 Vendor.originalFrameWidth = nil
 Vendor.originalFrameHeight = nil
 Vendor.originalItemsPerPage = 10
@@ -44,11 +45,11 @@ local VALID_FILTERS = {
 }
 
 local FILTER_BUTTONS = {
-    { key = "all", label = "Todos", width = 78 },
-    { key = "uncollected", label = "No obtenidos", width = 108 },
-    { key = "mounts", label = "Monturas", width = 88 },
-    { key = "transmog", label = "Transmog", width = 88 },
-    { key = "recipes", label = "Recetas", width = 82 },
+    { key = "all", label = "Todos", width = 64 },
+    { key = "uncollected", label = "No obtenidos", width = 98 },
+    { key = "mounts", label = "Monturas", width = 78 },
+    { key = "transmog", label = "Transmog", width = 78 },
+    { key = "recipes", label = "Recetas", width = 70 },
 }
 
 local function trim(text)
@@ -347,8 +348,8 @@ function Vendor:CreateFilterBar()
         end
     end
     bar:SetSize(barWidth, 24)
-    -- The header row shares space with Blizzard's merchant portrait, so it
-    -- needs its own X offset instead of reusing the item-grid FIRST_X value.
+    -- Keep the filters clear of both Blizzard's portrait on the left and the
+    -- class/filter dropdown on the right.
     bar:SetPoint("TOPLEFT", MerchantFrame, "TOPLEFT", FILTER_BAR_X, -38)
     bar.buttons = {}
 
@@ -419,6 +420,17 @@ function Vendor:CaptureOriginalLayout()
     end
     self.originalItemsPerPage = tonumber(MERCHANT_ITEMS_PER_PAGE) or 10
 
+    if MerchantBuyBackItem and not self.originalBuyBackPoint then
+        local point, relativeTo, relativePoint, xOfs, yOfs = MerchantBuyBackItem:GetPoint(1)
+        self.originalBuyBackPoint = {
+            point = point,
+            relativeTo = relativeTo,
+            relativePoint = relativePoint,
+            xOfs = xOfs,
+            yOfs = yOfs,
+        }
+    end
+
     for i = 1, 12 do
         local frame = _G["MerchantItem" .. i]
         if frame and not self.originalSlotPoints[i] then
@@ -437,6 +449,25 @@ function Vendor:CaptureOriginalLayout()
     end
 end
 
+function Vendor:RestoreMerchantBuyBackItem()
+    local frame = MerchantBuyBackItem
+    local pos = self.originalBuyBackPoint
+    if not frame or not pos then return end
+
+    frame:ClearAllPoints()
+    frame:SetPoint(pos.point, pos.relativeTo, pos.relativePoint, pos.xOfs, pos.yOfs)
+end
+
+function Vendor:PositionMerchantBuyBackItem()
+    if not MerchantFrame or not MerchantBuyBackItem then return end
+
+    -- Blizzard normally anchors this quick-buyback widget to MerchantItem10.
+    -- In a 4-column grid MerchantItem10 moves into the middle of the grid, so
+    -- keep the widget attached to the frame's bottom bar instead.
+    MerchantBuyBackItem:ClearAllPoints()
+    MerchantBuyBackItem:SetPoint("BOTTOMRIGHT", MerchantFrame, "BOTTOMRIGHT", -15, 33)
+end
+
 function Vendor:RestoreBuybackLayout()
     if not MerchantFrame then return end
     if self.filterBar then self.filterBar:Hide() end
@@ -444,6 +475,7 @@ function Vendor:RestoreBuybackLayout()
     if self.originalFrameWidth and self.originalFrameHeight then
         MerchantFrame:SetSize(self.originalFrameWidth, self.originalFrameHeight)
     end
+    self:RestoreMerchantBuyBackItem()
 
     for i = 1, 12 do
         local frame = _G["MerchantItem" .. i]
@@ -469,6 +501,7 @@ function Vendor:RestoreDefaultMerchantLayout()
     if self.originalFrameWidth and self.originalFrameHeight then
         MerchantFrame:SetSize(self.originalFrameWidth, self.originalFrameHeight)
     end
+    self:RestoreMerchantBuyBackItem()
 
     for i = 1, 10 do
         local frame = _G["MerchantItem" .. i]
@@ -539,6 +572,7 @@ function Vendor:LayoutMerchantSlots()
     local newWidth = baseWidth + extraColumns * (itemWidth + COLUMN_GAP)
     local newHeight = baseHeight + FILTER_BAR_EXTRA_HEIGHT + extraRows * (itemHeight + ROW_GAP)
     MerchantFrame:SetSize(newWidth, newHeight)
+    self:PositionMerchantBuyBackItem()
 
     if MerchantFrameInset then
         MerchantFrameInset:ClearPoint("RIGHT")
