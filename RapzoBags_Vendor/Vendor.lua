@@ -33,6 +33,7 @@ local COLUMN_GAP = 12
 local ROW_GAP = 8
 local FILTER_BAR_EXTRA_HEIGHT = 30
 local FILTER_BUTTON_GAP = 4
+local FILTER_BAR_X = 82
 
 local VALID_FILTERS = {
     all = true,
@@ -346,9 +347,9 @@ function Vendor:CreateFilterBar()
         end
     end
     bar:SetSize(barWidth, 24)
-    -- Align the filters with the first merchant item column. This keeps the
-    -- Blizzard dropdown on the right clear and avoids a floating prefix label.
-    bar:SetPoint("TOPLEFT", MerchantFrame, "TOPLEFT", FIRST_X, -38)
+    -- The header row shares space with Blizzard's merchant portrait, so it
+    -- needs its own X offset instead of reusing the item-grid FIRST_X value.
+    bar:SetPoint("TOPLEFT", MerchantFrame, "TOPLEFT", FILTER_BAR_X, -38)
     bar.buttons = {}
 
     local previous
