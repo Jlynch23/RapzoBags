@@ -332,7 +332,12 @@ local function ensurePlayerAuraContainer(display)
 
     local added = safeCall(container.AddAuraGroup, container, "rapzoPlayerHelpful", "HELPFUL", {
         maxFrameCount = 5,
-        candidateFilters = {},
+        -- Let Blizzard's secret-safe AuraContainer engine discard long-lived
+        -- utility buffs (flask, food, city buffs, etc.). The HUD strip is for
+        -- short combat information only; the native BuffFrame remains complete.
+        candidateFilters = {
+            maxDuration = 120,
+        },
         initializeFrame = initAuraButton,
         layout = {
             elementWidth = 22,
