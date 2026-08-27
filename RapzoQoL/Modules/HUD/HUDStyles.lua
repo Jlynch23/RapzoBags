@@ -8,13 +8,13 @@ local PORTRAIT_MASK = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
 
 local STYLE_CURRENT = 1
 local STYLE_ICON = 2
-local STYLE2_WIDTH = 260
-local STYLE2_HEIGHT = 61
+local STYLE2_WIDTH = 232
+local STYLE2_HEIGHT = 56
 local STYLE2_EDGE = 0
 local STYLE2_CONTENT = 0
 local STYLE2_AURA = 20
 local STYLE2_AURA_WIDTH = STYLE2_WIDTH
-local STYLE2_AURA_Y = 24
+local STYLE2_AURA_Y = 22
 
 local function isSecret(value)
     return type(issecretvalue) == "function" and issecretvalue(value)
@@ -489,18 +489,18 @@ local function applyStyle2(display)
     display:SetSize(STYLE2_WIDTH, STYLE2_HEIGHT)
 
     display.health:ClearAllPoints()
-    display.health:SetHeight(34)
-    display.health:SetPoint("TOPLEFT", display, "TOPLEFT", STYLE2_EDGE, -17)
+    display.health:SetHeight(31)
+    display.health:SetPoint("TOPLEFT", display, "TOPLEFT", STYLE2_EDGE, -15)
     display.health:SetPoint("RIGHT", display, "RIGHT", -STYLE2_EDGE, 0)
 
     display.power:ClearAllPoints()
-    display.power:SetHeight(8)
-    display.power:SetPoint("TOPLEFT", display.health, "BOTTOMLEFT", 0, -2)
+    display.power:SetHeight(7)
+    display.power:SetPoint("TOPLEFT", display.health, "BOTTOMLEFT", 0, -1)
     display.power:SetPoint("RIGHT", display.health, "RIGHT", 0, 0)
 
     display.nameText:ClearAllPoints()
     display.nameText:SetHeight(14)
-    display.nameText:SetPoint("BOTTOMLEFT", display.health, "TOPLEFT", 2, 2)
+    display.nameText:SetPoint("BOTTOMLEFT", display.health, "TOPLEFT", 2, 1)
     display.nameText:SetPoint("RIGHT", display.health, "RIGHT", -2, 0)
     display.nameText:SetJustifyH("LEFT")
 
@@ -532,7 +532,7 @@ local function applyStyle2(display)
 
     local castBar = ensureCastBar(display)
     castBar:ClearAllPoints()
-    castBar:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 0, -5)
+    castBar:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 0, -4)
     castBar:SetPoint("RIGHT", display, "RIGHT", 0, 0)
     setEdgesColor(castBar.RapzoQoLEdges, 0.01, 0.01, 0.01, 1.00)
     if castBar.RapzoQoLBackground then
