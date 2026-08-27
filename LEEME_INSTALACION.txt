@@ -1,53 +1,43 @@
-RAPZO BAGS MODULAR v3.0.0-alpha5
-=================================
+RAPZO QoL v3.0.0-alpha5
+=========================
 
-INSTALACION MANUAL
-------------------
-1. Borra/desactiva la carpeta antigua RapzoBags para no cargar dos versiones.
-2. Copia las 8 carpetas RapzoBags_* dentro de:
-   World of Warcraft/_retail_/Interface/AddOns/
-3. En la pantalla de AddOns deja RapzoBags_Core activo siempre.
-   Los otros modulos son opcionales.
+NUEVA ESTRUCTURA
+----------------
+Rapzo QoL ahora es UN SOLO addon visible en World of Warcraft.
 
-NUEVO EN alpha5
----------------
-- Nuevo modulo RapzoBags_AFK con pantalla fullscreen al entrar en AFK.
-- Contador de tiempo AFK, personaje, reino, especializacion, zona, reloj y version.
-- Deteccion preparada para los valores secretos/restricciones de Retail 12.x.
-- /rbags afk preview permite probar la pantalla sin ponerse AFK.
-- El overlay se oculta durante combate para no interferir con el juego.
-- Nuevo RapzoBags_HUD: aro del cursor, minimapa cuadrado y Player/Target/Focus minimalistas.
+Carpeta:
+RapzoQoL
 
-MODULOS
--------
-- RapzoBags_Core (OBLIGATORIO): DB, scanner, bolsas/banco/banco de guerra,
-  orden de bolsas.
-- RapzoBags_Tooltip: expansion, tipo, Item ID, cantidades/ubicaciones.
-- RapzoBags_Search: buscador global visual.
-- RapzoBags_Collections: obtenido/no obtenido para coleccionables.
-- RapzoBags_Vendor: vendedor 4x5 y filtros. Usa Collections si esta cargado.
-- RapzoBags_AFK: pantalla AFK fullscreen, timer e informacion del personaje.
-- RapzoBags_HUD: cursor visible, minimapa cuadrado y unit frames sin retratos.
-- RapzoBags_Config: /rbags config para apagar funciones sin quitar carpetas.
+Subcarpetas internas:
+- Core
+- Modules\Tooltip
+- Modules\Search
+- Modules\Collections
+- Modules\Vendor
+- Modules\AFK
+- Modules\HUD
+- Config
+- Media
 
-COMANDOS PRINCIPALES
---------------------
-/rbags
-/rbags config
-/rbags modules
-/rbags scan
-/rbags search <texto>
-/rbags vendor
-/rbags tooltip on|off
-/rbags expansion on|off
-/rbags collections on|off
-/rbags afk [status|on|off|preview|hide]
-/rbags hud [status|on|off|cursor on|off|minimap on|off|frames on|off]
+INSTALACION
+-----------
+1. Quita los junctions/carpetas antiguas RapzoBags_* de Interface\AddOns.
+2. Crea/copia solamente RapzoQoL dentro de:
+   World of Warcraft\_retail_\Interface\AddOns\
+3. Reinicia WoW completamente.
 
-NOTAS
+COMANDOS
+--------
+/rapzo
+/rapzo config
+/rapzo modules
+/rapzo scan
+/rapzo afk preview
+/rapzo hud status
+
+Los alias antiguos /rbags y /rapzobags siguen funcionando.
+
+DATOS
 -----
-- La base RapzoBagsDB se conserva al migrar desde la rama 2.x.
-- Si desactivas RapzoBags_Collections, Vendor sigue ampliando la tienda y
-  mostrando cantidades, pero no puede saber si un coleccionable esta obtenido.
-- Implementacion propia; no incluye codigo de BagSync ni Krowi Extended Vendor UI.
-- Mira RapzoBags_Core/ACTUALIZACIONES.txt para preparar actualizaciones automaticas.
+Se conserva RapzoBagsDB para no perder configuracion, personajes ni inventario
+registrado durante la migracion a Rapzo QoL.
