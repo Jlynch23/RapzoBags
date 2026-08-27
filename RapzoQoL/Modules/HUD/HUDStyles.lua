@@ -43,12 +43,13 @@ function HUD:GetStyleAuraOffset()
     return self:GetStyle() == STYLE_ICON and STYLE2_LEFT or 0
 end
 
-local function createSimpleEdges(parent)
+local function createSimpleEdges(parent, color)
     if parent.RapzoQoLEdges then return parent.RapzoQoLEdges end
+    color = color or {0.95, 0.70, 0.16}
     local edges = {}
     for i = 1, 4 do
         local tex = parent:CreateTexture(nil, "OVERLAY")
-        tex:SetColorTexture(0.95, 0.70, 0.16, 0.78)
+        tex:SetColorTexture(color[1], color[2], color[3], 0.78)
         edges[i] = tex
     end
     edges[1]:SetPoint("TOPLEFT", parent, "TOPLEFT", -1, 1)
@@ -84,7 +85,7 @@ local function ensureUnitIcon(display)
     icon:SetPoint("BOTTOMRIGHT", holder, "BOTTOMRIGHT", -2, 2)
     icon:SetTexture(FALLBACK_ICON)
 
-    createSimpleEdges(holder)
+    holder.RapzoQoLEdges = createSimpleEdges(holder, display.color)
 
     holder.icon = icon
     display.RapzoQoLUnitIcon = holder
@@ -125,6 +126,12 @@ local function updateUnitIcon(display)
     end
 
     holder:Show()
+
+    local color = display.color or {0.95, 0.70, 0.16}
+    for _, edge in ipairs(holder.RapzoQoLEdges or {}) do
+        edge:SetColorTexture(color[1], color[2], color[3], 0.78)
+    end
+
     local unit = display.unit
     local isPlayer = false
 
@@ -165,7 +172,7 @@ local function ensureCastBar(display)
     text:SetJustifyH("CENTER")
     text:SetText("")
 
-    createSimpleEdges(bar)
+    bar.RapzoQoLEdges = createSimpleEdges(bar, display.color)
 
     bar.RapzoQoLText = text
     display.RapzoQoLCastBar = bar
@@ -212,6 +219,9 @@ local function updateCastBar(unit)
     setCastText(bar.RapzoQoLText, name)
     if display.color then
         bar:SetStatusBarColor(display.color[1] or 0.92, display.color[2] or 0.63, display.color[3] or 0.12)
+        for _, edge in ipairs(bar.RapzoQoLEdges or {}) do
+            edge:SetColorTexture(display.color[1] or 0.92, display.color[2] or 0.63, display.color[3] or 0.12, 0.78)
+        end
     end
 
     local duration
