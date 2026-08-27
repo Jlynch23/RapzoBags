@@ -173,6 +173,7 @@ local function applyPreviewStyle(display, style)
     if not display then return end
 
     if style == 2 then
+        display:SetScale(1.50)
         setPreviewShellVisible(display, false)
         display:SetSize(178, 43)
 
@@ -209,6 +210,7 @@ local function applyPreviewStyle(display, style)
         display.previewCast:Show()
         display.unitTag:Hide()
     else
+        display:SetScale(1)
         setPreviewShellVisible(display, true)
         display:SetSize(240, 64)
 
