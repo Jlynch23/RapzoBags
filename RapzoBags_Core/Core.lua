@@ -5,7 +5,7 @@ _G.RapzoBags = RB
 
 RB.name = "RapzoBags"
 RB.coreAddonName = addonName or "RapzoBags_Core"
-RB.version = "3.0.0-alpha4"
+RB.version = "3.0.0-alpha5"
 RB.prefix = "|cff38bdf8Rapzo Bags|r"
 RB.modules = RB.modules or {}
 RB.commands = RB.commands or {}
@@ -76,6 +76,7 @@ function RB:EnsureDB()
     if modules.search == nil then modules.search = true end
     if modules.vendor == nil then modules.vendor = true end
     if modules.collections == nil then modules.collections = true end
+    if modules.afk == nil then modules.afk = true end
     if modules.config == nil then modules.config = true end
 
     self.db = db
@@ -299,7 +300,7 @@ function RB:ShowStatus()
 end
 
 function RB:ShowModules()
-    local labels = {"tooltip", "search", "vendor", "collections", "config"}
+    local labels = {"tooltip", "search", "vendor", "collections", "afk", "config"}
     self:Print("Modulos Rapzo Bags:")
     for _, key in ipairs(labels) do
         local present = self:IsModulePresent(key)
