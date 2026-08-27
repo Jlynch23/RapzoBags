@@ -4,7 +4,7 @@ RAPZO BAGS MODULAR v3.0.0-alpha5
 INSTALACION MANUAL
 ------------------
 1. Borra/desactiva la carpeta antigua RapzoBags para no cargar dos versiones.
-2. Copia las 7 carpetas RapzoBags_* dentro de:
+2. Copia las 8 carpetas RapzoBags_* dentro de:
    World of Warcraft/_retail_/Interface/AddOns/
 3. En la pantalla de AddOns deja RapzoBags_Core activo siempre.
    Los otros modulos son opcionales.
@@ -16,6 +16,7 @@ NUEVO EN alpha5
 - Deteccion preparada para los valores secretos/restricciones de Retail 12.x.
 - /rbags afk preview permite probar la pantalla sin ponerse AFK.
 - El overlay se oculta durante combate para no interferir con el juego.
+- Nuevo RapzoBags_HUD: aro del cursor, minimapa cuadrado y Player/Target/Focus minimalistas.
 
 MODULOS
 -------
@@ -26,6 +27,7 @@ MODULOS
 - RapzoBags_Collections: obtenido/no obtenido para coleccionables.
 - RapzoBags_Vendor: vendedor 4x5 y filtros. Usa Collections si esta cargado.
 - RapzoBags_AFK: pantalla AFK fullscreen, timer e informacion del personaje.
+- RapzoBags_HUD: cursor visible, minimapa cuadrado y unit frames sin retratos.
 - RapzoBags_Config: /rbags config para apagar funciones sin quitar carpetas.
 
 COMANDOS PRINCIPALES
@@ -40,6 +42,7 @@ COMANDOS PRINCIPALES
 /rbags expansion on|off
 /rbags collections on|off
 /rbags afk [status|on|off|preview|hide]
+/rbags hud [status|on|off|cursor on|off|minimap on|off|frames on|off]
 
 NOTAS
 -----
