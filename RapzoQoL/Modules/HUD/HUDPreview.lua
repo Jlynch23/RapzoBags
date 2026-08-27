@@ -1,0 +1,343 @@
+local addonName = ...
+local RB = _G.RapzoQoL or _G.RapzoBags
+if not RB or not RB.HUD then return end
+
+local HUD = RB.HUD
+local WHITE_TEXTURE = "Interface\\Buttons\\WHITE8X8"
+local CLASS_TEXTURE = "Interface\\GLUES\\CHARACTERCREATE\\UI-CHARACTERCREATE-CLASSES"
+
+HUD.previewFrame = nil
+HUD.previewDisplays = HUD.previewDisplays or {}
+
+local function makePanel(parent, width, height, color)
+    local frame = CreateFrame("Frame", nil, parent)
+    frame:SetSize(width, height)
+
+    local bg = frame:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints(frame)
+    bg:SetColorTexture(0.005, 0.009, 0.015, 0.96)
+
+    local accent = frame:CreateTexture(nil, "ARTWORK")
+    accent:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
+    accent:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
+    accent:SetHeight(2)
+    accent:SetColorTexture(color[1], color[2], color[3], 0.95)
+
+    local function edge(a, b, c, d, w, h)
+        local tex = frame:CreateTexture(nil, "OVERLAY")
+        tex:SetPoint(a, frame, a, b, c)
+        if d then tex:SetPoint(d, frame, d, -b, -c) end
+        if w then tex:SetWidth(w) end
+        if h then tex:SetHeight(h) end
+        tex:SetColorTexture(color[1], color[2], color[3], 0.34)
+    end
+
+    edge("TOPLEFT", -1, 1, "TOPRIGHT", nil, 1)
+    edge("BOTTOMLEFT", -1, -1, "BOTTOMRIGHT", nil, 1)
+    edge("TOPLEFT", -1, 1, "BOTTOMLEFT", 1, nil)
+    edge("TOPRIGHT", 1, 1, "BOTTOMRIGHT", 1, nil)
+
+    frame.RapzoQoLAccent = accent
+    return frame
+end
+
+local function makeStatusBar(parent, height, color)
+    local bar = CreateFrame("StatusBar", nil, parent)
+    bar:SetHeight(height)
+    bar:SetStatusBarTexture(WHITE_TEXTURE)
+    bar:SetMinMaxValues(0, 100)
+    bar:SetValue(82)
+    bar:SetStatusBarColor(color[1], color[2], color[3])
+
+    local bg = bar:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints(bar)
+    bg:SetColorTexture(0.015, 0.022, 0.034, 0.98)
+
+    local text = bar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    text:SetPoint("CENTER")
+    bar.RapzoQoLText = text
+    return bar
+end
+
+local function setFakeClassIcon(texture, classFile)
+    if type(CLASS_ICON_TCOORDS) ~= "table" then return false end
+    local coords = CLASS_ICON_TCOORDS[classFile]
+    if type(coords) ~= "table" then return false end
+    texture:SetTexture(CLASS_TEXTURE)
+    texture:SetTexCoord(coords[1], coords[2], coords[3], coords[4])
+    return true
+end
+
+local function makeDemo(parent, key, title, color, classFile, isMob)
+    local display = makePanel(parent, 296, 72, color)
+    display.key = key
+    display.color = color
+
+    local label = parent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    label:SetText(string.upper(key))
+    label:SetTextColor(color[1], color[2], color[3])
+    label:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 0, 42)
+    display.previewLabel = label
+
+    local name = display:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    name:SetPoint("TOPLEFT", display, "TOPLEFT", 66, -8)
+    name:SetPoint("RIGHT", display, "RIGHT", -6, 0)
+    name:SetHeight(14)
+    name:SetJustifyH("LEFT")
+    name:SetText(title)
+    display.nameText = name
+
+    local tag = display:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    tag:SetPoint("TOPRIGHT", display, "TOPRIGHT", -6, -8)
+    tag:SetText(string.upper(key))
+    tag:SetTextColor(color[1], color[2], color[3])
+    display.unitTag = tag
+
+    local health = makeStatusBar(display, 24, color)
+    health:SetPoint("TOPLEFT", display, "TOPLEFT", 66, -25)
+    health:SetPoint("RIGHT", display, "RIGHT", -6, 0)
+    health.RapzoQoLText:SetText(key == "player" and "1.24M / 1.24M  100%" or "82%")
+    display.health = health
+
+    local power = makeStatusBar(display, 10, {0.22, 0.28, 0.38})
+    power:SetPoint("TOPLEFT", health, "BOTTOMLEFT", 0, -4)
+    power:SetPoint("RIGHT", health, "RIGHT", 0, 0)
+    power:SetValue(key == "player" and 72 or 58)
+    power.RapzoQoLText:SetText(key == "player" and "RAGE 72" or "POWER")
+    display.power = power
+
+    local iconFrame = CreateFrame("Frame", nil, display)
+    iconFrame:SetSize(54, 54)
+    iconFrame:SetPoint("TOPLEFT", display, "TOPLEFT", 6, -9)
+
+    local iconBg = iconFrame:CreateTexture(nil, "BACKGROUND")
+    iconBg:SetAllPoints(iconFrame)
+    iconBg:SetColorTexture(0.02, 0.03, 0.05, 1)
+
+    local icon = iconFrame:CreateTexture(nil, "ARTWORK")
+    icon:SetPoint("TOPLEFT", iconFrame, "TOPLEFT", 2, -2)
+    icon:SetPoint("BOTTOMRIGHT", iconFrame, "BOTTOMRIGHT", -2, 2)
+    if isMob then
+        icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
+        icon:SetTexCoord(0, 1, 0, 1)
+    elseif not setFakeClassIcon(icon, classFile) then
+        icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
+    end
+
+    local iconBorder = iconFrame:CreateTexture(nil, "OVERLAY")
+    iconBorder:SetAllPoints(iconFrame)
+    iconBorder:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
+    iconBorder:SetBlendMode("ADD")
+    iconBorder:SetVertexColor(color[1], color[2], color[3], 0.92)
+
+    display.previewIcon = iconFrame
+
+    local auraRow = CreateFrame("Frame", nil, display)
+    auraRow:SetSize(224, 28)
+    auraRow:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 66, 7)
+    display.previewAuras = auraRow
+
+    for i = 1, 5 do
+        local aura = CreateFrame("Frame", nil, auraRow)
+        aura:SetSize(26, 26)
+        aura:SetPoint("LEFT", auraRow, "LEFT", (i - 1) * 30, 0)
+
+        local tex = aura:CreateTexture(nil, "ARTWORK")
+        tex:SetAllPoints(aura)
+        local palette = {
+            {0.95, 0.56, 0.12},
+            {0.22, 0.66, 0.96},
+            {0.70, 0.25, 0.92},
+            {0.24, 0.78, 0.42},
+            {0.94, 0.26, 0.18},
+        }
+        local c = palette[i]
+        tex:SetColorTexture(c[1], c[2], c[3], 0.94)
+
+        local duration = aura:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+        duration:SetPoint("TOP", aura, "BOTTOM", 0, -1)
+        duration:SetText(({"2m", "38s", "18s", "9s", "4s"})[i])
+    end
+
+    local cast = makeStatusBar(display, 14, {0.92, 0.63, 0.12})
+    cast:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 66, -4)
+    cast:SetPoint("RIGHT", display, "RIGHT", -6, 0)
+    cast:SetValue(key == "target" and 48 or 68)
+    cast.RapzoQoLText:SetText(key == "target" and "Golpe demo  1.2 / 2.0" or "Lanzamiento demo")
+    display.previewCast = cast
+
+    HUD.previewDisplays[key] = display
+    return display
+end
+
+local function applyPreviewStyle(display, style)
+    if not display then return end
+
+    if style == 2 then
+        display:SetSize(296, 72)
+
+        display.nameText:ClearAllPoints()
+        display.nameText:SetPoint("TOPLEFT", display, "TOPLEFT", 66, -8)
+        display.nameText:SetPoint("RIGHT", display, "RIGHT", -6, 0)
+
+        display.health:ClearAllPoints()
+        display.health:SetPoint("TOPLEFT", display, "TOPLEFT", 66, -25)
+        display.health:SetPoint("RIGHT", display, "RIGHT", -6, 0)
+
+        display.power:ClearAllPoints()
+        display.power:SetPoint("TOPLEFT", display.health, "BOTTOMLEFT", 0, -4)
+        display.power:SetPoint("RIGHT", display.health, "RIGHT", 0, 0)
+
+        display.previewIcon:Show()
+        display.previewAuras:Show()
+        display.previewCast:Show()
+        display.unitTag:Hide()
+    else
+        display:SetSize(240, 64)
+
+        display.nameText:ClearAllPoints()
+        display.nameText:SetPoint("TOPLEFT", display, "TOPLEFT", 6, -8)
+        display.nameText:SetPoint("RIGHT", display, "RIGHT", -6, 0)
+
+        display.health:ClearAllPoints()
+        display.health:SetPoint("TOPLEFT", display, "TOPLEFT", 6, -25)
+        display.health:SetPoint("RIGHT", display, "RIGHT", -6, 0)
+
+        display.power:ClearAllPoints()
+        display.power:SetPoint("TOPLEFT", display.health, "BOTTOMLEFT", 0, -4)
+        display.power:SetPoint("RIGHT", display.health, "RIGHT", 0, 0)
+
+        display.previewIcon:Hide()
+        display.previewCast:Hide()
+        display.unitTag:Show()
+
+        if display.key == "player" then
+            display.previewAuras:Hide()
+        else
+            display.previewAuras:Show()
+            display.previewAuras:ClearAllPoints()
+            display.previewAuras:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 0, 7)
+        end
+    end
+
+    if style == 2 then
+        display.previewAuras:ClearAllPoints()
+        display.previewAuras:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 66, 7)
+    end
+end
+
+function HUD:CreatePreview()
+    if self.previewFrame then return self.previewFrame end
+
+    local frame = CreateFrame("Frame", "RapzoQoLHUDPreviewFrame", UIParent, "BasicFrameTemplateWithInset")
+    frame:SetSize(920, 560)
+    frame:SetPoint("CENTER")
+    frame:SetFrameStrata("DIALOG")
+    frame:SetMovable(true)
+    frame:EnableMouse(true)
+    frame:RegisterForDrag("LeftButton")
+    frame:SetScript("OnDragStart", frame.StartMoving)
+    frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
+    frame:SetClampedToScreen(true)
+
+    frame.TitleText:SetText("Rapzo QoL - HUD Preview")
+
+    local intro = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    intro:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -38)
+    intro:SetPoint("RIGHT", frame, "RIGHT", -20, 0)
+    intro:SetJustifyH("LEFT")
+    intro:SetText("Preview seguro: son frames falsos de demostracion. Puedes comparar Estilo 1 y Estilo 2 sin necesitar target, focus ni entrar en combate.")
+
+    local style1 = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    style1:SetSize(150, 26)
+    style1:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -68)
+    style1:SetText("Estilo 1 - Actual")
+    style1:SetScript("OnClick", function()
+        HUD:SetStyle(1)
+        HUD:ShowPreview()
+    end)
+
+    local style2 = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    style2:SetSize(260, 26)
+    style2:SetPoint("LEFT", style1, "RIGHT", 10, 0)
+    style2:SetText("Estilo 2 - Icon + Auras TOP + Cast BOT")
+    style2:SetScript("OnClick", function()
+        HUD:SetStyle(2)
+        HUD:ShowPreview()
+    end)
+
+    local hint = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    hint:SetPoint("LEFT", style2, "RIGHT", 16, 0)
+    hint:SetText("/rapzo hud style 1|2")
+    hint:SetTextColor(0.55, 0.75, 0.95)
+
+    local player = makeDemo(frame, "player", "Rapzo", {0.92, 0.66, 0.10}, "WARRIOR", false)
+    player:SetPoint("TOPLEFT", frame, "TOPLEFT", 70, -190)
+
+    local target = makeDemo(frame, "target", "Muñeco de entrenamiento", {0.92, 0.30, 0.09}, nil, true)
+    target:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -70, -190)
+
+    local focus = makeDemo(frame, "focus", "Focus Player", {0.12, 0.72, 0.95}, "MAGE", false)
+    focus:SetPoint("BOTTOM", frame, "BOTTOM", 0, 82)
+
+    local note = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    note:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 20, 18)
+    note:SetPoint("RIGHT", frame, "RIGHT", -20, 0)
+    note:SetJustifyH("LEFT")
+    note:SetText("Estilo 2: player/player-target usa icono de clase; mobs usan referencia visual. Auras arriba y castbar abajo. El Estilo 1 se conserva intacto.")
+
+    self.previewFrame = frame
+
+    if type(UISpecialFrames) == "table" then
+        UISpecialFrames[#UISpecialFrames + 1] = "RapzoQoLHUDPreviewFrame"
+    end
+
+    self:RefreshPreview()
+    frame:Hide()
+    return frame
+end
+
+function HUD:RefreshPreview()
+    local frame = self.previewFrame
+    if not frame then return end
+    local style = self:GetStyle()
+    for _, key in ipairs({"player", "target", "focus"}) do
+        applyPreviewStyle(self.previewDisplays[key], style)
+    end
+end
+
+function HUD:ShowPreview()
+    local frame = self:CreatePreview()
+    self:RefreshPreview()
+    frame:Show()
+    frame:Raise()
+end
+
+function HUD:HidePreview()
+    if self.previewFrame then self.previewFrame:Hide() end
+end
+
+function HUD:TogglePreview(value)
+    value = string.lower(tostring(value or ""))
+
+    if value == "off" then
+        self:HidePreview()
+        RB:Print("HUD preview: OFF")
+        return
+    end
+
+    if value == "on" then
+        self:ShowPreview()
+        RB:Print("HUD preview: ON")
+        return
+    end
+
+    local frame = self:CreatePreview()
+    if frame:IsShown() then
+        self:HidePreview()
+        RB:Print("HUD preview: OFF")
+    else
+        self:ShowPreview()
+        RB:Print("HUD preview: ON")
+    end
+end
