@@ -6,9 +6,9 @@ local HUD = RB.HUD
 local WHITE_TEXTURE = "Interface\\Buttons\\WHITE8X8"
 
 local RESOURCE_GAP = 3
-local RESOURCE_HEIGHT = 8
-local RESOURCE_WIDTH = 260
-local RESOURCE_Y = -4
+local RESOURCE_HEIGHT = 7
+local RESOURCE_WIDTH = 232
+local RESOURCE_Y = -3
 local CAST_GAP = 5
 local MAX_PIPS = 10
 
@@ -319,7 +319,7 @@ function HUD:ApplyClassResourceCastAnchor(unit, castBar)
         castBar:SetPoint("TOPLEFT", resource, "BOTTOMLEFT", 0, -CAST_GAP)
         castBar:SetPoint("RIGHT", resource, "RIGHT", 0, 0)
     else
-        castBar:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 0, -5)
+        castBar:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 0, -4)
         castBar:SetPoint("RIGHT", display, "RIGHT", 0, 0)
     end
 end
