@@ -72,7 +72,7 @@ local function getPreviewClassColor(classFile, fallback)
 end
 
 local function makeDemo(parent, key, title, color, classFile, isMob)
-    local display = makePanel(parent, 296, 72, color)
+    local display = makePanel(parent, 260, 72, color)
     display.key = key
     display.color = color
 
@@ -110,7 +110,7 @@ local function makeDemo(parent, key, title, color, classFile, isMob)
     display.power = power
 
     local auraRow = CreateFrame("Frame", nil, display)
-    auraRow:SetSize(288, 22)
+    auraRow:SetSize(260, 22)
     auraRow:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 6, 6)
     display.previewAuras = auraRow
 
@@ -168,27 +168,27 @@ local function applyPreviewStyle(display, style)
 
     if style == 2 then
         setPreviewShellVisible(display, false)
-        display:SetSize(296, 55)
+        display:SetSize(260, 61)
 
         display.health:ClearAllPoints()
-        display.health:SetHeight(30)
-        display.health:SetPoint("TOPLEFT", display, "TOPLEFT", 0, -16)
+        display.health:SetHeight(34)
+        display.health:SetPoint("TOPLEFT", display, "TOPLEFT", 0, -17)
         display.health:SetPoint("RIGHT", display, "RIGHT", 0, 0)
 
         display.power:ClearAllPoints()
-        display.power:SetHeight(7)
+        display.power:SetHeight(8)
         display.power:SetPoint("TOPLEFT", display.health, "BOTTOMLEFT", 0, -2)
         display.power:SetPoint("RIGHT", display.health, "RIGHT", 0, 0)
 
         display.nameText:ClearAllPoints()
         display.nameText:SetHeight(14)
-        display.nameText:SetPoint("BOTTOMLEFT", display.health, "TOPLEFT", 2, 3)
+        display.nameText:SetPoint("BOTTOMLEFT", display.health, "TOPLEFT", 2, 2)
         display.nameText:SetPoint("RIGHT", display.health, "RIGHT", -2, 0)
         display.nameText:SetJustifyH("LEFT")
 
         display.previewAuras:ClearAllPoints()
-        display.previewAuras:SetSize(296, 22)
-        display.previewAuras:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 0, 26)
+        display.previewAuras:SetSize(260, 22)
+        display.previewAuras:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 0, 24)
 
         display.previewCast:ClearAllPoints()
         display.previewCast:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 0, -5)
