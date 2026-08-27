@@ -3,6 +3,7 @@
 ## Notes: Suite QoL de Rapzo: inventario, tooltip, busqueda, colecciones, vendedor, AFK y HUD.
 ## Author: Rapzo
 ## Version: 3.0.0-alpha5
+## IconTexture: Interface\AddOns\RapzoQoL\Media\RapzoQoLIcon.tga
 ## SavedVariables: RapzoBagsDB
 ## Category: Rapzo
 
