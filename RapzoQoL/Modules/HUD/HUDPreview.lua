@@ -155,14 +155,14 @@ local function makeDemo(parent, key, title, color, classFile, isMob)
     display.previewIcon = iconFrame
 
     local auraRow = CreateFrame("Frame", nil, display)
-    auraRow:SetSize(224, 28)
-    auraRow:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 66, 7)
+    auraRow:SetSize(224, 24)
+    auraRow:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 66, 10)
     display.previewAuras = auraRow
 
     for i = 1, 5 do
         local aura = CreateFrame("Frame", nil, auraRow)
-        aura:SetSize(26, 26)
-        aura:SetPoint("LEFT", auraRow, "LEFT", (i - 1) * 30, 0)
+        aura:SetSize(22, 22)
+        aura:SetPoint("LEFT", auraRow, "LEFT", (i - 1) * 27, 0)
 
         local tex = aura:CreateTexture(nil, "ARTWORK")
         tex:SetAllPoints(aura)
@@ -175,6 +175,20 @@ local function makeDemo(parent, key, title, color, classFile, isMob)
         }
         local c = palette[i]
         tex:SetColorTexture(c[1], c[2], c[3], 0.94)
+
+        if type(aura.CreateMaskTexture) == "function" and type(tex.AddMaskTexture) == "function" then
+            local mask = aura:CreateMaskTexture()
+            mask:SetAllPoints(tex)
+            mask:SetTexture(PORTRAIT_MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+            tex:AddMaskTexture(mask)
+        end
+
+        local glow = aura:CreateTexture(nil, "OVERLAY")
+        glow:SetPoint("TOPLEFT", aura, "TOPLEFT", -2, 2)
+        glow:SetPoint("BOTTOMRIGHT", aura, "BOTTOMRIGHT", 2, -2)
+        glow:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
+        glow:SetBlendMode("ADD")
+        glow:SetVertexColor(color[1], color[2], color[3], 0.34)
 
         local duration = aura:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
         duration:SetPoint("TOP", aura, "BOTTOM", 0, -1)
@@ -208,17 +222,52 @@ local function applyPreviewStyle(display, style)
         setPreviewShellVisible(display, false)
         display:SetSize(296, 72)
 
+        local mirrored = display.key == "target" or display.key == "focus"
+
         display.nameText:ClearAllPoints()
-        display.nameText:SetPoint("TOPLEFT", display, "TOPLEFT", 66, -8)
-        display.nameText:SetPoint("RIGHT", display, "RIGHT", -6, 0)
+        if mirrored then
+            display.nameText:SetPoint("TOPLEFT", display, "TOPLEFT", 6, -8)
+            display.nameText:SetPoint("RIGHT", display, "RIGHT", -66, 0)
+        else
+            display.nameText:SetPoint("TOPLEFT", display, "TOPLEFT", 66, -8)
+            display.nameText:SetPoint("RIGHT", display, "RIGHT", -6, 0)
+        end
 
         display.health:ClearAllPoints()
-        display.health:SetPoint("TOPLEFT", display, "TOPLEFT", 66, -25)
-        display.health:SetPoint("RIGHT", display, "RIGHT", -6, 0)
+        if mirrored then
+            display.health:SetPoint("TOPLEFT", display, "TOPLEFT", 6, -25)
+            display.health:SetPoint("RIGHT", display, "RIGHT", -66, 0)
+        else
+            display.health:SetPoint("TOPLEFT", display, "TOPLEFT", 66, -25)
+            display.health:SetPoint("RIGHT", display, "RIGHT", -6, 0)
+        end
 
         display.power:ClearAllPoints()
         display.power:SetPoint("TOPLEFT", display.health, "BOTTOMLEFT", 0, -4)
         display.power:SetPoint("RIGHT", display.health, "RIGHT", 0, 0)
+
+        display.previewIcon:ClearAllPoints()
+        if mirrored then
+            display.previewIcon:SetPoint("TOPRIGHT", display, "TOPRIGHT", -6, -9)
+        else
+            display.previewIcon:SetPoint("TOPLEFT", display, "TOPLEFT", 6, -9)
+        end
+
+        display.previewAuras:ClearAllPoints()
+        if mirrored then
+            display.previewAuras:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 6, 10)
+        else
+            display.previewAuras:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 66, 10)
+        end
+
+        display.previewCast:ClearAllPoints()
+        if mirrored then
+            display.previewCast:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 6, -4)
+            display.previewCast:SetPoint("RIGHT", display, "RIGHT", -66, 0)
+        else
+            display.previewCast:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 66, -4)
+            display.previewCast:SetPoint("RIGHT", display, "RIGHT", -6, 0)
+        end
 
         display.previewIcon:Show()
         display.previewAuras:Show()
@@ -253,10 +302,6 @@ local function applyPreviewStyle(display, style)
         end
     end
 
-    if style == 2 then
-        display.previewAuras:ClearAllPoints()
-        display.previewAuras:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 66, 7)
-    end
 end
 
 function HUD:CreatePreview()
