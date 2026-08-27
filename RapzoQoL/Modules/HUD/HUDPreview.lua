@@ -5,6 +5,7 @@ if not RB or not RB.HUD then return end
 local HUD = RB.HUD
 local WHITE_TEXTURE = "Interface\\Buttons\\WHITE8X8"
 local CLASS_TEXTURE = "Interface\\GLUES\\CHARACTERCREATE\\UI-CHARACTERCREATE-CLASSES"
+local PORTRAIT_MASK = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
 
 HUD.previewFrame = nil
 HUD.previewDisplays = HUD.previewDisplays or {}
@@ -123,12 +124,13 @@ local function makeDemo(parent, key, title, color, classFile, isMob)
     iconFrame:SetPoint("TOPLEFT", display, "TOPLEFT", 6, -9)
 
     local iconBg = iconFrame:CreateTexture(nil, "BACKGROUND")
-    iconBg:SetAllPoints(iconFrame)
+    iconBg:SetPoint("TOPLEFT", iconFrame, "TOPLEFT", 3, -3)
+    iconBg:SetPoint("BOTTOMRIGHT", iconFrame, "BOTTOMRIGHT", -3, 3)
     iconBg:SetColorTexture(0.02, 0.03, 0.05, 1)
 
     local icon = iconFrame:CreateTexture(nil, "ARTWORK")
-    icon:SetPoint("TOPLEFT", iconFrame, "TOPLEFT", 2, -2)
-    icon:SetPoint("BOTTOMRIGHT", iconFrame, "BOTTOMRIGHT", -2, 2)
+    icon:SetPoint("TOPLEFT", iconFrame, "TOPLEFT", 4, -4)
+    icon:SetPoint("BOTTOMRIGHT", iconFrame, "BOTTOMRIGHT", -4, 4)
     if isMob then
         icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
         icon:SetTexCoord(0, 1, 0, 1)
@@ -136,11 +138,19 @@ local function makeDemo(parent, key, title, color, classFile, isMob)
         icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
     end
 
+    if type(iconFrame.CreateMaskTexture) == "function" and type(icon.AddMaskTexture) == "function" then
+        local mask = iconFrame:CreateMaskTexture()
+        mask:SetAllPoints(icon)
+        mask:SetTexture(PORTRAIT_MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+        icon:AddMaskTexture(mask)
+        iconBg:AddMaskTexture(mask)
+    end
+
     local iconBorder = iconFrame:CreateTexture(nil, "OVERLAY")
     iconBorder:SetAllPoints(iconFrame)
     iconBorder:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
     iconBorder:SetBlendMode("ADD")
-    iconBorder:SetVertexColor(color[1], color[2], color[3], 0.92)
+    iconBorder:SetVertexColor(color[1], color[2], color[3], 0.96)
 
     display.previewIcon = iconFrame
 
