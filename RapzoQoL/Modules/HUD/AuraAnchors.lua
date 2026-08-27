@@ -43,9 +43,19 @@ local function anchorAuraContainer(unit)
 
     anchoring = true
 
-    -- Blizzard sigue siendo dueno de la creacion/filtrado de auras.
-    -- Rapzo QoL solo mueve el contenedor: Estilo 1 usa todo el ancho;
-    -- Estilo 2 deja libre la columna izquierda reservada para el icono.
+    -- Style 2 uses Rapzo QoL-managed AuraContainers:
+    -- Player = short HELPFUL combat buffs.
+    -- Target/Focus = HARMFUL|PLAYER only.
+    -- Hide Blizzard's mixed native target aura strip so it cannot duplicate them.
+    if type(HUD.GetStyle) == "function" and HUD:GetStyle() == 2 then
+        safeCall(auraContainer.Hide, auraContainer)
+        anchoring = false
+        return
+    end
+
+    safeCall(auraContainer.Show, auraContainer)
+
+    -- Style 1 keeps Blizzard's native aura container behavior.
     local x = auraOffset(unit)
     local rightInset = auraRightInset(unit)
     safeCall(auraContainer.ClearAllPoints, auraContainer)
