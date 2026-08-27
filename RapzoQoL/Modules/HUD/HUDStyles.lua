@@ -12,7 +12,10 @@ local STYLE_CURRENT = 1
 local STYLE_ICON = 2
 local STYLE2_WIDTH = 296
 local STYLE2_HEIGHT = 72
-local STYLE2_LEFT = 66
+local STYLE2_ICON = 48
+local STYLE2_CONTENT = 58
+local STYLE2_EDGE = 4
+local STYLE2_AURA = 20
 
 local function isSecret(value)
     return type(issecretvalue) == "function" and issecretvalue(value)
@@ -45,13 +48,13 @@ function HUD:GetStyleAuraOffset(unit)
     if unit == "target" or unit == "focus" then
         return 0
     end
-    return STYLE2_LEFT
+    return STYLE2_CONTENT
 end
 
 function HUD:GetStyleAuraRightInset(unit)
     if self:GetStyle() ~= STYLE_ICON then return 0 end
     if unit == "target" or unit == "focus" then
-        return STYLE2_LEFT
+        return STYLE2_CONTENT
     end
     return 6
 end
@@ -85,14 +88,17 @@ local function ensureUnitIcon(display)
     if display.RapzoQoLUnitIcon then return display.RapzoQoLUnitIcon end
 
     local holder = CreateFrame("Frame", nil, display)
-    holder:SetSize(54, 54)
-    holder:SetPoint("TOPLEFT", display, "TOPLEFT", 6, -9)
+    holder:SetSize(STYLE2_ICON, STYLE2_ICON)
     holder:SetFrameLevel(display:GetFrameLevel() + 2)
 
-    local bg = holder:CreateTexture(nil, "BACKGROUND")
-    bg:SetPoint("TOPLEFT", holder, "TOPLEFT", 3, -3)
-    bg:SetPoint("BOTTOMRIGHT", holder, "BOTTOMRIGHT", -3, 3)
-    bg:SetColorTexture(0.01, 0.02, 0.03, 0.98)
+    local ring = holder:CreateTexture(nil, "BACKGROUND")
+    ring:SetAllPoints(holder)
+    ring:SetColorTexture(0.95, 0.70, 0.16, 0.78)
+
+    local inner = holder:CreateTexture(nil, "BORDER")
+    inner:SetPoint("TOPLEFT", holder, "TOPLEFT", 2, -2)
+    inner:SetPoint("BOTTOMRIGHT", holder, "BOTTOMRIGHT", -2, 2)
+    inner:SetColorTexture(0.005, 0.009, 0.015, 1)
 
     local icon = holder:CreateTexture(nil, "ARTWORK")
     icon:SetPoint("TOPLEFT", holder, "TOPLEFT", 4, -4)
@@ -101,18 +107,13 @@ local function ensureUnitIcon(display)
 
     if type(holder.CreateMaskTexture) == "function" and type(icon.AddMaskTexture) == "function" then
         local mask = holder:CreateMaskTexture()
-        mask:SetAllPoints(icon)
+        mask:SetAllPoints(holder)
         mask:SetTexture(PORTRAIT_MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+        ring:AddMaskTexture(mask)
+        inner:AddMaskTexture(mask)
         icon:AddMaskTexture(mask)
-        bg:AddMaskTexture(mask)
         holder.RapzoQoLMask = mask
     end
-
-    local ring = holder:CreateTexture(nil, "OVERLAY")
-    ring:SetAllPoints(holder)
-    ring:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
-    ring:SetBlendMode("ADD")
-    ring:SetVertexColor(0.95, 0.70, 0.16, 0.98)
 
     holder.icon = icon
     holder.RapzoQoLRing = ring
@@ -157,7 +158,7 @@ local function updateUnitIcon(display)
 
     local color = display.color or {0.95, 0.70, 0.16}
     if holder.RapzoQoLRing then
-        holder.RapzoQoLRing:SetVertexColor(color[1], color[2], color[3], 0.98)
+        holder.RapzoQoLRing:SetColorTexture(color[1], color[2], color[3], 0.78)
     end
 
     local unit = display.unit
@@ -186,7 +187,7 @@ local function ensureCastBar(display)
     bar:SetMinMaxValues(0, 1)
     bar:SetValue(1)
     bar:SetHeight(14)
-    bar:SetPoint("TOPLEFT", display, "BOTTOMLEFT", STYLE2_LEFT, -4)
+    bar:SetPoint("TOPLEFT", display, "BOTTOMLEFT", STYLE2_CONTENT, -4)
     bar:SetPoint("RIGHT", display, "RIGHT", -6, 0)
     bar:SetFrameLevel(display:GetFrameLevel() + 3)
 
@@ -278,7 +279,7 @@ local function updateCastBar(unit)
 end
 
 local function initAuraButton(button)
-    button:SetSize(22, 22)
+    button:SetSize(STYLE2_AURA, STYLE2_AURA)
 
     local icon = button:CreateTexture(nil, "ARTWORK")
     icon:SetAllPoints(button)
@@ -303,13 +304,14 @@ local function initAuraButton(button)
         safeCall(button.SetDurationCooldown, button, cooldown)
     end
 
-    local glow = button:CreateTexture(nil, "OVERLAY")
-    glow:SetPoint("TOPLEFT", button, "TOPLEFT", -2, 2)
-    glow:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 2, -2)
-    glow:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
-    glow:SetBlendMode("ADD")
-    glow:SetVertexColor(0.95, 0.70, 0.16, 0.40)
-    button.RapzoQoLAuraGlow = glow
+    local ring = button:CreateTexture(nil, "BACKGROUND")
+    ring:SetPoint("TOPLEFT", button, "TOPLEFT", -1, 1)
+    ring:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 1, -1)
+    ring:SetColorTexture(0.95, 0.70, 0.16, 0.26)
+    if button.RapzoQoLAuraMask and type(ring.AddMaskTexture) == "function" then
+        ring:AddMaskTexture(button.RapzoQoLAuraMask)
+    end
+    button.RapzoQoLAuraGlow = ring
 end
 
 local function ensurePlayerAuraContainer(display)
@@ -325,8 +327,8 @@ local function ensurePlayerAuraContainer(display)
         return nil
     end
 
-    container:SetSize(224, 24)
-    container:SetPoint("BOTTOMLEFT", display, "TOPLEFT", STYLE2_LEFT, 10)
+    container:SetSize(234, 22)
+    container:SetPoint("BOTTOMLEFT", display, "TOPLEFT", STYLE2_CONTENT, 6)
     container:SetFrameLevel(display:GetFrameLevel() + 4)
     container:Show()
 
@@ -340,8 +342,8 @@ local function ensurePlayerAuraContainer(display)
         },
         initializeFrame = initAuraButton,
         layout = {
-            elementWidth = 22,
-            elementHeight = 22,
+            elementWidth = STYLE2_AURA,
+            elementHeight = STYLE2_AURA,
             elementSpacing = 5,
             lineSpacing = 5,
         },
@@ -362,6 +364,73 @@ local function ensurePlayerAuraContainer(display)
 
     display.RapzoQoLPlayerAuras = container
     return container
+end
+
+local function ensureTargetAuraContainer(display)
+    if not display or (display.unit ~= "target" and display.unit ~= "focus") then return nil end
+    if display.RapzoQoLTargetAuras then return display.RapzoQoLTargetAuras end
+    if type(InCombatLockdown) == "function" and InCombatLockdown() then return nil end
+
+    local ok, container = pcall(CreateFrame, "AuraContainer", nil, display, "CustomAuraContainerTemplate")
+    if not ok or not container or type(container.AddAuraGroup) ~= "function" then return nil end
+
+    container:SetSize(234, 22)
+    container:SetPoint("BOTTOMLEFT", display, "TOPLEFT", STYLE2_EDGE, 6)
+    container:SetFrameLevel(display:GetFrameLevel() + 4)
+
+    local added = safeCall(container.AddAuraGroup, container, "rapzoTargetHarmfulPlayer", "HARMFUL|PLAYER", {
+        maxFrameCount = 5,
+        candidateFilters = {},
+        initializeFrame = initAuraButton,
+        layout = {
+            elementWidth = STYLE2_AURA,
+            elementHeight = STYLE2_AURA,
+            elementSpacing = 5,
+            lineSpacing = 5,
+        },
+    })
+
+    if not added then
+        container:Hide()
+        return nil
+    end
+
+    safeCall(container.SetUnit, container, display.unit)
+    if type(container.SetEnabled) == "function" then
+        safeCall(container.SetEnabled, container, true)
+    end
+    if type(container.UpdateAllAuras) == "function" then
+        safeCall(container.UpdateAllAuras, container)
+    end
+
+    display.RapzoQoLTargetAuras = container
+    return container
+end
+
+local function setTargetAurasEnabled(display, enabled)
+    if not display or (display.unit ~= "target" and display.unit ~= "focus") then return end
+
+    local container = display.RapzoQoLTargetAuras
+    if enabled and not container then
+        container = ensureTargetAuraContainer(display)
+    end
+    if not container then return end
+
+    if type(container.SetEnabled) == "function" then
+        safeCall(container.SetEnabled, container, enabled)
+    end
+
+    if enabled then
+        container:Show()
+        if type(container.SetUnit) == "function" then
+            safeCall(container.SetUnit, container, display.unit)
+        end
+        if type(container.UpdateAllAuras) == "function" then
+            safeCall(container.UpdateAllAuras, container)
+        end
+    else
+        container:Hide()
+    end
 end
 
 local function setPlayerAurasEnabled(display, enabled)
@@ -419,7 +488,7 @@ local function applyStyle1(display)
     display.health:SetPoint("RIGHT", display, "RIGHT", -6, 0)
 
     display.power:ClearAllPoints()
-    display.power:SetHeight(10)
+    display.power:SetHeight(9)
     display.power:SetPoint("TOPLEFT", display.health, "BOTTOMLEFT", 0, -4)
     display.power:SetPoint("RIGHT", display.health, "RIGHT", 0, 0)
 
@@ -427,6 +496,7 @@ local function applyStyle1(display)
     if display.RapzoQoLUnitIcon then display.RapzoQoLUnitIcon:Hide() end
     if display.RapzoQoLCastBar then display.RapzoQoLCastBar:Hide() end
     setPlayerAurasEnabled(display, false)
+    setTargetAurasEnabled(display, false)
 end
 
 local function applyStyle2(display)
@@ -441,21 +511,21 @@ local function applyStyle2(display)
 
     display.nameText:ClearAllPoints()
     if mirrored then
-        display.nameText:SetPoint("TOPLEFT", display, "TOPLEFT", 6, -8)
-        display.nameText:SetPoint("RIGHT", display, "RIGHT", -STYLE2_LEFT, 0)
+        display.nameText:SetPoint("TOPLEFT", display, "TOPLEFT", STYLE2_EDGE, -8)
+        display.nameText:SetPoint("RIGHT", display, "RIGHT", -STYLE2_CONTENT, 0)
     else
-        display.nameText:SetPoint("TOPLEFT", display, "TOPLEFT", STYLE2_LEFT, -8)
-        display.nameText:SetPoint("RIGHT", display, "RIGHT", -6, 0)
+        display.nameText:SetPoint("TOPLEFT", display, "TOPLEFT", STYLE2_CONTENT, -8)
+        display.nameText:SetPoint("RIGHT", display, "RIGHT", -STYLE2_EDGE, 0)
     end
 
     display.health:ClearAllPoints()
     display.health:SetHeight(24)
     if mirrored then
-        display.health:SetPoint("TOPLEFT", display, "TOPLEFT", 6, -25)
-        display.health:SetPoint("RIGHT", display, "RIGHT", -STYLE2_LEFT, 0)
+        display.health:SetPoint("TOPLEFT", display, "TOPLEFT", STYLE2_EDGE, -25)
+        display.health:SetPoint("RIGHT", display, "RIGHT", -STYLE2_CONTENT, 0)
     else
-        display.health:SetPoint("TOPLEFT", display, "TOPLEFT", STYLE2_LEFT, -25)
-        display.health:SetPoint("RIGHT", display, "RIGHT", -6, 0)
+        display.health:SetPoint("TOPLEFT", display, "TOPLEFT", STYLE2_CONTENT, -25)
+        display.health:SetPoint("RIGHT", display, "RIGHT", -STYLE2_EDGE, 0)
     end
 
     display.power:ClearAllPoints()
@@ -468,9 +538,9 @@ local function applyStyle2(display)
     local icon = ensureUnitIcon(display)
     icon:ClearAllPoints()
     if mirrored then
-        icon:SetPoint("TOPRIGHT", display, "TOPRIGHT", -6, -9)
+        icon:SetPoint("TOPRIGHT", display, "TOPRIGHT", 0, -12)
     else
-        icon:SetPoint("TOPLEFT", display, "TOPLEFT", 6, -9)
+        icon:SetPoint("TOPLEFT", display, "TOPLEFT", 0, -12)
     end
     icon:Show()
     updateUnitIcon(display)
@@ -478,17 +548,18 @@ local function applyStyle2(display)
     local castBar = ensureCastBar(display)
     castBar:ClearAllPoints()
     if mirrored then
-        castBar:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 6, -4)
-        castBar:SetPoint("RIGHT", display, "RIGHT", -STYLE2_LEFT, 0)
+        castBar:SetPoint("TOPLEFT", display, "BOTTOMLEFT", STYLE2_EDGE, -4)
+        castBar:SetPoint("RIGHT", display, "RIGHT", -STYLE2_CONTENT, 0)
     else
-        castBar:SetPoint("TOPLEFT", display, "BOTTOMLEFT", STYLE2_LEFT, -4)
-        castBar:SetPoint("RIGHT", display, "RIGHT", -6, 0)
+        castBar:SetPoint("TOPLEFT", display, "BOTTOMLEFT", STYLE2_CONTENT, -4)
+        castBar:SetPoint("RIGHT", display, "RIGHT", -STYLE2_EDGE, 0)
     end
     if type(HUD.ApplyClassResourceCastAnchor) == "function" then
         HUD:ApplyClassResourceCastAnchor(display.unit, castBar)
     end
 
     setPlayerAurasEnabled(display, display.unit == "player")
+    setTargetAurasEnabled(display, display.unit == "target" or display.unit == "focus")
     updateCastBar(display.unit)
 end
 
