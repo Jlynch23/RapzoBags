@@ -159,7 +159,9 @@ local function createBar(parent, height, color)
     bg:SetAllPoints(bar)
     bg:SetColorTexture(COLORS.dark[1], COLORS.dark[2], COLORS.dark[3], 0.96)
 
-    createEdges(bar, color, 0.60, 1)
+    local edges = createEdges(bar, color, 0.60, 1)
+    bar.RapzoQoLBackground = bg
+    bar.RapzoQoLEdges = edges
     return bar
 end
 
@@ -293,9 +295,30 @@ local function createUnitDisplay(unit, nativeFrame, color)
     health:SetPoint("TOPLEFT", display, "TOPLEFT", 6, -25)
     health:SetPoint("RIGHT", display, "RIGHT", -6, 0)
 
+    local healthPercentText = health:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    healthPercentText:SetPoint("LEFT", health, "LEFT", 7, 0)
+    healthPercentText:SetJustifyH("LEFT")
+    healthPercentText:SetTextColor(0.98, 0.98, 0.98)
+    healthPercentText:SetShadowColor(0, 0, 0, 1)
+    healthPercentText:SetShadowOffset(1, -1)
+
+    local healthValueText = health:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    healthValueText:SetPoint("RIGHT", health, "RIGHT", -7, 0)
+    healthValueText:SetJustifyH("RIGHT")
+    healthValueText:SetTextColor(0.98, 0.98, 0.98)
+    healthValueText:SetShadowColor(0, 0, 0, 1)
+    healthValueText:SetShadowOffset(1, -1)
+
     local power = createBar(display, 10, COLORS.power)
     power:SetPoint("TOPLEFT", health, "BOTTOMLEFT", 0, -4)
     power:SetPoint("RIGHT", health, "RIGHT", 0, 0)
+
+    local powerValueText = power:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    powerValueText:SetPoint("RIGHT", power, "RIGHT", -5, 0)
+    powerValueText:SetJustifyH("RIGHT")
+    powerValueText:SetTextColor(0.92, 0.94, 0.98)
+    powerValueText:SetShadowColor(0, 0, 0, 1)
+    powerValueText:SetShadowOffset(1, -1)
 
     local unitTag = display:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     unitTag:SetPoint("TOPRIGHT", display, "TOPRIGHT", -6, -8)
@@ -305,7 +328,10 @@ local function createUnitDisplay(unit, nativeFrame, color)
     display.unit = unit
     display.nativeFrame = nativeFrame
     display.health = health
+    display.healthPercentText = healthPercentText
+    display.healthValueText = healthValueText
     display.power = power
+    display.powerValueText = powerValueText
     display.nameText = name
     display.unitTag = unitTag
     display.accent = accent
@@ -333,6 +359,21 @@ local function applyDisplayColor(display, color)
     for _, edge in ipairs(display.edges or {}) do
         edge:SetColorTexture(color[1], color[2], color[3], 0.30)
     end
+end
+
+local function formatCompactNumber(value)
+    value = tonumber(value)
+    if not value then return "" end
+
+    local absValue = math.abs(value)
+    if absValue >= 1000000000 then
+        return string.format("%.2fB", value / 1000000000)
+    elseif absValue >= 1000000 then
+        return string.format("%.2fM", value / 1000000)
+    elseif absValue >= 1000 then
+        return string.format("%.1fK", value / 1000)
+    end
+    return tostring(math.floor(value + 0.5))
 end
 
 local function updateUnitDisplay(display)
@@ -367,6 +408,22 @@ local function updateUnitDisplay(display)
         local health = UnitHealth(unit)
         display.health:SetMinMaxValues(0, maxHealth)
         display.health:SetValue(health)
+
+        if not isSecret(health) and not isSecret(maxHealth) then
+            local h = tonumber(health)
+            local hm = tonumber(maxHealth)
+            if h and hm and hm > 0 then
+                if display.healthPercentText then
+                    display.healthPercentText:SetText(string.format("%d%%", math.floor((h / hm) * 100 + 0.5)))
+                end
+                if display.healthValueText then
+                    display.healthValueText:SetText(formatCompactNumber(h) .. " / " .. formatCompactNumber(hm))
+                end
+            end
+        else
+            if display.healthPercentText then display.healthPercentText:SetText("") end
+            if display.healthValueText then display.healthValueText:SetText("") end
+        end
     end
 
     if UnitPowerMax and UnitPower then
@@ -374,6 +431,15 @@ local function updateUnitDisplay(display)
         local power = UnitPower(unit)
         display.power:SetMinMaxValues(0, maxPower)
         display.power:SetValue(power)
+
+        if display.powerValueText then
+            if not isSecret(power) then
+                local numericPower = tonumber(power)
+                display.powerValueText:SetText(numericPower and tostring(math.floor(numericPower + 0.5)) or "")
+            else
+                display.powerValueText:SetText("")
+            end
+        end
     end
 end
 
