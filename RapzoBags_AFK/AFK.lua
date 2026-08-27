@@ -40,7 +40,7 @@ local function getConfig()
     local cfg = db.settings.afk
 
     if cfg.enabled == nil then cfg.enabled = RB:IsFeatureEnabled("afk") end
-    if cfg.opacity == nil then cfg.opacity = 0.90 end
+    if cfg.opacity == nil then cfg.opacity = 0.84 end
     if cfg.showTimer == nil then cfg.showTimer = true end
     if cfg.showCharacter == nil then cfg.showCharacter = true end
     if cfg.showZone == nil then cfg.showZone = true end
@@ -160,15 +160,27 @@ function AFK:CreateFrame()
     background:SetColorTexture(0.005, 0.009, 0.018, getConfig().opacity)
     frame.background = background
 
-    local glow = frame:CreateTexture(nil, "ARTWORK")
-    glow:SetPoint("CENTER", frame, "CENTER", 0, 12)
-    glow:SetSize(620, 380)
-    glow:SetColorTexture(0.025, 0.08, 0.12, 0.28)
-    frame.glow = glow
+    local card = CreateFrame("Frame", nil, frame, "BackdropTemplate")
+    card:SetPoint("CENTER", frame, "CENTER", 0, 18)
+    card:SetSize(520, 420)
+    card:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8X8",
+        edgeFile = "Interface\\Buttons\\WHITE8X8",
+        edgeSize = 1,
+    })
+    card:SetBackdropColor(0.004, 0.008, 0.016, 0.70)
+    card:SetBackdropBorderColor(0.15, 0.70, 0.95, 0.20)
+    frame.card = card
 
-    local logo = frame:CreateTexture(nil, "OVERLAY")
-    logo:SetPoint("CENTER", frame, "CENTER", 0, 150)
-    logo:SetSize(78, 78)
+    local topLine = card:CreateTexture(nil, "ARTWORK")
+    topLine:SetPoint("TOP", card, "TOP", 0, 0)
+    topLine:SetSize(180, 2)
+    topLine:SetColorTexture(0.22, 0.83, 0.98, 0.85)
+    frame.topLine = topLine
+
+    local logo = card:CreateTexture(nil, "OVERLAY")
+    logo:SetPoint("TOP", card, "TOP", 0, -34)
+    logo:SetSize(88, 88)
     logo:SetTexture("Interface\\AddOns\\RapzoBags_Core\\Media\\RapzoBagsIcon.tga")
     frame.logo = logo
 
@@ -184,7 +196,7 @@ function AFK:CreateFrame()
         fontPath = select(1, GameFontNormalHuge:GetFont())
     end
     if fontPath then
-        pcall(afkText.SetFont, afkText, fontPath, 64, "OUTLINE")
+        pcall(afkText.SetFont, afkText, fontPath, 76, "OUTLINE")
     end
     afkText:SetText("AFK")
     afkText:SetTextColor(0.92, 0.96, 1.00)
@@ -192,7 +204,7 @@ function AFK:CreateFrame()
 
     local accent = frame:CreateTexture(nil, "ARTWORK")
     accent:SetPoint("TOP", afkText, "BOTTOM", 0, -12)
-    accent:SetSize(230, 1)
+    accent:SetSize(280, 1)
     accent:SetColorTexture(0.22, 0.74, 0.97, 0.75)
     frame.accent = accent
 
@@ -220,14 +232,14 @@ function AFK:CreateFrame()
     money:SetPoint("TOP", timer, "BOTTOM", 0, -10)
     frame.money = money
 
-    local footer = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    footer:SetPoint("BOTTOM", frame, "BOTTOM", 0, 42)
-    frame.footer = footer
-
-    local quote = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    quote:SetPoint("BOTTOM", footer, "TOP", 0, 8)
+    local quote = card:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    quote:SetPoint("BOTTOM", card, "BOTTOM", 0, 42)
     quote:SetText("The inventory never sleeps.")
     frame.quote = quote
+
+    local footer = card:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    footer:SetPoint("TOP", quote, "BOTTOM", 0, -8)
+    frame.footer = footer
 
     local fadeIn = frame:CreateAnimationGroup()
     local fadeInAlpha = fadeIn:CreateAnimation("Alpha")
@@ -276,6 +288,9 @@ function AFK:UpdateDisplay()
     local cfg = getConfig()
 
     frame.background:SetColorTexture(0.005, 0.009, 0.018, cfg.opacity)
+    if frame.card then
+        frame.card:SetBackdropColor(0.004, 0.008, 0.016, math.min(0.82, cfg.opacity * 0.82))
+    end
 
     local playerName = RB:GetPlayerNameSafe()
     local realmName = RB:GetRealmNameSafe()
@@ -291,7 +306,7 @@ function AFK:UpdateDisplay()
     frame.character:SetShown(cfg.showCharacter ~= false)
     frame.detail:SetShown(cfg.showCharacter ~= false)
     if cfg.showCharacter ~= false then
-        frame.character:SetText(tostring(playerName or "Player"))
+        frame.character:SetText(string.upper(tostring(playerName or "Player")))
         frame.character:SetTextColor(r, g, b)
         local details = {}
         if specName and specName ~= "" then details[#details + 1] = specName end
