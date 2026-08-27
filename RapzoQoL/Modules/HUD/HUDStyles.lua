@@ -341,9 +341,26 @@ local function setPlayerAurasEnabled(display, enabled)
     end
 end
 
+local function setShellVisible(display, visible)
+    if not display then return end
+
+    if display.panel then
+        display.panel:SetAlpha(visible and 1 or 0)
+    end
+
+    if display.accent then
+        display.accent:SetAlpha(visible and 1 or 0)
+    end
+
+    for _, edge in ipairs(display.edges or {}) do
+        edge:SetAlpha(visible and 1 or 0)
+    end
+end
+
 local function applyStyle1(display)
     if not display then return end
 
+    setShellVisible(display, true)
     display:SetSize(240, 64)
 
     display.nameText:ClearAllPoints()
@@ -369,6 +386,9 @@ end
 local function applyStyle2(display)
     if not display then return end
 
+    -- Estilo 2 "naked": el frame contenedor solo sirve como ancla.
+    -- No se dibuja panel, linea superior ni borde exterior.
+    setShellVisible(display, false)
     display:SetSize(STYLE2_WIDTH, STYLE2_HEIGHT)
 
     display.nameText:ClearAllPoints()
