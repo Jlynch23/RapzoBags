@@ -1,0 +1,19 @@
+## Interface: 120100
+## Title: Rapzo QoL
+## Notes: Suite QoL de Rapzo: inventario, tooltip, busqueda, colecciones, vendedor, AFK y HUD.
+## Author: Rapzo
+## Version: 3.0.0-alpha5
+## SavedVariables: RapzoBagsDB
+## Category: Rapzo
+
+Core\Core.lua
+Core\Scanner.lua
+
+Modules\Tooltip\Tooltip.lua
+Modules\Search\Search.lua
+Modules\Collections\Collections.lua
+Modules\Vendor\Vendor.lua
+Modules\AFK\AFK.lua
+Modules\HUD\HUD.lua
+
+Config\Config.lua
