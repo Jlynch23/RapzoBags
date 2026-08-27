@@ -10,7 +10,9 @@ local STYLE_CURRENT = 1
 local STYLE_ICON = 2
 local STYLE2_WIDTH = 178
 local STYLE2_HEIGHT = 43
-local STYLE2_SCALE = 1.50
+local STYLE2_DEFAULT_SCALE = 1.50
+local STYLE2_MIN_SCALE = 0.50
+local STYLE2_MAX_SCALE = 2.50
 local STYLE2_EDGE = 0
 local STYLE2_CONTENT = 0
 local STYLE2_AURA = 16
@@ -35,12 +37,44 @@ local function getConfig()
         style = STYLE_CURRENT
     end
     cfg.style = style
+
+    local frameScale = tonumber(cfg.frameScale)
+    if not frameScale then frameScale = STYLE2_DEFAULT_SCALE end
+    frameScale = math.max(STYLE2_MIN_SCALE, math.min(STYLE2_MAX_SCALE, frameScale))
+    cfg.frameScale = frameScale
+
     HUD.config = cfg
     return cfg
 end
 
 function HUD:GetStyle()
     return getConfig().style
+end
+
+function HUD:GetFrameScale()
+    return getConfig().frameScale
+end
+
+function HUD:SetFrameScale(scale, silent)
+    scale = tonumber(scale)
+    if not scale then return false end
+
+    scale = math.max(STYLE2_MIN_SCALE, math.min(STYLE2_MAX_SCALE, scale))
+    local cfg = getConfig()
+    cfg.frameScale = scale
+
+    self:ApplyFrameStyle()
+
+    if type(self.RefreshPreview) == "function" then
+        self:RefreshPreview()
+    end
+
+    if not silent then
+        local visualW = math.floor(STYLE2_WIDTH * scale + 0.5)
+        local visualH = math.floor(STYLE2_HEIGHT * scale + 0.5)
+        RB:Print(string.format("HUD scale: %.2fx | aprox. %dx%d px", scale, visualW, visualH))
+    end
+    return true
 end
 
 function HUD:GetStyleAuraOffset(unit)
@@ -491,7 +525,7 @@ local function applyStyle2(display)
 
     -- Whole Style 2 frame is scaled uniformly so every element keeps
     -- the same Toxi proportions (text, bars, auras, castbar and resources).
-    display:SetScale(STYLE2_SCALE)
+    display:SetScale(HUD:GetFrameScale())
 
     -- Rapzo QoL / ToxiUI-inspired:
     -- name floats above, health is the visual anchor and the power bar stays thin.
@@ -682,6 +716,22 @@ function HUD:HandleSlash(rest)
             return
         end
         self:SetStyle(value)
+        return
+    elseif part == "scale" then
+        if value == "" then
+            local scale = self:GetFrameScale()
+            local visualW = math.floor(STYLE2_WIDTH * scale + 0.5)
+            local visualH = math.floor(STYLE2_HEIGHT * scale + 0.5)
+            RB:Print(string.format("HUD scale actual: %.2fx | aprox. %dx%d px | usa /rapzo hud scale 1.25", scale, visualW, visualH))
+            return
+        elseif value == "reset" then
+            self:SetFrameScale(STYLE2_DEFAULT_SCALE)
+            return
+        end
+
+        if not self:SetFrameScale(value) then
+            RB:Print("Uso: /rapzo hud scale 0.50-2.50")
+        end
         return
     elseif part == "preview" then
         if type(self.TogglePreview) == "function" then
