@@ -162,7 +162,7 @@ function AFK:CreateFrame()
 
     local card = CreateFrame("Frame", nil, frame, "BackdropTemplate")
     card:SetPoint("CENTER", frame, "CENTER", 0, 6)
-    card:SetSize(560, 350)
+    card:SetSize(640, 400)
     card:SetBackdrop({
         bgFile = "Interface\\Buttons\\WHITE8X8",
         edgeFile = "Interface\\Buttons\\WHITE8X8",
@@ -188,7 +188,7 @@ function AFK:CreateFrame()
     title:SetPoint("TOP", card, "TOP", 0, -34)
     local titleFont = STANDARD_TEXT_FONT
     if titleFont then
-        pcall(title.SetFont, title, titleFont, 18, "OUTLINE")
+        pcall(title.SetFont, title, titleFont, 22, "OUTLINE")
     end
     title:SetText("|cff38bdf8RAPZO|r |cffffffffQoL|r")
     frame.title = title
@@ -200,7 +200,7 @@ function AFK:CreateFrame()
         fontPath = select(1, GameFontNormalHuge:GetFont())
     end
     if fontPath then
-        pcall(afkText.SetFont, afkText, fontPath, 58, "OUTLINE")
+        pcall(afkText.SetFont, afkText, fontPath, 72, "OUTLINE")
     end
     afkText:SetText("AFK")
     afkText:SetTextColor(0.90, 0.94, 0.98)
@@ -208,22 +208,22 @@ function AFK:CreateFrame()
 
     local accent = frame:CreateTexture(nil, "ARTWORK")
     accent:SetPoint("TOP", afkText, "BOTTOM", 0, -8)
-    accent:SetSize(220, 1)
+    accent:SetSize(260, 1)
     accent:SetColorTexture(0.22, 0.74, 0.97, 0.36)
     frame.accent = accent
 
     local timer = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     timer:SetPoint("TOP", accent, "BOTTOM", 0, -16)
     if titleFont then
-        pcall(timer.SetFont, timer, titleFont, 20, "OUTLINE")
+        pcall(timer.SetFont, timer, titleFont, 24, "OUTLINE")
     end
     timer:SetTextColor(0.22, 0.83, 0.98)
     frame.timer = timer
 
     local character = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
-    character:SetPoint("TOP", timer, "BOTTOM", 0, -20)
+    character:SetPoint("TOP", timer, "BOTTOM", 0, -22)
     if titleFont then
-        pcall(character.SetFont, character, titleFont, 16, "OUTLINE")
+        pcall(character.SetFont, character, titleFont, 18, "OUTLINE")
     end
     character:SetText("Player")
     frame.character = character
@@ -243,7 +243,7 @@ function AFK:CreateFrame()
     frame.money = money
 
     local quote = card:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    quote:SetPoint("BOTTOM", card, "BOTTOM", 0, 38)
+    quote:SetPoint("BOTTOM", card, "BOTTOM", 0, 44)
     quote:SetText("Quality of life, the Rapzo way.")
     frame.quote = quote
 
