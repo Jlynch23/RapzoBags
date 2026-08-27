@@ -242,6 +242,10 @@ local function updateCastBar(unit)
         bar:SetValue(1)
     end
 
+    if type(HUD.ApplyClassResourceCastAnchor) == "function" then
+        HUD:ApplyClassResourceCastAnchor(unit, bar)
+    end
+
     bar:Show()
 end
 
@@ -393,6 +397,9 @@ local function applyStyle2(display)
     castBar:ClearAllPoints()
     castBar:SetPoint("TOPLEFT", display, "BOTTOMLEFT", STYLE2_LEFT, -4)
     castBar:SetPoint("RIGHT", display, "RIGHT", -6, 0)
+    if type(HUD.ApplyClassResourceCastAnchor) == "function" then
+        HUD:ApplyClassResourceCastAnchor(display.unit, castBar)
+    end
 
     setPlayerAurasEnabled(display, display.unit == "player")
     updateCastBar(display.unit)
