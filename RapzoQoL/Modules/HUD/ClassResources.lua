@@ -7,7 +7,7 @@ local WHITE_TEXTURE = "Interface\\Buttons\\WHITE8X8"
 
 local RESOURCE_GAP = 3
 local RESOURCE_HEIGHT = 8
-local RESOURCE_WIDTH = 288
+local RESOURCE_WIDTH = 296
 local RESOURCE_Y = -4
 local CAST_GAP = 5
 local MAX_PIPS = 10
@@ -152,7 +152,7 @@ local function ensureResourceFrame(display)
 
     local frame = CreateFrame("Frame", nil, display)
     frame:SetSize(RESOURCE_WIDTH, RESOURCE_HEIGHT)
-    frame:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 4, RESOURCE_Y)
+    frame:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 0, RESOURCE_Y)
     frame:SetFrameLevel(display:GetFrameLevel() + 4)
     frame:EnableMouse(false)
 
@@ -319,8 +319,8 @@ function HUD:ApplyClassResourceCastAnchor(unit, castBar)
         castBar:SetPoint("TOPLEFT", resource, "BOTTOMLEFT", 0, -CAST_GAP)
         castBar:SetPoint("RIGHT", resource, "RIGHT", 0, 0)
     else
-        castBar:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 4, -4)
-        castBar:SetPoint("RIGHT", display, "RIGHT", -4, 0)
+        castBar:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 0, -5)
+        castBar:SetPoint("RIGHT", display, "RIGHT", 0, 0)
     end
 end
 
