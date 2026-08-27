@@ -146,7 +146,13 @@
   }
   .cast .fill{width:62%;background:linear-gradient(90deg,#ba7b13,#f5bc37)}
   .cast span{position:absolute;inset:0;display:grid;place-items:center;font-size:9px;font-weight:700}
-  body.style2 .frame{width:296px;height:72px}
+  body.style2 .frame{
+    width:296px;height:72px;
+    background:transparent;
+    border-color:transparent;
+    box-shadow:none;
+  }
+  body.style2 .frame:before{display:none}
   body.style2 .portrait{display:grid}
   body.style2 .name{left:66px;right:6px}
   body.style2 .health{left:66px;top:25px;right:6px}
@@ -218,14 +224,15 @@
   <div class="stage">
     <div class="guide">
       <strong>Objetivo de Estilo 2</strong>
-      <p>Player/player-target: icono de clase. Mob: icono/representación referencial. Buffs y debuffs arriba. Barra de casteo abajo.</p>
+      <p>Sin panel exterior ni linea superior: solo icono, nombre, barras, recursos, buffs/debuffs arriba y castbar abajo.</p>
     </div>
 
     <div class="spec">
       <h3>Comparación rápida</h3>
       <ul>
         <li>Estilo 1 nunca se elimina.</li>
-        <li>Estilo 2 amplía el frame a 296×72.</li>
+        <li>Estilo 2 usa un contenedor invisible de 296×72.</li>
+        <li>Sin fondo, borde ni linea exterior.</li>
         <li>Zona izquierda reservada al icono.</li>
         <li>Auras superiores con ancho útil del frame.</li>
         <li>Castbar inferior independiente.</li>
