@@ -72,7 +72,7 @@ local function getPreviewClassColor(classFile, fallback)
 end
 
 local function makeDemo(parent, key, title, color, classFile, isMob)
-    local display = makePanel(parent, 232, 68, color)
+    local display = makePanel(parent, 178, 50, color)
     display.key = key
     display.color = color
 
@@ -89,6 +89,12 @@ local function makeDemo(parent, key, title, color, classFile, isMob)
     name:SetJustifyH("LEFT")
     name:SetText(title)
     display.nameText = name
+
+    local levelText = display:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    levelText:SetText(key == "player" and "90" or "??")
+    levelText:SetTextColor(1.00, 0.82, 0.15)
+    levelText:SetJustifyH("RIGHT")
+    display.levelText = levelText
 
     local tag = display:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     tag:SetPoint("TOPRIGHT", display, "TOPRIGHT", -6, -8)
@@ -110,7 +116,7 @@ local function makeDemo(parent, key, title, color, classFile, isMob)
     display.power = power
 
     local auraRow = CreateFrame("Frame", nil, display)
-    auraRow:SetSize(232, 22)
+    auraRow:SetSize(178, 18)
     auraRow:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 6, 6)
     display.previewAuras = auraRow
 
@@ -168,31 +174,36 @@ local function applyPreviewStyle(display, style)
 
     if style == 2 then
         setPreviewShellVisible(display, false)
-        display:SetSize(232, 56)
+        display:SetSize(178, 43)
 
         display.health:ClearAllPoints()
-        display.health:SetHeight(31)
-        display.health:SetPoint("TOPLEFT", display, "TOPLEFT", 0, -15)
+        display.health:SetHeight(21)
+        display.health:SetPoint("TOPLEFT", display, "TOPLEFT", 0, -11)
         display.health:SetPoint("RIGHT", display, "RIGHT", 0, 0)
 
         display.power:ClearAllPoints()
-        display.power:SetHeight(7)
+        display.power:SetHeight(9)
         display.power:SetPoint("TOPLEFT", display.health, "BOTTOMLEFT", 0, -1)
         display.power:SetPoint("RIGHT", display.health, "RIGHT", 0, 0)
 
         display.nameText:ClearAllPoints()
-        display.nameText:SetHeight(14)
-        display.nameText:SetPoint("BOTTOMLEFT", display.health, "TOPLEFT", 2, 1)
-        display.nameText:SetPoint("RIGHT", display.health, "RIGHT", -2, 0)
+        display.nameText:SetHeight(10)
+        display.nameText:SetPoint("BOTTOMLEFT", display.health, "TOPLEFT", 1, 1)
+        display.nameText:SetPoint("RIGHT", display.health, "RIGHT", -28, 0)
         display.nameText:SetJustifyH("LEFT")
 
         display.previewAuras:ClearAllPoints()
-        display.previewAuras:SetSize(232, 22)
-        display.previewAuras:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 0, 22)
+        display.previewAuras:SetSize(178, 18)
+        display.previewAuras:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 0, 18)
 
         display.previewCast:ClearAllPoints()
         display.previewCast:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 0, -4)
         display.previewCast:SetPoint("RIGHT", display, "RIGHT", 0, 0)
+
+        display.levelText:ClearAllPoints()
+        display.levelText:SetPoint("BOTTOMRIGHT", display.health, "TOPRIGHT", -1, 1)
+        display.levelText:Show()
+        display.previewCast:SetHeight(10)
 
         display.previewAuras:Show()
         display.previewCast:Show()
@@ -214,6 +225,7 @@ local function applyPreviewStyle(display, style)
         display.power:SetPoint("RIGHT", display.health, "RIGHT", 0, 0)
 
         display.previewCast:Hide()
+        if display.levelText then display.levelText:Hide() end
         display.unitTag:Show()
 
         if display.key == "player" then
