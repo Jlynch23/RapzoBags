@@ -8,13 +8,13 @@ local PORTRAIT_MASK = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
 
 local STYLE_CURRENT = 1
 local STYLE_ICON = 2
-local STYLE2_WIDTH = 296
-local STYLE2_HEIGHT = 55
+local STYLE2_WIDTH = 260
+local STYLE2_HEIGHT = 61
 local STYLE2_EDGE = 0
 local STYLE2_CONTENT = 0
 local STYLE2_AURA = 20
 local STYLE2_AURA_WIDTH = STYLE2_WIDTH
-local STYLE2_AURA_Y = 26
+local STYLE2_AURA_Y = 24
 
 local function isSecret(value)
     return type(issecretvalue) == "function" and issecretvalue(value)
@@ -489,18 +489,18 @@ local function applyStyle2(display)
     display:SetSize(STYLE2_WIDTH, STYLE2_HEIGHT)
 
     display.health:ClearAllPoints()
-    display.health:SetHeight(30)
-    display.health:SetPoint("TOPLEFT", display, "TOPLEFT", STYLE2_EDGE, -16)
+    display.health:SetHeight(34)
+    display.health:SetPoint("TOPLEFT", display, "TOPLEFT", STYLE2_EDGE, -17)
     display.health:SetPoint("RIGHT", display, "RIGHT", -STYLE2_EDGE, 0)
 
     display.power:ClearAllPoints()
-    display.power:SetHeight(7)
+    display.power:SetHeight(8)
     display.power:SetPoint("TOPLEFT", display.health, "BOTTOMLEFT", 0, -2)
     display.power:SetPoint("RIGHT", display.health, "RIGHT", 0, 0)
 
     display.nameText:ClearAllPoints()
     display.nameText:SetHeight(14)
-    display.nameText:SetPoint("BOTTOMLEFT", display.health, "TOPLEFT", 2, 3)
+    display.nameText:SetPoint("BOTTOMLEFT", display.health, "TOPLEFT", 2, 2)
     display.nameText:SetPoint("RIGHT", display.health, "RIGHT", -2, 0)
     display.nameText:SetJustifyH("LEFT")
 
@@ -519,8 +519,8 @@ local function applyStyle2(display)
 
     -- ToxiUI-like black outline: let the class/reaction color be the fill,
     -- not the border. This keeps the frame readable over every zone.
-    setEdgesColor(display.health.RapzoQoLEdges, 0.015, 0.018, 0.024, 0.98)
-    setEdgesColor(display.power.RapzoQoLEdges, 0.015, 0.018, 0.024, 0.98)
+    setEdgesColor(display.health.RapzoQoLEdges, 0.01, 0.01, 0.01, 1.00)
+    setEdgesColor(display.power.RapzoQoLEdges, 0.01, 0.01, 0.01, 1.00)
 
     if display.health.RapzoQoLBackground then
         display.health.RapzoQoLBackground:SetColorTexture(0.025, 0.028, 0.035, 0.98)
@@ -534,7 +534,7 @@ local function applyStyle2(display)
     castBar:ClearAllPoints()
     castBar:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 0, -5)
     castBar:SetPoint("RIGHT", display, "RIGHT", 0, 0)
-    setEdgesColor(castBar.RapzoQoLEdges, 0.015, 0.018, 0.024, 0.98)
+    setEdgesColor(castBar.RapzoQoLEdges, 0.01, 0.01, 0.01, 1.00)
     if castBar.RapzoQoLBackground then
         castBar.RapzoQoLBackground:SetColorTexture(0.012, 0.015, 0.020, 0.99)
     end
