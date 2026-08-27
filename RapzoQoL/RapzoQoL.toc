@@ -15,7 +15,9 @@ Modules\Search\Search.lua
 Modules\Collections\Collections.lua
 Modules\Vendor\Vendor.lua
 Modules\AFK\AFK.lua
+Modules\AFK\AFKBrand.lua
 Modules\HUD\HUD.lua
 Modules\HUD\HUDFixes.lua
+Modules\HUD\AuraAnchors.lua
 
 Config\Config.lua
