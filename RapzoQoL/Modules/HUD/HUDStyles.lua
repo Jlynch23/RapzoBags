@@ -4,18 +4,16 @@ if not RB or not RB.HUD then return end
 
 local HUD = RB.HUD
 local WHITE_TEXTURE = "Interface\\Buttons\\WHITE8X8"
-local CLASS_TEXTURE = "Interface\\TargetingFrame\\UI-Classes-Circles"
-local FALLBACK_ICON = "Interface\\Icons\\INV_Misc_QuestionMark"
 local PORTRAIT_MASK = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
 
 local STYLE_CURRENT = 1
 local STYLE_ICON = 2
 local STYLE2_WIDTH = 296
 local STYLE2_HEIGHT = 72
-local STYLE2_ICON = 48
-local STYLE2_CONTENT = 58
 local STYLE2_EDGE = 4
+local STYLE2_CONTENT = STYLE2_EDGE
 local STYLE2_AURA = 20
+local STYLE2_AURA_WIDTH = STYLE2_WIDTH - (STYLE2_EDGE * 2)
 
 local function isSecret(value)
     return type(issecretvalue) == "function" and issecretvalue(value)
@@ -82,109 +80,6 @@ local function createSimpleEdges(parent, color)
     edges[4]:SetWidth(1)
     parent.RapzoQoLEdges = edges
     return edges
-end
-
-local function ensureUnitIcon(display)
-    if display.RapzoQoLUnitIcon then return display.RapzoQoLUnitIcon end
-
-    local holder = CreateFrame("Frame", nil, display)
-    holder:SetSize(STYLE2_ICON, STYLE2_ICON)
-    holder:SetFrameLevel(display:GetFrameLevel() + 2)
-
-    -- No square background or ActionButton border. The class sheet itself is
-    -- circular/transparent; NPC portraits get only a circular mask.
-    local icon = holder:CreateTexture(nil, "ARTWORK")
-    icon:SetAllPoints(holder)
-    icon:SetTexture(FALLBACK_ICON)
-
-    if type(holder.CreateMaskTexture) == "function" and type(icon.AddMaskTexture) == "function" then
-        local mask = holder:CreateMaskTexture()
-        mask:SetAllPoints(icon)
-        mask:SetTexture(PORTRAIT_MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-        holder.RapzoQoLMask = mask
-    end
-
-    holder.icon = icon
-    display.RapzoQoLUnitIcon = holder
-    return holder
-end
-
-local function setIconMask(holder, enabled)
-    if not holder or not holder.icon or not holder.RapzoQoLMask then return end
-    local icon = holder.icon
-
-    if enabled then
-        if not holder.RapzoQoLMaskApplied and type(icon.AddMaskTexture) == "function" then
-            local ok = pcall(icon.AddMaskTexture, icon, holder.RapzoQoLMask)
-            if ok then holder.RapzoQoLMaskApplied = true end
-        end
-    elseif holder.RapzoQoLMaskApplied and type(icon.RemoveMaskTexture) == "function" then
-        local ok = pcall(icon.RemoveMaskTexture, icon, holder.RapzoQoLMask)
-        if ok then holder.RapzoQoLMaskApplied = false end
-    end
-end
-
-local function setClassIcon(holder, unit)
-    if not holder or not holder.icon then return false end
-    if type(UnitClass) ~= "function" or type(CLASS_ICON_TCOORDS) ~= "table" then return false end
-
-    local ok, _, classFile = pcall(UnitClass, unit)
-    if not ok or isSecret(classFile) or type(classFile) ~= "string" then return false end
-
-    classFile = string.upper(classFile)
-    local coords = CLASS_ICON_TCOORDS[classFile]
-    if type(coords) ~= "table" then return false end
-
-    local icon = holder.icon
-    setIconMask(holder, false)
-
-    icon:SetTexture(CLASS_TEXTURE)
-    icon:SetTexCoord(coords[1], coords[2], coords[3], coords[4])
-    return true
-end
-
-local function setReferencePortrait(holder, unit)
-    if not holder or not holder.icon then return false end
-    local icon = holder.icon
-    icon:SetTexCoord(0, 1, 0, 1)
-
-    setIconMask(holder, true)
-
-    if type(SetPortraitTexture) == "function" then
-        local ok = pcall(SetPortraitTexture, icon, unit)
-        if ok then return true end
-    end
-
-    icon:SetTexture(FALLBACK_ICON)
-    return false
-end
-
-local function updateUnitIcon(display)
-    if not display then return end
-    local holder = ensureUnitIcon(display)
-
-    if HUD:GetStyle() ~= STYLE_ICON then
-        holder:Hide()
-        return
-    end
-
-    holder:Show()
-
-    local unit = display.unit
-    local isPlayer = false
-
-    if type(UnitIsPlayer) == "function" then
-        local ok, value = pcall(UnitIsPlayer, unit)
-        if ok and not isSecret(value) and value == true then
-            isPlayer = true
-        end
-    end
-
-    if isPlayer and setClassIcon(holder, unit) then
-        return
-    end
-
-    setReferencePortrait(holder, unit)
 end
 
 local function ensureCastBar(display)
@@ -336,7 +231,7 @@ local function ensurePlayerAuraContainer(display)
         return nil
     end
 
-    container:SetSize(234, 22)
+    container:SetSize(STYLE2_AURA_WIDTH, 22)
     container:SetPoint("BOTTOMLEFT", display, "TOPLEFT", STYLE2_CONTENT, 6)
     container:SetFrameLevel(display:GetFrameLevel() + 4)
     container:Show()
@@ -383,7 +278,7 @@ local function ensureTargetAuraContainer(display)
     local ok, container = pcall(CreateFrame, "AuraContainer", nil, display, "CustomAuraContainerTemplate")
     if not ok or not container or type(container.AddAuraGroup) ~= "function" then return nil end
 
-    container:SetSize(234, 22)
+    container:SetSize(STYLE2_AURA_WIDTH, 22)
     container:SetPoint("BOTTOMLEFT", display, "TOPLEFT", STYLE2_EDGE, 6)
     container:SetFrameLevel(display:GetFrameLevel() + 4)
 
@@ -544,15 +439,11 @@ local function applyStyle2(display)
 
     if display.unitTag then display.unitTag:Hide() end
 
-    local icon = ensureUnitIcon(display)
-    icon:ClearAllPoints()
-    if mirrored then
-        icon:SetPoint("TOPRIGHT", display, "TOPRIGHT", 0, -12)
-    else
-        icon:SetPoint("TOPLEFT", display, "TOPLEFT", 0, -12)
+    -- Style 2 no longer renders a class/portrait icon.
+    -- Hide an old holder too, so /reload or live iteration cannot resurrect it.
+    if display.RapzoQoLUnitIcon then
+        display.RapzoQoLUnitIcon:Hide()
     end
-    icon:Show()
-    updateUnitIcon(display)
 
     local castBar = ensureCastBar(display)
     castBar:ClearAllPoints()
@@ -609,7 +500,7 @@ function HUD:SetStyle(style)
     if style == STYLE_CURRENT then
         RB:Print("HUD frames: ESTILO 1 (actual).")
     else
-        RB:Print("HUD frames: ESTILO 2 (icono + auras TOP + castbar BOT).")
+        RB:Print("HUD frames: ESTILO 2 (sin icono + auras TOP + castbar BOT).")
     end
 
     if type(self.RefreshPreview) == "function" then
