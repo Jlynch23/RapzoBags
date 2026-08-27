@@ -15,9 +15,16 @@ local function nativeFrameFor(unit)
     if unit == "focus" then return _G.FocusFrame end
 end
 
-local function auraOffset()
+local function auraOffset(unit)
     if type(HUD.GetStyleAuraOffset) == "function" then
-        return tonumber(HUD:GetStyleAuraOffset()) or 0
+        return tonumber(HUD:GetStyleAuraOffset(unit)) or 0
+    end
+    return 0
+end
+
+local function auraRightInset(unit)
+    if type(HUD.GetStyleAuraRightInset) == "function" then
+        return tonumber(HUD:GetStyleAuraRightInset(unit)) or 0
     end
     return 0
 end
@@ -39,12 +46,13 @@ local function anchorAuraContainer(unit)
     -- Blizzard sigue siendo dueno de la creacion/filtrado de auras.
     -- Rapzo QoL solo mueve el contenedor: Estilo 1 usa todo el ancho;
     -- Estilo 2 deja libre la columna izquierda reservada para el icono.
-    local x = auraOffset()
+    local x = auraOffset(unit)
+    local rightInset = auraRightInset(unit)
     safeCall(auraContainer.ClearAllPoints, auraContainer)
-    safeCall(auraContainer.SetPoint, auraContainer, "BOTTOMLEFT", display, "TOPLEFT", x, 7)
+    safeCall(auraContainer.SetPoint, auraContainer, "BOTTOMLEFT", display, "TOPLEFT", x, 10)
 
     if type(auraContainer.SetWidth) == "function" then
-        local width = math.max(40, (display:GetWidth() or 240) - x - 6)
+        local width = math.max(40, (display:GetWidth() or 240) - x - rightInset)
         safeCall(auraContainer.SetWidth, auraContainer, width)
     end
 
