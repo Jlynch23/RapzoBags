@@ -27,6 +27,7 @@ jobs:
             RapzoBags_Search \
             RapzoBags_Collections \
             RapzoBags_Vendor \
+            RapzoBags_AFK \
             RapzoBags_Config
           echo "ZIP_NAME=$ZIP_NAME" >> "$GITHUB_ENV"
 
