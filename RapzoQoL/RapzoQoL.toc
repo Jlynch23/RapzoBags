@@ -19,6 +19,7 @@ Modules\AFK\AFKBrand.lua
 Modules\HUD\HUD.lua
 Modules\HUD\HUDFixes.lua
 Modules\HUD\HUDStyles.lua
+Modules\HUD\ClassResources.lua
 Modules\HUD\AuraAnchors.lua
 Modules\HUD\HUDPreview.lua
 
