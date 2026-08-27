@@ -129,6 +129,17 @@
   .aura:nth-child(5){background:linear-gradient(135deg,#ff6d4d,#6d1616)}
   .aura:after{content:attr(data-t);position:absolute;top:29px;left:50%;transform:translateX(-50%);
     font-size:9px;color:#e7edf6;white-space:nowrap;text-shadow:0 1px 2px #000}
+  .secondary{
+    display:none;position:absolute;left:66px;right:6px;top:calc(100% + 4px);height:10px;gap:3px;
+    align-items:stretch
+  }
+  .secondary .pip{
+    flex:1;position:relative;background:#09101a;border:1px solid color-mix(in srgb,var(--accent) 38%,#26384c);
+    overflow:hidden
+  }
+  .secondary .pip:before{
+    content:"";position:absolute;inset:0 auto 0 0;width:var(--fill,0%);background:var(--accent)
+  }
   .cast{
     display:none;position:absolute;height:15px;left:66px;right:6px;top:calc(100% + 4px);
     border:1px solid #3a526c;background:#05080d;overflow:hidden
@@ -142,6 +153,8 @@
   body.style2 .power{left:66px;top:53px;right:6px}
   body.style2 .tag{display:none}
   body.style2 .auras{left:66px}
+  body.style2 .secondary.has-resource{display:flex}
+  body.style2 .frame.has-secondary .cast{top:calc(100% + 21px)}
   body.style2 .cast{display:block}
   body.style1 .player-pos .auras{display:none}
   body.style1 .cast{display:none}
@@ -184,6 +197,9 @@
           <option value="EVOKER">Evoker</option>
         </select>
       </label>
+      <label class="control">Spec
+        <select id="playerSpec"></select>
+      </label>
       <label class="control">Target
         <select id="targetType"><option value="mob">Mob</option><option value="player">Player</option></select>
       </label>
@@ -224,7 +240,8 @@
           <div class="auras"><i class="aura" data-t="2m"></i><i class="aura" data-t="38s"></i><i class="aura" data-t="12s"></i><i class="aura" data-t="1m"></i></div>
           <div class="name">Rapzo <span class="tag">PLAYER</span></div>
           <div class="bar health"><i class="fill"></i><span class="bartext">1.24M / 1.24M · 100%</span></div>
-          <div class="bar power"><i class="fill"></i><span class="bartext">RAGE · 72</span></div>
+          <div class="bar power"><i class="fill"></i><span id="playerPowerText" class="bartext">RAGE · 72</span></div>
+          <div id="playerSecondary" class="secondary"></div>
           <div class="cast"><i class="fill"></i><span>Shield Charge · 0.8 / 1.2</span></div>
         </div>
       </div>
@@ -267,6 +284,9 @@ const scaleText=document.getElementById('scaleText');
 const targetType=document.getElementById('targetType');
 const targetClass=document.getElementById('targetClass');
 const playerClass=document.getElementById('playerClass');
+const playerSpec=document.getElementById('playerSpec');
+const playerSecondary=document.getElementById('playerSecondary');
+const playerPowerText=document.getElementById('playerPowerText');
 const targetPortrait=document.getElementById('targetPortrait');
 const targetName=document.getElementById('targetName');
 const targetFrame=document.getElementById('targetFrame');
@@ -283,11 +303,78 @@ const CLASS_LABELS={
   WARRIOR:'WAR',ROGUE:'ROG',MAGE:'MAG',HUNTER:'HUN',PRIEST:'PRI',WARLOCK:'WLK',PALADIN:'PAL',
   DRUID:'DRU',SHAMAN:'SHA',DEATHKNIGHT:'DK',MONK:'MNK',DEMONHUNTER:'DH',EVOKER:'EVO'
 };
+const SPEC_OPTIONS={
+  WARRIOR:[['PROTECTION','Protection'],['ARMS','Arms'],['FURY','Fury']],
+  ROGUE:[['ASSASSINATION','Assassination'],['OUTLAW','Outlaw'],['SUBTLETY','Subtlety']],
+  MAGE:[['ARCANE','Arcane'],['FIRE','Fire'],['FROST','Frost']],
+  HUNTER:[['BM','Beast Mastery'],['MM','Marksmanship'],['SURVIVAL','Survival']],
+  PRIEST:[['SHADOW','Shadow'],['HOLY','Holy'],['DISC','Discipline']],
+  WARLOCK:[['AFFLICTION','Affliction'],['DEMONOLOGY','Demonology'],['DESTRUCTION','Destruction']],
+  PALADIN:[['PROTECTION','Protection'],['RETRIBUTION','Retribution'],['HOLY','Holy']],
+  DRUID:[['FERAL','Feral'],['GUARDIAN','Guardian'],['BALANCE','Balance'],['RESTO','Restoration']],
+  SHAMAN:[['ENHANCEMENT','Enhancement'],['ELEMENTAL','Elemental'],['RESTO','Restoration']],
+  DEATHKNIGHT:[['BLOOD','Blood'],['FROST','Frost'],['UNHOLY','Unholy']],
+  MONK:[['WINDWALKER','Windwalker'],['BREWMASTER','Brewmaster'],['MISTWEAVER','Mistweaver']],
+  DEMONHUNTER:[['HAVOC','Havoc'],['VENGEANCE','Vengeance']],
+  EVOKER:[['DEVASTATION','Devastation'],['PRESERVATION','Preservation'],['AUGMENTATION','Augmentation']]
+};
+const PRIMARY_POWER={
+  WARRIOR:'RAGE',ROGUE:'ENERGY',MAGE:'MANA',HUNTER:'FOCUS',PRIEST:'MANA',WARLOCK:'MANA',
+  PALADIN:'MANA',DRUID:'ENERGY',SHAMAN:'MANA',DEATHKNIGHT:'RUNIC POWER',MONK:'ENERGY',
+  DEMONHUNTER:'FURY',EVOKER:'MANA'
+};
 
 function applyClass(frame,portrait,classFile){
   const color=CLASS_COLORS[classFile]||'#d49a20';
   frame.style.setProperty('--accent',color);
   portrait.textContent=CLASS_LABELS[classFile]||classFile.slice(0,3);
+}
+
+function populateSpecs(){
+  const options=SPEC_OPTIONS[playerClass.value]||[['DEFAULT','Default']];
+  const previous=playerSpec.value;
+  playerSpec.innerHTML='';
+  options.forEach(([value,label])=>{
+    const opt=document.createElement('option');
+    opt.value=value; opt.textContent=label; playerSpec.appendChild(opt);
+  });
+  if(options.some(x=>x[0]===previous)) playerSpec.value=previous;
+}
+
+function secondaryDef(classFile,spec){
+  if(classFile==='ROGUE') return {label:'COMBO',count:6,current:4};
+  if(classFile==='WARLOCK') return {label:'SOUL SHARDS',count:5,current:3.4};
+  if(classFile==='PALADIN') return {label:'HOLY POWER',count:5,current:3};
+  if(classFile==='DEATHKNIGHT') return {label:'RUNES',count:6,current:4.7};
+  if(classFile==='EVOKER') return {label:'ESSENCE',count:6,current:4.2};
+  if(classFile==='DRUID' && spec==='FERAL') return {label:'COMBO',count:5,current:4};
+  if(classFile==='MONK' && spec==='WINDWALKER') return {label:'CHI',count:5,current:3};
+  if(classFile==='MAGE' && spec==='ARCANE') return {label:'ARCANE CHARGES',count:4,current:3};
+  return null;
+}
+
+function renderSecondary(){
+  const def=secondaryDef(playerClass.value,playerSpec.value);
+  playerSecondary.innerHTML='';
+  playerSecondary.classList.toggle('has-resource',!!def);
+  playerFrame.classList.toggle('has-secondary',!!def);
+
+  if(!def) return;
+
+  for(let i=0;i<def.count;i++){
+    const pip=document.createElement('i');
+    pip.className='pip';
+    const fill=Math.max(0,Math.min(1,def.current-i));
+    pip.style.setProperty('--fill',(fill*100)+'%');
+    pip.title=def.label;
+    playerSecondary.appendChild(pip);
+  }
+}
+
+function refreshPlayer(){
+  applyClass(playerFrame,playerPortrait,playerClass.value);
+  playerPowerText.textContent=(PRIMARY_POWER[playerClass.value]||'POWER')+' · 72';
+  renderSecondary();
 }
 
 function setStyle(n){
@@ -321,11 +408,16 @@ function refreshTarget(){
   }
 }
 
-playerClass.onchange=()=>applyClass(playerFrame,playerPortrait,playerClass.value);
+playerClass.onchange=()=>{
+  populateSpecs();
+  refreshPlayer();
+};
+playerSpec.onchange=refreshPlayer;
 targetType.onchange=refreshTarget;
 targetClass.onchange=refreshTarget;
 
-applyClass(playerFrame,playerPortrait,playerClass.value);
+populateSpecs();
+refreshPlayer();
 focusFrame.style.setProperty('--accent',CLASS_COLORS.ROGUE);
 refreshTarget();
 setStyle(Number(localStorage.getItem('rapzoPreviewStyle'))===1?1:2);
