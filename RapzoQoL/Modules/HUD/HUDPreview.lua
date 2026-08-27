@@ -168,31 +168,31 @@ local function applyPreviewStyle(display, style)
 
     if style == 2 then
         setPreviewShellVisible(display, false)
-        display:SetSize(296, 72)
-
-        local mirrored = display.key == "target" or display.key == "focus"
-
-        display.nameText:ClearAllPoints()
-        if mirrored then
-            display.nameText:SetPoint("TOPLEFT", display, "TOPLEFT", 4, -8)
-            display.nameText:SetPoint("RIGHT", display, "RIGHT", -4, 0)
-        else
-            display.nameText:SetPoint("TOPLEFT", display, "TOPLEFT", 4, -8)
-            display.nameText:SetPoint("RIGHT", display, "RIGHT", -4, 0)
-        end
+        display:SetSize(296, 55)
 
         display.health:ClearAllPoints()
-        if mirrored then
-            display.health:SetPoint("TOPLEFT", display, "TOPLEFT", 4, -25)
-            display.health:SetPoint("RIGHT", display, "RIGHT", -4, 0)
-        else
-            display.health:SetPoint("TOPLEFT", display, "TOPLEFT", 4, -25)
-            display.health:SetPoint("RIGHT", display, "RIGHT", -4, 0)
-        end
+        display.health:SetHeight(30)
+        display.health:SetPoint("TOPLEFT", display, "TOPLEFT", 0, -16)
+        display.health:SetPoint("RIGHT", display, "RIGHT", 0, 0)
 
         display.power:ClearAllPoints()
-        display.power:SetPoint("TOPLEFT", display.health, "BOTTOMLEFT", 0, -3)
+        display.power:SetHeight(7)
+        display.power:SetPoint("TOPLEFT", display.health, "BOTTOMLEFT", 0, -2)
         display.power:SetPoint("RIGHT", display.health, "RIGHT", 0, 0)
+
+        display.nameText:ClearAllPoints()
+        display.nameText:SetHeight(14)
+        display.nameText:SetPoint("BOTTOMLEFT", display.health, "TOPLEFT", 2, 3)
+        display.nameText:SetPoint("RIGHT", display.health, "RIGHT", -2, 0)
+        display.nameText:SetJustifyH("LEFT")
+
+        display.previewAuras:ClearAllPoints()
+        display.previewAuras:SetSize(296, 22)
+        display.previewAuras:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 0, 26)
+
+        display.previewCast:ClearAllPoints()
+        display.previewCast:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 0, -5)
+        display.previewCast:SetPoint("RIGHT", display, "RIGHT", 0, 0)
 
         display.previewAuras:Show()
         display.previewCast:Show()
@@ -264,7 +264,7 @@ function HUD:CreatePreview()
     local style2 = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
     style2:SetSize(260, 26)
     style2:SetPoint("LEFT", style1, "RIGHT", 10, 0)
-    style2:SetText("Estilo 2 - Auras TOP + Cast BOT")
+    style2:SetText("Estilo 2 - ToxiUI")
     style2:SetScript("OnClick", function()
         HUD:SetStyle(2)
         HUD:ShowPreview()
@@ -288,7 +288,7 @@ function HUD:CreatePreview()
     note:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 20, 18)
     note:SetPoint("RIGHT", frame, "RIGHT", -20, 0)
     note:SetJustifyH("LEFT")
-    note:SetText("Estilo 2: sin iconos; barras limpias, auras arriba y castbar abajo. El Estilo 1 se conserva intacto.")
+    note:SetText("Estilo 2 Toxi: nombre arriba, health principal, power fino, sin iconos, auras arriba y castbar abajo.")
 
     self.previewFrame = frame
 
