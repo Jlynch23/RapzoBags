@@ -14,7 +14,7 @@ HUD.unitDisplays = {}
 HUD.config = nil
 
 local WHITE_TEXTURE = "Interface\\Buttons\\WHITE8X8"
-local CURSOR_TEXTURE = "Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight"
+local CURSOR_ATLAS = "GarrLanding-CircleGlow"
 
 local COLORS = {
     player = { 0.92, 0.66, 0.10 },
@@ -74,7 +74,7 @@ local function getConfig()
     if cfg.cursor == nil then cfg.cursor = true end
     if cfg.squareMinimap == nil then cfg.squareMinimap = true end
     if cfg.unitFrames == nil then cfg.unitFrames = true end
-    if cfg.cursorSize == nil then cfg.cursorSize = 58 end
+    if cfg.cursorSize == nil then cfg.cursorSize = 50 end
 
     cfg.cursorSize = math.max(36, math.min(90, tonumber(cfg.cursorSize) or 58))
     RB:SetFeatureEnabled("hud", cfg.enabled, true)
@@ -220,6 +220,19 @@ local function hideTargetStaticArt(frame)
     end
 end
 
+local function reapplyNativeArtHiding(frame)
+    if not frame then return end
+
+    if frame == _G.PlayerFrame then
+        hidePlayerStaticArt()
+        return
+    end
+
+    if frame == _G.TargetFrame or frame == _G.FocusFrame then
+        hideTargetStaticArt(frame)
+    end
+end
+
 local function createUnitDisplay(unit, nativeFrame, color)
     if HUD.unitDisplays[unit] then
         return HUD.unitDisplays[unit]
@@ -230,9 +243,17 @@ local function createUnitDisplay(unit, nativeFrame, color)
     -- Blizzard frame; it never writes fields into protected Blizzard bars.
     local display = CreateFrame("Frame", nil, UIParent)
     display:SetSize(240, 64)
-    display:SetPoint("TOPLEFT", nativeFrame, "TOPLEFT", -2, -13)
+
+    if unit == "player" then
+        display:SetPoint("TOPLEFT", nativeFrame, "TOPLEFT", -2, -18)
+    else
+        display:SetPoint("TOPRIGHT", nativeFrame, "TOPRIGHT", 2, -18)
+    end
+
     display:SetFrameStrata("LOW")
-    display:SetFrameLevel((nativeFrame:GetFrameLevel() or 1) + 15)
+    -- Keep our visual panel below Blizzard's aura container. The previous
+    -- +15 frame level could cover target/focus buffs.
+    display:SetFrameLevel(math.max(1, nativeFrame:GetFrameLevel() - 1))
     display:EnableMouse(false)
 
     local panel = display:CreateTexture(nil, "BACKGROUND")
@@ -399,18 +420,10 @@ function HUD:CreateCursorRing()
 
     local outer = frame:CreateTexture(nil, "OVERLAY")
     outer:SetAllPoints(frame)
-    outer:SetTexture(CURSOR_TEXTURE)
+    outer:SetAtlas(CURSOR_ATLAS, false)
     outer:SetBlendMode("ADD")
-    outer:SetVertexColor(0.10, 0.88, 1.00, 0.95)
+    outer:SetVertexColor(0.05, 0.88, 1.00, 0.95)
     frame.outer = outer
-
-    local inner = frame:CreateTexture(nil, "OVERLAY")
-    inner:SetPoint("CENTER")
-    inner:SetSize(38, 38)
-    inner:SetTexture(CURSOR_TEXTURE)
-    inner:SetBlendMode("ADD")
-    inner:SetVertexColor(1.00, 0.68, 0.08, 0.72)
-    frame.inner = inner
 
     frame:SetScript("OnUpdate", function(self)
         local cfg = HUD.config or getConfig()
@@ -425,7 +438,6 @@ function HUD:CreateCursorRing()
 
         local size = cfg.cursorSize
         self:SetSize(size, size)
-        self.inner:SetSize(size * 0.66, size * 0.66)
         self:ClearAllPoints()
         self:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x / scale, y / scale)
         if not self:IsShown() then self:Show() end
@@ -594,15 +606,34 @@ function HUD:Initialize()
 
     events:SetScript("OnEvent", function(_, event, unit)
         if event == "PLAYER_REGEN_ENABLED" then
+            reapplyNativeArtHiding(_G.PlayerFrame)
+            reapplyNativeArtHiding(_G.TargetFrame)
+            reapplyNativeArtHiding(_G.FocusFrame)
             HUD:StyleUnitFrames()
             return
         end
 
         if event == "PLAYER_TARGET_CHANGED" then
-            HUD:UpdateUnitFrames("target")
+            if C_Timer and C_Timer.After then
+                C_Timer.After(0, function()
+                    reapplyNativeArtHiding(_G.TargetFrame)
+                    HUD:UpdateUnitFrames("target")
+                end)
+            else
+                reapplyNativeArtHiding(_G.TargetFrame)
+                HUD:UpdateUnitFrames("target")
+            end
             return
         elseif event == "PLAYER_FOCUS_CHANGED" then
-            HUD:UpdateUnitFrames("focus")
+            if C_Timer and C_Timer.After then
+                C_Timer.After(0, function()
+                    reapplyNativeArtHiding(_G.FocusFrame)
+                    HUD:UpdateUnitFrames("focus")
+                end)
+            else
+                reapplyNativeArtHiding(_G.FocusFrame)
+                HUD:UpdateUnitFrames("focus")
+            end
             return
         elseif event == "UNIT_HEALTH"
             or event == "UNIT_MAXHEALTH"
@@ -622,6 +653,14 @@ function HUD:Initialize()
             HUD:ScheduleApply(2.0)
         end
     end)
+
+    if type(hooksecurefunc) == "function" and type(TargetFrameMixin) == "table" and type(TargetFrameMixin.Update) == "function" then
+        hooksecurefunc(TargetFrameMixin, "Update", function(frame)
+            if frame == _G.TargetFrame or frame == _G.FocusFrame then
+                reapplyNativeArtHiding(frame)
+            end
+        end)
+    end
 
     self:ScheduleApply(0.5)
 end
