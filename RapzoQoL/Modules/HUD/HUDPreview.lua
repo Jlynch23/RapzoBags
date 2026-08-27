@@ -65,7 +65,7 @@ local function makeStatusBar(parent, height, color)
 end
 
 local function getPreviewClassColor(classFile, fallback)
-    fallback = fallback or {0.92, 0.66, 0.10}
+    fallback = fallback or {0.92, 0.58, 0.10}
     if type(RAID_CLASS_COLORS) ~= "table" then return fallback end
     local color = RAID_CLASS_COLORS[classFile]
     if not color then return fallback end
@@ -93,8 +93,8 @@ local function makeDemo(parent, key, title, color, classFile, isMob)
     display.previewLabel = label
 
     local name = display:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    name:SetPoint("TOPLEFT", display, "TOPLEFT", 66, -8)
-    name:SetPoint("RIGHT", display, "RIGHT", -6, 0)
+    name:SetPoint("TOPLEFT", display, "TOPLEFT", 58, -8)
+    name:SetPoint("RIGHT", display, "RIGHT", -4, 0)
     name:SetHeight(14)
     name:SetJustifyH("LEFT")
     name:SetText(title)
@@ -107,25 +107,29 @@ local function makeDemo(parent, key, title, color, classFile, isMob)
     display.unitTag = tag
 
     local health = makeStatusBar(display, 24, color)
-    health:SetPoint("TOPLEFT", display, "TOPLEFT", 66, -25)
-    health:SetPoint("RIGHT", display, "RIGHT", -6, 0)
+    health:SetPoint("TOPLEFT", display, "TOPLEFT", 58, -25)
+    health:SetPoint("RIGHT", display, "RIGHT", -4, 0)
     health.RapzoQoLText:SetText(key == "player" and "1.24M / 1.24M  100%" or "82%")
     display.health = health
 
-    local power = makeStatusBar(display, 10, {0.22, 0.28, 0.38})
-    power:SetPoint("TOPLEFT", health, "BOTTOMLEFT", 0, -4)
+    local power = makeStatusBar(display, 9, {0.22, 0.28, 0.38})
+    power:SetPoint("TOPLEFT", health, "BOTTOMLEFT", 0, -3)
     power:SetPoint("RIGHT", health, "RIGHT", 0, 0)
     power:SetValue(key == "player" and 72 or 58)
     power.RapzoQoLText:SetText(key == "player" and "RAGE 72" or "POWER")
     display.power = power
 
     local iconFrame = CreateFrame("Frame", nil, display)
-    iconFrame:SetSize(54, 54)
-    iconFrame:SetPoint("TOPLEFT", display, "TOPLEFT", 6, -9)
+    iconFrame:SetSize(48, 48)
+    iconFrame:SetPoint("TOPLEFT", display, "TOPLEFT", 0, -12)
 
-    local iconBg = iconFrame:CreateTexture(nil, "BACKGROUND")
-    iconBg:SetPoint("TOPLEFT", iconFrame, "TOPLEFT", 3, -3)
-    iconBg:SetPoint("BOTTOMRIGHT", iconFrame, "BOTTOMRIGHT", -3, 3)
+    local iconRing = iconFrame:CreateTexture(nil, "BACKGROUND")
+    iconRing:SetAllPoints(iconFrame)
+    iconRing:SetColorTexture(color[1], color[2], color[3], 0.78)
+
+    local iconBg = iconFrame:CreateTexture(nil, "BORDER")
+    iconBg:SetPoint("TOPLEFT", iconFrame, "TOPLEFT", 2, -2)
+    iconBg:SetPoint("BOTTOMRIGHT", iconFrame, "BOTTOMRIGHT", -2, 2)
     iconBg:SetColorTexture(0.02, 0.03, 0.05, 1)
 
     local icon = iconFrame:CreateTexture(nil, "ARTWORK")
@@ -142,33 +146,28 @@ local function makeDemo(parent, key, title, color, classFile, isMob)
         local mask = iconFrame:CreateMaskTexture()
         mask:SetAllPoints(icon)
         mask:SetTexture(PORTRAIT_MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-        icon:AddMaskTexture(mask)
+        iconRing:AddMaskTexture(mask)
         iconBg:AddMaskTexture(mask)
+        icon:AddMaskTexture(mask)
     end
-
-    local iconBorder = iconFrame:CreateTexture(nil, "OVERLAY")
-    iconBorder:SetAllPoints(iconFrame)
-    iconBorder:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
-    iconBorder:SetBlendMode("ADD")
-    iconBorder:SetVertexColor(color[1], color[2], color[3], 0.96)
 
     display.previewIcon = iconFrame
 
     local auraRow = CreateFrame("Frame", nil, display)
-    auraRow:SetSize(224, 24)
-    auraRow:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 66, 10)
+    auraRow:SetSize(234, 22)
+    auraRow:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 58, 6)
     display.previewAuras = auraRow
 
     for i = 1, 5 do
         local aura = CreateFrame("Frame", nil, auraRow)
-        aura:SetSize(22, 22)
-        aura:SetPoint("LEFT", auraRow, "LEFT", (i - 1) * 27, 0)
+        aura:SetSize(20, 20)
+        aura:SetPoint("LEFT", auraRow, "LEFT", (i - 1) * 25, 0)
 
         local tex = aura:CreateTexture(nil, "ARTWORK")
         tex:SetAllPoints(aura)
         local palette = {
             {0.95, 0.56, 0.12},
-            {0.22, 0.66, 0.96},
+            {0.22, 0.58, 0.96},
             {0.70, 0.25, 0.92},
             {0.24, 0.78, 0.42},
             {0.94, 0.26, 0.18},
@@ -196,8 +195,8 @@ local function makeDemo(parent, key, title, color, classFile, isMob)
     end
 
     local cast = makeStatusBar(display, 14, {0.92, 0.63, 0.12})
-    cast:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 66, -4)
-    cast:SetPoint("RIGHT", display, "RIGHT", -6, 0)
+    cast:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 58, -4)
+    cast:SetPoint("RIGHT", display, "RIGHT", -4, 0)
     cast:SetValue(key == "target" and 48 or 68)
     cast.RapzoQoLText:SetText(key == "target" and "Golpe demo  1.2 / 2.0" or "Lanzamiento demo")
     display.previewCast = cast
@@ -227,19 +226,19 @@ local function applyPreviewStyle(display, style)
         display.nameText:ClearAllPoints()
         if mirrored then
             display.nameText:SetPoint("TOPLEFT", display, "TOPLEFT", 6, -8)
-            display.nameText:SetPoint("RIGHT", display, "RIGHT", -66, 0)
+            display.nameText:SetPoint("RIGHT", display, "RIGHT", -58, 0)
         else
-            display.nameText:SetPoint("TOPLEFT", display, "TOPLEFT", 66, -8)
-            display.nameText:SetPoint("RIGHT", display, "RIGHT", -6, 0)
+            display.nameText:SetPoint("TOPLEFT", display, "TOPLEFT", 58, -8)
+            display.nameText:SetPoint("RIGHT", display, "RIGHT", -4, 0)
         end
 
         display.health:ClearAllPoints()
         if mirrored then
             display.health:SetPoint("TOPLEFT", display, "TOPLEFT", 6, -25)
-            display.health:SetPoint("RIGHT", display, "RIGHT", -66, 0)
+            display.health:SetPoint("RIGHT", display, "RIGHT", -58, 0)
         else
-            display.health:SetPoint("TOPLEFT", display, "TOPLEFT", 66, -25)
-            display.health:SetPoint("RIGHT", display, "RIGHT", -6, 0)
+            display.health:SetPoint("TOPLEFT", display, "TOPLEFT", 58, -25)
+            display.health:SetPoint("RIGHT", display, "RIGHT", -4, 0)
         end
 
         display.power:ClearAllPoints()
@@ -248,25 +247,25 @@ local function applyPreviewStyle(display, style)
 
         display.previewIcon:ClearAllPoints()
         if mirrored then
-            display.previewIcon:SetPoint("TOPRIGHT", display, "TOPRIGHT", -6, -9)
+            display.previewIcon:SetPoint("TOPRIGHT", display, "TOPRIGHT", 0, -12)
         else
-            display.previewIcon:SetPoint("TOPLEFT", display, "TOPLEFT", 6, -9)
+            display.previewIcon:SetPoint("TOPLEFT", display, "TOPLEFT", 0, -12)
         end
 
         display.previewAuras:ClearAllPoints()
         if mirrored then
             display.previewAuras:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 6, 10)
         else
-            display.previewAuras:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 66, 10)
+            display.previewAuras:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 58, 10)
         end
 
         display.previewCast:ClearAllPoints()
         if mirrored then
             display.previewCast:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 6, -4)
-            display.previewCast:SetPoint("RIGHT", display, "RIGHT", -66, 0)
+            display.previewCast:SetPoint("RIGHT", display, "RIGHT", -58, 0)
         else
-            display.previewCast:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 66, -4)
-            display.previewCast:SetPoint("RIGHT", display, "RIGHT", -6, 0)
+            display.previewCast:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 58, -4)
+            display.previewCast:SetPoint("RIGHT", display, "RIGHT", -4, 0)
         end
 
         display.previewIcon:Show()
@@ -279,11 +278,11 @@ local function applyPreviewStyle(display, style)
 
         display.nameText:ClearAllPoints()
         display.nameText:SetPoint("TOPLEFT", display, "TOPLEFT", 6, -8)
-        display.nameText:SetPoint("RIGHT", display, "RIGHT", -6, 0)
+        display.nameText:SetPoint("RIGHT", display, "RIGHT", -4, 0)
 
         display.health:ClearAllPoints()
         display.health:SetPoint("TOPLEFT", display, "TOPLEFT", 6, -25)
-        display.health:SetPoint("RIGHT", display, "RIGHT", -6, 0)
+        display.health:SetPoint("RIGHT", display, "RIGHT", -4, 0)
 
         display.power:ClearAllPoints()
         display.power:SetPoint("TOPLEFT", display.health, "BOTTOMLEFT", 0, -4)
@@ -352,7 +351,7 @@ function HUD:CreatePreview()
     hint:SetText("/rapzo hud style 1|2")
     hint:SetTextColor(0.55, 0.75, 0.95)
 
-    local player = makeDemo(frame, "player", "Rapzo", getPreviewClassColor("WARRIOR", {0.92, 0.66, 0.10}), "WARRIOR", false)
+    local player = makeDemo(frame, "player", "Rapzo", getPreviewClassColor("WARRIOR", {0.92, 0.58, 0.10}), "WARRIOR", false)
     player:SetPoint("TOPLEFT", frame, "TOPLEFT", 70, -190)
 
     local target = makeDemo(frame, "target", "Muñeco de entrenamiento", {0.92, 0.30, 0.09}, nil, true)
