@@ -260,6 +260,7 @@ local function createUnitDisplay(unit, nativeFrame, color)
     panel:SetPoint("TOPLEFT", display, "TOPLEFT", 0, 0)
     panel:SetPoint("BOTTOMRIGHT", display, "BOTTOMRIGHT", 0, 0)
     panel:SetColorTexture(0.005, 0.009, 0.015, 0.93)
+    display.panel = panel
 
     local accent = display:CreateTexture(nil, "ARTWORK")
     accent:SetPoint("TOPLEFT", display, "TOPLEFT", 0, 0)
