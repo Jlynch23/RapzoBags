@@ -1,6 +1,6 @@
 local addonName, private = ...
 
-local RB = _G.RapzoQoL or _G.RapzoBags or private or {}
+local RB = private or _G.RapzoQoL or _G.RapzoBags or {}
 _G.RapzoQoL = RB
 _G.RapzoBags = RB -- compatibilidad con datos/modulos anteriores
 
