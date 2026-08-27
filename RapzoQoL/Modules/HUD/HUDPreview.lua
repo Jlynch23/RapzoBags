@@ -65,7 +65,7 @@ local function makeStatusBar(parent, height, color)
 end
 
 local function getPreviewClassColor(classFile, fallback)
-    fallback = fallback or {0.92, 0.58, 0.10}
+    fallback = fallback or {0.92, 0.66, 0.10}
     if type(RAID_CLASS_COLORS) ~= "table" then return fallback end
     local color = RAID_CLASS_COLORS[classFile]
     if not color then return fallback end
@@ -167,7 +167,7 @@ local function makeDemo(parent, key, title, color, classFile, isMob)
         tex:SetAllPoints(aura)
         local palette = {
             {0.95, 0.56, 0.12},
-            {0.22, 0.58, 0.96},
+            {0.22, 0.66, 0.96},
             {0.70, 0.25, 0.92},
             {0.24, 0.78, 0.42},
             {0.94, 0.26, 0.18},
@@ -225,7 +225,7 @@ local function applyPreviewStyle(display, style)
 
         display.nameText:ClearAllPoints()
         if mirrored then
-            display.nameText:SetPoint("TOPLEFT", display, "TOPLEFT", 6, -8)
+            display.nameText:SetPoint("TOPLEFT", display, "TOPLEFT", 4, -8)
             display.nameText:SetPoint("RIGHT", display, "RIGHT", -58, 0)
         else
             display.nameText:SetPoint("TOPLEFT", display, "TOPLEFT", 58, -8)
@@ -234,7 +234,7 @@ local function applyPreviewStyle(display, style)
 
         display.health:ClearAllPoints()
         if mirrored then
-            display.health:SetPoint("TOPLEFT", display, "TOPLEFT", 6, -25)
+            display.health:SetPoint("TOPLEFT", display, "TOPLEFT", 4, -25)
             display.health:SetPoint("RIGHT", display, "RIGHT", -58, 0)
         else
             display.health:SetPoint("TOPLEFT", display, "TOPLEFT", 58, -25)
@@ -242,7 +242,7 @@ local function applyPreviewStyle(display, style)
         end
 
         display.power:ClearAllPoints()
-        display.power:SetPoint("TOPLEFT", display.health, "BOTTOMLEFT", 0, -4)
+        display.power:SetPoint("TOPLEFT", display.health, "BOTTOMLEFT", 0, -3)
         display.power:SetPoint("RIGHT", display.health, "RIGHT", 0, 0)
 
         display.previewIcon:ClearAllPoints()
@@ -254,14 +254,14 @@ local function applyPreviewStyle(display, style)
 
         display.previewAuras:ClearAllPoints()
         if mirrored then
-            display.previewAuras:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 6, 10)
+            display.previewAuras:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 4, 6)
         else
-            display.previewAuras:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 58, 10)
+            display.previewAuras:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 58, 6)
         end
 
         display.previewCast:ClearAllPoints()
         if mirrored then
-            display.previewCast:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 6, -4)
+            display.previewCast:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 4, -4)
             display.previewCast:SetPoint("RIGHT", display, "RIGHT", -58, 0)
         else
             display.previewCast:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 58, -4)
@@ -278,11 +278,11 @@ local function applyPreviewStyle(display, style)
 
         display.nameText:ClearAllPoints()
         display.nameText:SetPoint("TOPLEFT", display, "TOPLEFT", 6, -8)
-        display.nameText:SetPoint("RIGHT", display, "RIGHT", -4, 0)
+        display.nameText:SetPoint("RIGHT", display, "RIGHT", -6, 0)
 
         display.health:ClearAllPoints()
         display.health:SetPoint("TOPLEFT", display, "TOPLEFT", 6, -25)
-        display.health:SetPoint("RIGHT", display, "RIGHT", -4, 0)
+        display.health:SetPoint("RIGHT", display, "RIGHT", -6, 0)
 
         display.power:ClearAllPoints()
         display.power:SetPoint("TOPLEFT", display.health, "BOTTOMLEFT", 0, -4)
@@ -351,7 +351,7 @@ function HUD:CreatePreview()
     hint:SetText("/rapzo hud style 1|2")
     hint:SetTextColor(0.55, 0.75, 0.95)
 
-    local player = makeDemo(frame, "player", "Rapzo", getPreviewClassColor("WARRIOR", {0.92, 0.58, 0.10}), "WARRIOR", false)
+    local player = makeDemo(frame, "player", "Rapzo", getPreviewClassColor("WARRIOR", {0.92, 0.66, 0.10}), "WARRIOR", false)
     player:SetPoint("TOPLEFT", frame, "TOPLEFT", 70, -190)
 
     local target = makeDemo(frame, "target", "Muñeco de entrenamiento", {0.92, 0.30, 0.09}, nil, true)
