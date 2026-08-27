@@ -291,6 +291,13 @@ local function createUnitDisplay(unit, nativeFrame, color)
     name:SetJustifyH("LEFT")
     name:SetTextColor(0.94, 0.96, 1.00)
 
+    local levelText = display:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    levelText:SetPoint("TOPRIGHT", display, "TOPRIGHT", -2, -8)
+    levelText:SetJustifyH("RIGHT")
+    levelText:SetTextColor(1.00, 0.82, 0.15)
+    levelText:SetShadowColor(0, 0, 0, 1)
+    levelText:SetShadowOffset(1, -1)
+
     local health = createBar(display, 24, color)
     health:SetPoint("TOPLEFT", display, "TOPLEFT", 6, -25)
     health:SetPoint("RIGHT", display, "RIGHT", -6, 0)
@@ -333,6 +340,7 @@ local function createUnitDisplay(unit, nativeFrame, color)
     display.power = power
     display.powerValueText = powerValueText
     display.nameText = name
+    display.levelText = levelText
     display.unitTag = unitTag
     display.accent = accent
     display.edges = displayEdges
@@ -412,6 +420,20 @@ local function updateUnitDisplay(display)
     local name = UnitName and UnitName(unit)
     setSecretSafeText(display.nameText, name)
 
+    if display.levelText and type(UnitLevel) == "function" then
+        local okLevel, level = pcall(UnitLevel, unit)
+        if okLevel and not isSecret(level) then
+            level = tonumber(level)
+            if level then
+                display.levelText:SetText(level < 0 and "??" or tostring(math.floor(level)))
+            else
+                display.levelText:SetText("")
+            end
+        else
+            display.levelText:SetText("")
+        end
+    end
+
     -- Midnight secret-safe path: do not inspect, compare, stringify, divide or
     -- branch on health/power values. StatusBar consumes them directly C-side.
     if UnitHealthMax and UnitHealth then
@@ -428,7 +450,7 @@ local function updateUnitDisplay(display)
                     display.healthPercentText:SetText(string.format("%d%%", math.floor((h / hm) * 100 + 0.5)))
                 end
                 if display.healthValueText then
-                    display.healthValueText:SetText(formatCompactNumber(h) .. " / " .. formatCompactNumber(hm))
+                    display.healthValueText:SetText(formatCompactNumber(h))
                 end
             end
         else
