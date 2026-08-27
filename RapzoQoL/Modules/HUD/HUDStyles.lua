@@ -8,13 +8,13 @@ local PORTRAIT_MASK = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
 
 local STYLE_CURRENT = 1
 local STYLE_ICON = 2
-local STYLE2_WIDTH = 232
-local STYLE2_HEIGHT = 56
+local STYLE2_WIDTH = 178
+local STYLE2_HEIGHT = 43
 local STYLE2_EDGE = 0
 local STYLE2_CONTENT = 0
-local STYLE2_AURA = 20
+local STYLE2_AURA = 16
 local STYLE2_AURA_WIDTH = STYLE2_WIDTH
-local STYLE2_AURA_Y = 22
+local STYLE2_AURA_Y = 18
 
 local function isSecret(value)
     return type(issecretvalue) == "function" and issecretvalue(value)
@@ -424,7 +424,7 @@ local function applyToxiTypography(display)
         display.nameText:SetShadowColor(0, 0, 0, 1)
         display.nameText:SetShadowOffset(1, -1)
         if fontPath then
-            pcall(display.nameText.SetFont, display.nameText, fontPath, 13, "OUTLINE")
+            pcall(display.nameText.SetFont, display.nameText, fontPath, 9, "OUTLINE")
         end
     end
 
@@ -433,12 +433,16 @@ local function applyToxiTypography(display)
         display.healthValueText,
     }) do
         if text and fontPath then
-            pcall(text.SetFont, text, fontPath, 11, "OUTLINE")
+            pcall(text.SetFont, text, fontPath, 8, "OUTLINE")
         end
     end
 
     if display.powerValueText and fontPath then
-        pcall(display.powerValueText.SetFont, display.powerValueText, fontPath, 9, "OUTLINE")
+        pcall(display.powerValueText.SetFont, display.powerValueText, fontPath, 8, "OUTLINE")
+    end
+
+    if display.levelText and fontPath then
+        pcall(display.levelText.SetFont, display.levelText, fontPath, 10, "OUTLINE")
     end
 end
 
@@ -463,6 +467,7 @@ local function applyStyle1(display)
     display.power:SetPoint("RIGHT", display.health, "RIGHT", 0, 0)
 
     if display.unitTag then display.unitTag:Show() end
+    if display.levelText then display.levelText:Hide() end
     if display.healthPercentText then display.healthPercentText:Hide() end
     if display.healthValueText then display.healthValueText:Hide() end
     if display.powerValueText then display.powerValueText:Hide() end
@@ -489,23 +494,28 @@ local function applyStyle2(display)
     display:SetSize(STYLE2_WIDTH, STYLE2_HEIGHT)
 
     display.health:ClearAllPoints()
-    display.health:SetHeight(31)
-    display.health:SetPoint("TOPLEFT", display, "TOPLEFT", STYLE2_EDGE, -15)
+    display.health:SetHeight(21)
+    display.health:SetPoint("TOPLEFT", display, "TOPLEFT", STYLE2_EDGE, -11)
     display.health:SetPoint("RIGHT", display, "RIGHT", -STYLE2_EDGE, 0)
 
     display.power:ClearAllPoints()
-    display.power:SetHeight(7)
+    display.power:SetHeight(9)
     display.power:SetPoint("TOPLEFT", display.health, "BOTTOMLEFT", 0, -1)
     display.power:SetPoint("RIGHT", display.health, "RIGHT", 0, 0)
 
     display.nameText:ClearAllPoints()
-    display.nameText:SetHeight(14)
-    display.nameText:SetPoint("BOTTOMLEFT", display.health, "TOPLEFT", 2, 1)
-    display.nameText:SetPoint("RIGHT", display.health, "RIGHT", -2, 0)
+    display.nameText:SetHeight(10)
+    display.nameText:SetPoint("BOTTOMLEFT", display.health, "TOPLEFT", 1, 1)
+    display.nameText:SetPoint("RIGHT", display.health, "RIGHT", -28, 0)
     display.nameText:SetJustifyH("LEFT")
 
     if display.unitTag then display.unitTag:Hide() end
-    if display.healthPercentText then display.healthPercentText:Show() end
+    if display.levelText then
+        display.levelText:ClearAllPoints()
+        display.levelText:SetPoint("BOTTOMRIGHT", display.health, "TOPRIGHT", -1, 1)
+        display.levelText:Show()
+    end
+    if display.healthPercentText then display.healthPercentText:Hide() end
     if display.healthValueText then display.healthValueText:Show() end
     if display.powerValueText then display.powerValueText:Show() end
 
@@ -531,6 +541,7 @@ local function applyStyle2(display)
     display.power:SetStatusBarColor(0.11, 0.14, 0.18, 1)
 
     local castBar = ensureCastBar(display)
+    castBar:SetHeight(10)
     castBar:ClearAllPoints()
     castBar:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 0, -4)
     castBar:SetPoint("RIGHT", display, "RIGHT", 0, 0)
