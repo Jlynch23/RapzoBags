@@ -9,11 +9,12 @@ local PORTRAIT_MASK = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
 local STYLE_CURRENT = 1
 local STYLE_ICON = 2
 local STYLE2_WIDTH = 296
-local STYLE2_HEIGHT = 72
-local STYLE2_EDGE = 4
-local STYLE2_CONTENT = STYLE2_EDGE
+local STYLE2_HEIGHT = 55
+local STYLE2_EDGE = 0
+local STYLE2_CONTENT = 0
 local STYLE2_AURA = 20
-local STYLE2_AURA_WIDTH = STYLE2_WIDTH - (STYLE2_EDGE * 2)
+local STYLE2_AURA_WIDTH = STYLE2_WIDTH
+local STYLE2_AURA_Y = 26
 
 local function isSecret(value)
     return type(issecretvalue) == "function" and issecretvalue(value)
@@ -106,6 +107,7 @@ local function ensureCastBar(display)
     text:SetText("")
 
     bar.RapzoQoLEdges = createSimpleEdges(bar, display.color)
+    bar.RapzoQoLBackground = bg
 
     bar.RapzoQoLText = text
     display.RapzoQoLCastBar = bar
@@ -232,7 +234,7 @@ local function ensurePlayerAuraContainer(display)
     end
 
     container:SetSize(STYLE2_AURA_WIDTH, 22)
-    container:SetPoint("BOTTOMLEFT", display, "TOPLEFT", STYLE2_CONTENT, 6)
+    container:SetPoint("BOTTOMLEFT", display, "TOPLEFT", STYLE2_CONTENT, STYLE2_AURA_Y)
     container:SetFrameLevel(display:GetFrameLevel() + 4)
     container:Show()
 
@@ -279,7 +281,7 @@ local function ensureTargetAuraContainer(display)
     if not ok or not container or type(container.AddAuraGroup) ~= "function" then return nil end
 
     container:SetSize(STYLE2_AURA_WIDTH, 22)
-    container:SetPoint("BOTTOMLEFT", display, "TOPLEFT", STYLE2_EDGE, 6)
+    container:SetPoint("BOTTOMLEFT", display, "TOPLEFT", STYLE2_EDGE, STYLE2_AURA_Y)
     container:SetFrameLevel(display:GetFrameLevel() + 4)
 
     local added = safeCall(container.AddAuraGroup, container, "rapzoTargetHarmfulPlayer", "HARMFUL|PLAYER", {
@@ -376,6 +378,70 @@ local function setShellVisible(display, visible)
     end
 end
 
+local function setEdgesColor(edges, r, g, b, a)
+    for _, edge in ipairs(edges or {}) do
+        edge:SetColorTexture(r, g, b, a)
+    end
+end
+
+local function ensureToxiDecor(display)
+    if not display or not display.health then return end
+    if display.RapzoQoLToxiDecor then return end
+
+    local health = display.health
+
+    local highlight = health:CreateTexture(nil, "OVERLAY")
+    highlight:SetPoint("TOPLEFT", health, "TOPLEFT", 1, -1)
+    highlight:SetPoint("TOPRIGHT", health, "TOPRIGHT", -1, -1)
+    highlight:SetHeight(1)
+    highlight:SetColorTexture(1, 1, 1, 0.10)
+
+    local lowerShade = health:CreateTexture(nil, "OVERLAY")
+    lowerShade:SetPoint("BOTTOMLEFT", health, "BOTTOMLEFT", 1, 1)
+    lowerShade:SetPoint("BOTTOMRIGHT", health, "BOTTOMRIGHT", -1, 1)
+    lowerShade:SetHeight(7)
+    lowerShade:SetColorTexture(0, 0, 0, 0.10)
+
+    display.RapzoQoLToxiDecor = {
+        highlight = highlight,
+        lowerShade = lowerShade,
+    }
+end
+
+local function setToxiDecorVisible(display, visible)
+    local decor = display and display.RapzoQoLToxiDecor
+    if not decor then return end
+    if decor.highlight then decor.highlight:SetShown(visible) end
+    if decor.lowerShade then decor.lowerShade:SetShown(visible) end
+end
+
+local function applyToxiTypography(display)
+    if not display then return end
+    local fontPath = STANDARD_TEXT_FONT
+
+    if display.nameText then
+        display.nameText:SetTextColor(0.98, 0.98, 0.98)
+        display.nameText:SetShadowColor(0, 0, 0, 1)
+        display.nameText:SetShadowOffset(1, -1)
+        if fontPath then
+            pcall(display.nameText.SetFont, display.nameText, fontPath, 13, "OUTLINE")
+        end
+    end
+
+    for _, text in ipairs({
+        display.healthPercentText,
+        display.healthValueText,
+    }) do
+        if text and fontPath then
+            pcall(text.SetFont, text, fontPath, 11, "OUTLINE")
+        end
+    end
+
+    if display.powerValueText and fontPath then
+        pcall(display.powerValueText.SetFont, display.powerValueText, fontPath, 9, "OUTLINE")
+    end
+end
+
 local function applyStyle1(display)
     if not display then return end
 
@@ -397,8 +463,18 @@ local function applyStyle1(display)
     display.power:SetPoint("RIGHT", display.health, "RIGHT", 0, 0)
 
     if display.unitTag then display.unitTag:Show() end
+    if display.healthPercentText then display.healthPercentText:Hide() end
+    if display.healthValueText then display.healthValueText:Hide() end
+    if display.powerValueText then display.powerValueText:Hide() end
     if display.RapzoQoLUnitIcon then display.RapzoQoLUnitIcon:Hide() end
     if display.RapzoQoLCastBar then display.RapzoQoLCastBar:Hide() end
+    setToxiDecorVisible(display, false)
+
+    if display.color then
+        setEdgesColor(display.health and display.health.RapzoQoLEdges, display.color[1], display.color[2], display.color[3], 0.60)
+    end
+    setEdgesColor(display.power and display.power.RapzoQoLEdges, 0.22, 0.28, 0.38, 0.60)
+
     setPlayerAurasEnabled(display, false)
     setTargetAurasEnabled(display, false)
 end
@@ -406,54 +482,63 @@ end
 local function applyStyle2(display)
     if not display then return end
 
-    -- Estilo 2 "naked": el frame contenedor solo sirve como ancla.
-    -- No se dibuja panel, linea superior ni borde exterior.
+    -- Rapzo QoL / ToxiUI-inspired:
+    -- name floats above, health is the visual anchor and the power bar stays thin.
+    -- No portrait, no exterior panel and no decorative shell.
     setShellVisible(display, false)
     display:SetSize(STYLE2_WIDTH, STYLE2_HEIGHT)
 
-    local mirrored = display.unit == "target" or display.unit == "focus"
-
-    display.nameText:ClearAllPoints()
-    if mirrored then
-        display.nameText:SetPoint("TOPLEFT", display, "TOPLEFT", STYLE2_EDGE, -8)
-        display.nameText:SetPoint("RIGHT", display, "RIGHT", -STYLE2_CONTENT, 0)
-    else
-        display.nameText:SetPoint("TOPLEFT", display, "TOPLEFT", STYLE2_CONTENT, -8)
-        display.nameText:SetPoint("RIGHT", display, "RIGHT", -STYLE2_EDGE, 0)
-    end
-
     display.health:ClearAllPoints()
-    display.health:SetHeight(24)
-    if mirrored then
-        display.health:SetPoint("TOPLEFT", display, "TOPLEFT", STYLE2_EDGE, -25)
-        display.health:SetPoint("RIGHT", display, "RIGHT", -STYLE2_CONTENT, 0)
-    else
-        display.health:SetPoint("TOPLEFT", display, "TOPLEFT", STYLE2_CONTENT, -25)
-        display.health:SetPoint("RIGHT", display, "RIGHT", -STYLE2_EDGE, 0)
-    end
+    display.health:SetHeight(30)
+    display.health:SetPoint("TOPLEFT", display, "TOPLEFT", STYLE2_EDGE, -16)
+    display.health:SetPoint("RIGHT", display, "RIGHT", -STYLE2_EDGE, 0)
 
     display.power:ClearAllPoints()
-    display.power:SetHeight(9)
-    display.power:SetPoint("TOPLEFT", display.health, "BOTTOMLEFT", 0, -3)
+    display.power:SetHeight(7)
+    display.power:SetPoint("TOPLEFT", display.health, "BOTTOMLEFT", 0, -2)
     display.power:SetPoint("RIGHT", display.health, "RIGHT", 0, 0)
 
-    if display.unitTag then display.unitTag:Hide() end
+    display.nameText:ClearAllPoints()
+    display.nameText:SetHeight(14)
+    display.nameText:SetPoint("BOTTOMLEFT", display.health, "TOPLEFT", 2, 3)
+    display.nameText:SetPoint("RIGHT", display.health, "RIGHT", -2, 0)
+    display.nameText:SetJustifyH("LEFT")
 
-    -- Style 2 no longer renders a class/portrait icon.
-    -- Hide an old holder too, so /reload or live iteration cannot resurrect it.
+    if display.unitTag then display.unitTag:Hide() end
+    if display.healthPercentText then display.healthPercentText:Show() end
+    if display.healthValueText then display.healthValueText:Show() end
+    if display.powerValueText then display.powerValueText:Show() end
+
     if display.RapzoQoLUnitIcon then
         display.RapzoQoLUnitIcon:Hide()
     end
 
+    ensureToxiDecor(display)
+    setToxiDecorVisible(display, true)
+    applyToxiTypography(display)
+
+    -- ToxiUI-like black outline: let the class/reaction color be the fill,
+    -- not the border. This keeps the frame readable over every zone.
+    setEdgesColor(display.health.RapzoQoLEdges, 0.015, 0.018, 0.024, 0.98)
+    setEdgesColor(display.power.RapzoQoLEdges, 0.015, 0.018, 0.024, 0.98)
+
+    if display.health.RapzoQoLBackground then
+        display.health.RapzoQoLBackground:SetColorTexture(0.025, 0.028, 0.035, 0.98)
+    end
+    if display.power.RapzoQoLBackground then
+        display.power.RapzoQoLBackground:SetColorTexture(0.012, 0.015, 0.020, 0.99)
+    end
+    display.power:SetStatusBarColor(0.11, 0.14, 0.18, 1)
+
     local castBar = ensureCastBar(display)
     castBar:ClearAllPoints()
-    if mirrored then
-        castBar:SetPoint("TOPLEFT", display, "BOTTOMLEFT", STYLE2_EDGE, -4)
-        castBar:SetPoint("RIGHT", display, "RIGHT", -STYLE2_CONTENT, 0)
-    else
-        castBar:SetPoint("TOPLEFT", display, "BOTTOMLEFT", STYLE2_CONTENT, -4)
-        castBar:SetPoint("RIGHT", display, "RIGHT", -STYLE2_EDGE, 0)
+    castBar:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 0, -5)
+    castBar:SetPoint("RIGHT", display, "RIGHT", 0, 0)
+    setEdgesColor(castBar.RapzoQoLEdges, 0.015, 0.018, 0.024, 0.98)
+    if castBar.RapzoQoLBackground then
+        castBar.RapzoQoLBackground:SetColorTexture(0.012, 0.015, 0.020, 0.99)
     end
+
     if type(HUD.ApplyClassResourceCastAnchor) == "function" then
         HUD:ApplyClassResourceCastAnchor(display.unit, castBar)
     end
@@ -500,7 +585,7 @@ function HUD:SetStyle(style)
     if style == STYLE_CURRENT then
         RB:Print("HUD frames: ESTILO 1 (actual).")
     else
-        RB:Print("HUD frames: ESTILO 2 (sin icono + auras TOP + castbar BOT).")
+        RB:Print("HUD frames: ESTILO 2 TOXI (sin iconos, health principal + power fino).")
     end
 
     if type(self.RefreshPreview) == "function" then
