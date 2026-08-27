@@ -105,15 +105,6 @@
   .bartext{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     font-size:11px;font-weight:700;text-shadow:0 1px 2px #000}
   .power .bartext{font-size:9px}
-  .portrait{
-    display:none;position:absolute;left:0;top:12px;width:48px;height:48px;border-radius:50%;
-    border:2px solid color-mix(in srgb,var(--accent) 78%,transparent);
-    background:radial-gradient(circle at 35% 30%,#30435d,#111824 72%);
-    box-shadow:0 0 10px color-mix(in srgb,var(--accent) 14%,transparent);
-    place-items:center;font-size:11px;font-weight:800;color:#f9d778;letter-spacing:.5px;
-    overflow:hidden
-  }
-  .portrait.mob{font-size:23px;color:#ddd}
   .auras{
     position:absolute;left:0;bottom:calc(100% + 7px);height:29px;
     display:flex;gap:5px;align-items:flex-end
@@ -133,7 +124,7 @@
   .aura:after{content:attr(data-t);position:absolute;top:21px;left:50%;transform:translateX(-50%);
     font-size:8px;color:#e7edf6;white-space:nowrap;text-shadow:0 1px 2px #000}
   .secondary{
-    display:none;position:absolute;left:58px;right:4px;top:calc(100% + 4px);height:8px;gap:3px;
+    display:none;position:absolute;left:4px;right:4px;top:calc(100% + 4px);height:8px;gap:3px;
     align-items:stretch
   }
   .secondary .pip{
@@ -144,7 +135,7 @@
     content:"";position:absolute;inset:0 auto 0 0;width:var(--fill,0%);background:var(--accent)
   }
   .cast{
-    display:none;position:absolute;height:14px;left:58px;right:4px;top:calc(100% + 4px);
+    display:none;position:absolute;height:14px;left:4px;right:4px;top:calc(100% + 4px);
     border:1px solid #3a526c;background:#05080d;overflow:hidden
   }
   .cast .fill{width:62%;background:linear-gradient(90deg,#ba7b13,#f5bc37)}
@@ -156,30 +147,26 @@
     box-shadow:none;
   }
   body.style2 .frame:before{display:none}
-  body.style2 .portrait{display:grid}
-  body.style2 .name{left:58px;right:4px}
-  body.style2 .health{left:58px;top:25px;right:4px}
-  body.style2 .power{left:58px;top:52px;right:4px}
+  body.style2 .name{left:4px;right:4px}
+  body.style2 .health{left:4px;top:25px;right:4px}
+  body.style2 .power{left:4px;top:52px;right:4px}
   body.style2 .tag{display:none}
-  body.style2 .auras{left:58px;bottom:calc(100% + 6px);gap:5px}
-
-  body.style2 .target .portrait,
-  body.style2 .focus .portrait{left:auto;right:0}
+  body.style2 .auras{left:4px;bottom:calc(100% + 6px);gap:5px}
 
   body.style2 .target .name,
-  body.style2 .focus .name{left:4px;right:58px}
+  body.style2 .focus .name{left:4px;right:4px}
 
   body.style2 .target .health,
-  body.style2 .focus .health{left:4px;right:58px}
+  body.style2 .focus .health{left:4px;right:4px}
 
   body.style2 .target .power,
-  body.style2 .focus .power{left:4px;right:58px}
+  body.style2 .focus .power{left:4px;right:4px}
 
   body.style2 .target .auras,
-  body.style2 .focus .auras{left:4px;right:58px}
+  body.style2 .focus .auras{left:4px;right:4px}
 
   body.style2 .target .cast,
-  body.style2 .focus .cast{left:4px;right:58px}
+  body.style2 .focus .cast{left:4px;right:4px}
   body.style2 .secondary.has-resource{display:flex}
   body.style2 .frame.has-secondary .cast{top:calc(100% + 17px)}
   body.style2 .cast{display:block}
@@ -213,7 +200,7 @@
     </div>
     <div class="controls">
       <button id="style1">Estilo 1 · Actual</button>
-      <button id="style2" class="active">Estilo 2 · Icon + Buffs TOP + Cast BOT</button>
+      <button id="style2" class="active">Estilo 2 · Buffs TOP + Cast BOT</button>
       <label class="control">Escala <input id="scale" type="range" min="75" max="135" value="100"><span id="scaleText">100%</span></label>
       <label class="control">Player
         <select id="playerClass">
@@ -245,7 +232,7 @@
   <div class="stage">
     <div class="guide">
       <strong>Objetivo de Estilo 2</strong>
-      <p>Spec final: icono circular 48×48; Player a la izquierda, Target/Focus a la derecha; auras 20×20; barras 234 px; recursos 8 px; castbar 14 px.</p>
+      <p>Spec final: sin iconos; auras 20×20; barras 288 px; recursos 8 px; castbar 14 px.</p>
     </div>
 
     <div class="spec">
@@ -254,8 +241,6 @@
         <li>Estilo 1 nunca se elimina.</li>
         <li>Estilo 2 usa un contenedor invisible de 296×72.</li>
         <li>Sin fondo, borde ni linea exterior.</li>
-        <li>Player: icono izquierda.</li>
-        <li>Target/Focus: icono derecha.</li>
         <li>Player: buffs cortos de combate, 20×20, maximo 5.</li>
         <li>Target/Focus: solo debuffs tuyos (HARMFUL|PLAYER), maximo 5.</li>
         <li>Castbar inferior independiente.</li>
@@ -266,7 +251,6 @@
       <div class="unit-wrap player-pos">
         <div class="label">Player</div>
         <div id="playerFrame" class="frame player">
-          <div id="playerPortrait" class="portrait">WAR</div>
           <div class="auras"><i class="aura" data-t="2m"></i><i class="aura" data-t="38s"></i><i class="aura" data-t="12s"></i><i class="aura" data-t="1m"></i></div>
           <div class="name">Rapzo <span class="tag">PLAYER</span></div>
           <div class="bar health"><i class="fill"></i><span class="bartext">1.24M / 1.24M · 100%</span></div>
@@ -279,7 +263,6 @@
       <div class="unit-wrap target-pos">
         <div class="label">Target</div>
         <div id="targetFrame" class="frame target">
-          <div id="targetPortrait" class="portrait mob">☠</div>
           <div class="auras"><i class="aura" data-t="24s"></i><i class="aura" data-t="18s"></i><i class="aura" data-t="7s"></i><i class="aura" data-t="3s"></i></div>
           <div id="targetName" class="name">Muñeco de entrenamiento <span class="tag">TARGET</span></div>
           <div class="bar health"><i class="fill" style="width:64%"></i><span class="bartext">64%</span></div>
@@ -291,7 +274,6 @@
       <div class="unit-wrap focus-pos">
         <div class="label">Focus</div>
         <div id="focusFrame" class="frame focus">
-          <div class="portrait">ROG</div>
           <div class="auras"><i class="aura" data-t="1m"></i><i class="aura" data-t="22s"></i><i class="aura" data-t="8s"></i></div>
           <div class="name">Focus Player <span class="tag">FOCUS</span></div>
           <div class="bar health"><i class="fill" style="width:91%"></i><span class="bartext">91%</span></div>
@@ -317,21 +299,15 @@ const playerClass=document.getElementById('playerClass');
 const playerSpec=document.getElementById('playerSpec');
 const playerSecondary=document.getElementById('playerSecondary');
 const playerPowerText=document.getElementById('playerPowerText');
-const targetPortrait=document.getElementById('targetPortrait');
 const targetName=document.getElementById('targetName');
 const targetFrame=document.getElementById('targetFrame');
 const playerFrame=document.getElementById('playerFrame');
-const playerPortrait=document.getElementById('playerPortrait');
 const focusFrame=document.getElementById('focusFrame');
 
 const CLASS_COLORS={
   WARRIOR:'#C69B6D',ROGUE:'#FFF468',MAGE:'#3FC7EB',HUNTER:'#AAD372',PRIEST:'#FFFFFF',
   WARLOCK:'#8788EE',PALADIN:'#F48CBA',DRUID:'#FF7C0A',SHAMAN:'#0070DD',DEATHKNIGHT:'#C41E3A',
   MONK:'#00FF98',DEMONHUNTER:'#A330C9',EVOKER:'#33937F'
-};
-const CLASS_LABELS={
-  WARRIOR:'WAR',ROGUE:'ROG',MAGE:'MAG',HUNTER:'HUN',PRIEST:'PRI',WARLOCK:'WLK',PALADIN:'PAL',
-  DRUID:'DRU',SHAMAN:'SHA',DEATHKNIGHT:'DK',MONK:'MNK',DEMONHUNTER:'DH',EVOKER:'EVO'
 };
 const SPEC_OPTIONS={
   WARRIOR:[['PROTECTION','Protection'],['ARMS','Arms'],['FURY','Fury']],
@@ -354,10 +330,9 @@ const PRIMARY_POWER={
   DEMONHUNTER:'FURY',EVOKER:'MANA'
 };
 
-function applyClass(frame,portrait,classFile){
+function applyClass(frame,classFile){
   const color=CLASS_COLORS[classFile]||'#d49a20';
   frame.style.setProperty('--accent',color);
-  portrait.textContent=CLASS_LABELS[classFile]||classFile.slice(0,3);
 }
 
 function populateSpecs(){
@@ -402,7 +377,7 @@ function renderSecondary(){
 }
 
 function refreshPlayer(){
-  applyClass(playerFrame,playerPortrait,playerClass.value);
+  applyClass(playerFrame,playerClass.value);
   playerPowerText.textContent=(PRIMARY_POWER[playerClass.value]||'POWER')+' · 72';
   renderSecondary();
 }
@@ -425,15 +400,13 @@ scale.oninput=()=>{
 
 function refreshTarget(){
   const player=targetType.value==='player';
-  targetPortrait.classList.toggle('mob',!player);
   targetClass.disabled=!player;
 
   if(player){
-    applyClass(targetFrame,targetPortrait,targetClass.value);
+    applyClass(targetFrame,targetClass.value);
     targetName.firstChild.nodeValue=targetClass.options[targetClass.selectedIndex].text+' enemigo ';
   }else{
     targetFrame.style.setProperty('--accent','#eb4d16');
-    targetPortrait.textContent='☠';
     targetName.firstChild.nodeValue='Muñeco de entrenamiento ';
   }
 }
