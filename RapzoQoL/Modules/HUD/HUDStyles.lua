@@ -155,7 +155,7 @@ local function updateCastBar(unit)
     if display.color then
         bar:SetStatusBarColor(display.color[1] or 0.92, display.color[2] or 0.63, display.color[3] or 0.12)
         for _, edge in ipairs(bar.RapzoQoLEdges or {}) do
-            edge:SetColorTexture(display.color[1] or 0.92, display.color[2] or 0.63, display.color[3] or 0.12, 0.78)
+            edge:SetColorTexture(0.015, 0.018, 0.024, 0.98)
         end
     end
 
