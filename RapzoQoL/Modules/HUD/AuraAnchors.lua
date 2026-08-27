@@ -15,6 +15,13 @@ local function nativeFrameFor(unit)
     if unit == "focus" then return _G.FocusFrame end
 end
 
+local function auraOffset()
+    if type(HUD.GetStyleAuraOffset) == "function" then
+        return tonumber(HUD:GetStyleAuraOffset()) or 0
+    end
+    return 0
+end
+
 local function anchorAuraContainer(unit)
     if anchoring then return end
 
@@ -29,15 +36,16 @@ local function anchorAuraContainer(unit)
 
     anchoring = true
 
-    -- Blizzard owns aura creation/filtering. Rapzo QoL only changes the visual
-    -- anchor so the first aura starts directly above our custom Target/Focus bar.
+    -- Blizzard sigue siendo dueno de la creacion/filtrado de auras.
+    -- Rapzo QoL solo mueve el contenedor: Estilo 1 usa todo el ancho;
+    -- Estilo 2 deja libre la columna izquierda reservada para el icono.
+    local x = auraOffset()
     safeCall(auraContainer.ClearAllPoints, auraContainer)
-    safeCall(auraContainer.SetPoint, auraContainer, "BOTTOMLEFT", display, "TOPLEFT", 0, 6)
+    safeCall(auraContainer.SetPoint, auraContainer, "BOTTOMLEFT", display, "TOPLEFT", x, 7)
 
-    -- Match the useful width of our custom unit frame so FlowContainer wraps
-    -- auras relative to the frame the player actually sees.
     if type(auraContainer.SetWidth) == "function" then
-        safeCall(auraContainer.SetWidth, auraContainer, display:GetWidth())
+        local width = math.max(40, (display:GetWidth() or 240) - x - 6)
+        safeCall(auraContainer.SetWidth, auraContainer, width)
     end
 
     anchoring = false
@@ -48,7 +56,8 @@ local function anchorAllAuras()
     anchorAuraContainer("focus")
 end
 
-local function schedule(unit)
+HUD.ReanchorAuras = anchorAllAuras
+HUD.ScheduleAuraAnchors = function(_, unit)
     if C_Timer and type(C_Timer.After) == "function" then
         C_Timer.After(0, function()
             if unit then
@@ -62,6 +71,10 @@ local function schedule(unit)
     else
         anchorAllAuras()
     end
+end
+
+local function schedule(unit)
+    HUD:ScheduleAuraAnchors(unit)
 end
 
 local events = CreateFrame("Frame")
