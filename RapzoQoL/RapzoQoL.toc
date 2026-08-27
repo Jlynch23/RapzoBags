@@ -16,5 +16,6 @@ Modules\Collections\Collections.lua
 Modules\Vendor\Vendor.lua
 Modules\AFK\AFK.lua
 Modules\HUD\HUD.lua
+Modules\HUD\HUDFixes.lua
 
 Config\Config.lua
