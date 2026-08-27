@@ -488,7 +488,7 @@ local function applyStyle1(display)
     display.health:SetPoint("RIGHT", display, "RIGHT", -6, 0)
 
     display.power:ClearAllPoints()
-    display.power:SetHeight(9)
+    display.power:SetHeight(10)
     display.power:SetPoint("TOPLEFT", display.health, "BOTTOMLEFT", 0, -4)
     display.power:SetPoint("RIGHT", display.health, "RIGHT", 0, 0)
 
@@ -529,8 +529,8 @@ local function applyStyle2(display)
     end
 
     display.power:ClearAllPoints()
-    display.power:SetHeight(10)
-    display.power:SetPoint("TOPLEFT", display.health, "BOTTOMLEFT", 0, -4)
+    display.power:SetHeight(9)
+    display.power:SetPoint("TOPLEFT", display.health, "BOTTOMLEFT", 0, -3)
     display.power:SetPoint("RIGHT", display.health, "RIGHT", 0, 0)
 
     if display.unitTag then display.unitTag:Hide() end
