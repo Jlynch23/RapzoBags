@@ -77,6 +77,7 @@ function RB:EnsureDB()
     if modules.vendor == nil then modules.vendor = true end
     if modules.collections == nil then modules.collections = true end
     if modules.afk == nil then modules.afk = true end
+    if modules.hud == nil then modules.hud = true end
     if modules.config == nil then modules.config = true end
 
     self.db = db
@@ -300,7 +301,7 @@ function RB:ShowStatus()
 end
 
 function RB:ShowModules()
-    local labels = {"tooltip", "search", "vendor", "collections", "afk", "config"}
+    local labels = {"tooltip", "search", "vendor", "collections", "afk", "hud", "config"}
     self:Print("Modulos Rapzo Bags:")
     for _, key in ipairs(labels) do
         local present = self:IsModulePresent(key)
