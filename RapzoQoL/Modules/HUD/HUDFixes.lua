@@ -61,9 +61,13 @@ local function ensureRestIndicator()
     end
 
     local text = display:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    text:SetPoint("TOPRIGHT", display, "TOPRIGHT", -48, -7)
     text:SetText("zzz")
     text:SetTextColor(1.00, 0.82, 0.15)
+    text:SetShadowColor(0, 0, 0, 1)
+    text:SetShadowOffset(1, -1)
+    if STANDARD_TEXT_FONT then
+        pcall(text.SetFont, text, STANDARD_TEXT_FONT, 11, "OUTLINE")
+    end
     text:Hide()
     display.RapzoQoLRestText = text
     return text
@@ -74,6 +78,14 @@ local function updateRestIndicator()
 
     local text = ensureRestIndicator()
     if not text then return end
+
+    text:ClearAllPoints()
+    local display = HUD.unitDisplays and HUD.unitDisplays.player
+    if display and type(HUD.GetStyle) == "function" and HUD:GetStyle() == 2 and display.health then
+        text:SetPoint("BOTTOMRIGHT", display.health, "TOPRIGHT", -2, 3)
+    elseif display then
+        text:SetPoint("TOPRIGHT", display, "TOPRIGHT", -48, -7)
+    end
 
     local resting = false
     if type(IsResting) == "function" then
