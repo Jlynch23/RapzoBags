@@ -162,7 +162,7 @@ function AFK:CreateFrame()
 
     local card = CreateFrame("Frame", nil, frame, "BackdropTemplate")
     card:SetPoint("CENTER", frame, "CENTER", 0, 18)
-    card:SetSize(520, 420)
+    card:SetSize(760, 520)
     card:SetBackdrop({
         bgFile = "Interface\\Buttons\\WHITE8X8",
         edgeFile = "Interface\\Buttons\\WHITE8X8",
@@ -174,13 +174,13 @@ function AFK:CreateFrame()
 
     local topLine = card:CreateTexture(nil, "ARTWORK")
     topLine:SetPoint("TOP", card, "TOP", 0, 0)
-    topLine:SetSize(180, 2)
+    topLine:SetSize(260, 2)
     topLine:SetColorTexture(0.22, 0.83, 0.98, 0.85)
     frame.topLine = topLine
 
     local logo = card:CreateTexture(nil, "OVERLAY")
-    logo:SetPoint("TOP", card, "TOP", 0, -34)
-    logo:SetSize(88, 88)
+    logo:SetPoint("TOP", card, "TOP", 0, -42)
+    logo:SetSize(112, 112)
     logo:SetTexture("Interface\\AddOns\\RapzoBags_Core\\Media\\RapzoBagsIcon.tga")
     frame.logo = logo
 
@@ -196,7 +196,7 @@ function AFK:CreateFrame()
         fontPath = select(1, GameFontNormalHuge:GetFont())
     end
     if fontPath then
-        pcall(afkText.SetFont, afkText, fontPath, 76, "OUTLINE")
+        pcall(afkText.SetFont, afkText, fontPath, 96, "OUTLINE")
     end
     afkText:SetText("AFK")
     afkText:SetTextColor(0.92, 0.96, 1.00)
@@ -204,12 +204,12 @@ function AFK:CreateFrame()
 
     local accent = frame:CreateTexture(nil, "ARTWORK")
     accent:SetPoint("TOP", afkText, "BOTTOM", 0, -12)
-    accent:SetSize(280, 1)
+    accent:SetSize(360, 1)
     accent:SetColorTexture(0.22, 0.74, 0.97, 0.75)
     frame.accent = accent
 
     local character = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
-    character:SetPoint("TOP", accent, "BOTTOM", 0, -18)
+    character:SetPoint("TOP", accent, "BOTTOM", 0, -24)
     character:SetText("Player")
     frame.character = character
 
@@ -224,7 +224,7 @@ function AFK:CreateFrame()
     frame.zone = zone
 
     local timer = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    timer:SetPoint("TOP", zone, "BOTTOM", 0, -20)
+    timer:SetPoint("TOP", zone, "BOTTOM", 0, -24)
     timer:SetTextColor(0.22, 0.83, 0.98)
     frame.timer = timer
 
@@ -233,7 +233,7 @@ function AFK:CreateFrame()
     frame.money = money
 
     local quote = card:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    quote:SetPoint("BOTTOM", card, "BOTTOM", 0, 42)
+    quote:SetPoint("BOTTOM", card, "BOTTOM", 0, 50)
     quote:SetText("The inventory never sleeps.")
     frame.quote = quote
 
