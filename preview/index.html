@@ -117,18 +117,19 @@
     display:flex;gap:5px;align-items:flex-end
   }
   .aura{
-    width:27px;height:27px;border:1px solid #78622d;border-radius:4px;
+    width:22px;height:22px;border:1px solid color-mix(in srgb,var(--accent) 32%,#334155);
+    border-radius:50%;
     background:
-      radial-gradient(circle at 35% 30%,rgba(255,255,255,.48),transparent 17%),
+      radial-gradient(circle at 35% 30%,rgba(255,255,255,.42),transparent 17%),
       linear-gradient(135deg,#e7a522,#5e2f08);
-    box-shadow:0 2px 8px #000;position:relative
+    box-shadow:0 1px 5px rgba(0,0,0,.65);position:relative
   }
   .aura:nth-child(2){background:linear-gradient(135deg,#42b5f5,#243d9b)}
   .aura:nth-child(3){background:linear-gradient(135deg,#d865ff,#5c1684)}
   .aura:nth-child(4){background:linear-gradient(135deg,#61d57a,#154d29)}
   .aura:nth-child(5){background:linear-gradient(135deg,#ff6d4d,#6d1616)}
-  .aura:after{content:attr(data-t);position:absolute;top:29px;left:50%;transform:translateX(-50%);
-    font-size:9px;color:#e7edf6;white-space:nowrap;text-shadow:0 1px 2px #000}
+  .aura:after{content:attr(data-t);position:absolute;top:23px;left:50%;transform:translateX(-50%);
+    font-size:8px;color:#e7edf6;white-space:nowrap;text-shadow:0 1px 2px #000}
   .secondary{
     display:none;position:absolute;left:66px;right:6px;top:calc(100% + 4px);height:10px;gap:3px;
     align-items:stretch
@@ -158,7 +159,25 @@
   body.style2 .health{left:66px;top:25px;right:6px}
   body.style2 .power{left:66px;top:53px;right:6px}
   body.style2 .tag{display:none}
-  body.style2 .auras{left:66px}
+  body.style2 .auras{left:66px;bottom:calc(100% + 10px);gap:5px}
+
+  body.style2 .target .portrait,
+  body.style2 .focus .portrait{left:auto;right:6px}
+
+  body.style2 .target .name,
+  body.style2 .focus .name{left:6px;right:66px}
+
+  body.style2 .target .health,
+  body.style2 .focus .health{left:6px;right:66px}
+
+  body.style2 .target .power,
+  body.style2 .focus .power{left:6px;right:66px}
+
+  body.style2 .target .auras,
+  body.style2 .focus .auras{left:6px;right:66px}
+
+  body.style2 .target .cast,
+  body.style2 .focus .cast{left:6px;right:66px}
   body.style2 .secondary.has-resource{display:flex}
   body.style2 .frame.has-secondary .cast{top:calc(100% + 21px)}
   body.style2 .cast{display:block}
@@ -224,7 +243,7 @@
   <div class="stage">
     <div class="guide">
       <strong>Objetivo de Estilo 2</strong>
-      <p>Sin panel exterior ni linea superior: solo icono, nombre, barras, recursos, buffs/debuffs arriba y castbar abajo.</p>
+      <p>Player con icono a la izquierda; Target/Focus espejados con icono a la derecha. Buffs del Player mas pequeños, circulares y sutiles.</p>
     </div>
 
     <div class="spec">
@@ -233,7 +252,9 @@
         <li>Estilo 1 nunca se elimina.</li>
         <li>Estilo 2 usa un contenedor invisible de 296×72.</li>
         <li>Sin fondo, borde ni linea exterior.</li>
-        <li>Zona izquierda reservada al icono.</li>
+        <li>Player: icono izquierda.</li>
+        <li>Target/Focus: icono derecha.</li>
+        <li>Buffs del Player: mini iconos circulares, maximo 5.</li>
         <li>Auras superiores con ancho útil del frame.</li>
         <li>Castbar inferior independiente.</li>
       </ul>
