@@ -174,6 +174,14 @@ if type(hooksecurefunc) == "function" then
             updateRestIndicator()
         end)
     end
+
+    if type(HUD.ApplyFrameStyle) == "function" then
+        hooksecurefunc(HUD, "ApplyFrameStyle", function(_, unit)
+            if unit == nil or unit == "player" then
+                updateRestIndicator()
+            end
+        end)
+    end
 end
 
 if C_Timer and C_Timer.After then
