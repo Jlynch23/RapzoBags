@@ -2,10 +2,10 @@
 ## Title: Rapzo Bags: Config
 ## Notes: Panel para activar y desactivar funciones de los modulos cargados.
 ## Author: Rapzo
-## Version: 3.0.0-alpha4
+## Version: 3.0.0-alpha5
 ## IconTexture: Interface\AddOns\RapzoBags_Core\Media\RapzoBagsIcon.tga
 ## Dependencies: RapzoBags_Core
-## OptionalDeps: RapzoBags_Tooltip, RapzoBags_Search, RapzoBags_Vendor, RapzoBags_Collections
+## OptionalDeps: RapzoBags_Tooltip, RapzoBags_Search, RapzoBags_Vendor, RapzoBags_Collections, RapzoBags_AFK
 ## Category: Inventory
 
 Config.lua
