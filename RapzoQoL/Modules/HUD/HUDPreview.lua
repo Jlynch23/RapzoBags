@@ -240,7 +240,10 @@ function HUD:CreatePreview()
     frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
     frame:SetClampedToScreen(true)
 
-    frame.TitleText:SetText("Rapzo QoL - HUD Preview")
+    local title = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    title:SetPoint("LEFT", frame.TitleBg, "LEFT", 6, 0)
+    title:SetText("Rapzo QoL - HUD Preview")
+    frame.RapzoQoLTitle = title
 
     local intro = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     intro:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -38)
