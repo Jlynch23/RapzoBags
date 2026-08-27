@@ -59,6 +59,14 @@ local function makeStatusBar(parent, height, color)
     return bar
 end
 
+local function getPreviewClassColor(classFile, fallback)
+    fallback = fallback or {0.92, 0.66, 0.10}
+    if type(RAID_CLASS_COLORS) ~= "table" then return fallback end
+    local color = RAID_CLASS_COLORS[classFile]
+    if not color then return fallback end
+    return {color.r or fallback[1], color.g or fallback[2], color.b or fallback[3]}
+end
+
 local function setFakeClassIcon(texture, classFile)
     if type(CLASS_ICON_TCOORDS) ~= "table" then return false end
     local coords = CLASS_ICON_TCOORDS[classFile]
@@ -274,13 +282,13 @@ function HUD:CreatePreview()
     hint:SetText("/rapzo hud style 1|2")
     hint:SetTextColor(0.55, 0.75, 0.95)
 
-    local player = makeDemo(frame, "player", "Rapzo", {0.92, 0.66, 0.10}, "WARRIOR", false)
+    local player = makeDemo(frame, "player", "Rapzo", getPreviewClassColor("WARRIOR", {0.92, 0.66, 0.10}), "WARRIOR", false)
     player:SetPoint("TOPLEFT", frame, "TOPLEFT", 70, -190)
 
     local target = makeDemo(frame, "target", "Muñeco de entrenamiento", {0.92, 0.30, 0.09}, nil, true)
     target:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -70, -190)
 
-    local focus = makeDemo(frame, "focus", "Focus Player", {0.12, 0.72, 0.95}, "MAGE", false)
+    local focus = makeDemo(frame, "focus", "Focus Rogue", getPreviewClassColor("ROGUE", {1.00, 0.96, 0.41}), "ROGUE", false)
     focus:SetPoint("BOTTOM", frame, "BOTTOM", 0, 82)
 
     local note = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
