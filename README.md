@@ -57,9 +57,21 @@ The offline preview is for geometry and visual iteration. Protected Blizzard beh
 **Style 2** is selectable and adds:
 - class icon for player units;
 - a reference portrait/icon for mobs;
+- class-correct colors from Blizzard's `RAID_CLASS_COLORS`;
 - helpful player auras in a WoW 12.1 AuraContainer above the player frame;
 - Target/Focus native aura containers re-anchored above the usable frame area;
-- a Rapzo QoL cast bar below the frame using Midnight-safe duration handling when available.
+- a Rapzo QoL cast bar below the frame using Midnight-safe duration handling when available;
+- player-only secondary class resources between the main power bar and castbar:
+  - Rogue: Combo Points;
+  - Feral Druid: Combo Points;
+  - Warlock: Soul Shards, including partial shard fill;
+  - Paladin: Holy Power;
+  - Windwalker Monk: Chi;
+  - Arcane Mage: Arcane Charges;
+  - Evoker: Essence;
+  - Death Knight: six Runes with recharge progress.
+
+Classes/specs without a discrete secondary resource keep the compact Style 2 spacing with no empty resource row.
 
 ## Compatibility
 
