@@ -99,17 +99,19 @@
     overflow:hidden
   }
   .health{top:25px}
-  .power{top:53px;height:10px;border-color:#344960}
+  .power{top:52px;height:9px;border-color:#344960}
   .fill{position:absolute;inset:0 auto 0 0;width:86%;background:var(--accent)}
   .power .fill{width:72%;background:var(--power)}
   .bartext{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     font-size:11px;font-weight:700;text-shadow:0 1px 2px #000}
   .power .bartext{font-size:9px}
   .portrait{
-    display:none;position:absolute;left:6px;top:9px;width:54px;height:54px;border-radius:50%;
-    border:2px solid var(--accent);background:radial-gradient(circle at 35% 30%,#30435d,#111824 72%);
-    box-shadow:0 0 0 3px rgba(0,0,0,.8),0 0 18px color-mix(in srgb,var(--accent) 24%,transparent);
-    place-items:center;font-size:12px;font-weight:800;color:#f9d778;letter-spacing:.5px
+    display:none;position:absolute;left:0;top:12px;width:48px;height:48px;border-radius:50%;
+    border:2px solid color-mix(in srgb,var(--accent) 78%,transparent);
+    background:radial-gradient(circle at 35% 30%,#30435d,#111824 72%);
+    box-shadow:0 0 10px color-mix(in srgb,var(--accent) 14%,transparent);
+    place-items:center;font-size:11px;font-weight:800;color:#f9d778;letter-spacing:.5px;
+    overflow:hidden
   }
   .portrait.mob{font-size:23px;color:#ddd}
   .auras{
@@ -117,7 +119,7 @@
     display:flex;gap:5px;align-items:flex-end
   }
   .aura{
-    width:22px;height:22px;border:1px solid color-mix(in srgb,var(--accent) 32%,#334155);
+    width:20px;height:20px;border:1px solid color-mix(in srgb,var(--accent) 26%,#334155);
     border-radius:50%;
     background:
       radial-gradient(circle at 35% 30%,rgba(255,255,255,.42),transparent 17%),
@@ -128,10 +130,10 @@
   .aura:nth-child(3){background:linear-gradient(135deg,#d865ff,#5c1684)}
   .aura:nth-child(4){background:linear-gradient(135deg,#61d57a,#154d29)}
   .aura:nth-child(5){background:linear-gradient(135deg,#ff6d4d,#6d1616)}
-  .aura:after{content:attr(data-t);position:absolute;top:23px;left:50%;transform:translateX(-50%);
+  .aura:after{content:attr(data-t);position:absolute;top:21px;left:50%;transform:translateX(-50%);
     font-size:8px;color:#e7edf6;white-space:nowrap;text-shadow:0 1px 2px #000}
   .secondary{
-    display:none;position:absolute;left:66px;right:6px;top:calc(100% + 4px);height:10px;gap:3px;
+    display:none;position:absolute;left:58px;right:4px;top:calc(100% + 4px);height:8px;gap:3px;
     align-items:stretch
   }
   .secondary .pip{
@@ -142,7 +144,7 @@
     content:"";position:absolute;inset:0 auto 0 0;width:var(--fill,0%);background:var(--accent)
   }
   .cast{
-    display:none;position:absolute;height:15px;left:66px;right:6px;top:calc(100% + 4px);
+    display:none;position:absolute;height:14px;left:58px;right:4px;top:calc(100% + 4px);
     border:1px solid #3a526c;background:#05080d;overflow:hidden
   }
   .cast .fill{width:62%;background:linear-gradient(90deg,#ba7b13,#f5bc37)}
@@ -155,31 +157,31 @@
   }
   body.style2 .frame:before{display:none}
   body.style2 .portrait{display:grid}
-  body.style2 .name{left:66px;right:6px}
-  body.style2 .health{left:66px;top:25px;right:6px}
-  body.style2 .power{left:66px;top:53px;right:6px}
+  body.style2 .name{left:58px;right:4px}
+  body.style2 .health{left:58px;top:25px;right:4px}
+  body.style2 .power{left:58px;top:52px;right:4px}
   body.style2 .tag{display:none}
-  body.style2 .auras{left:66px;bottom:calc(100% + 10px);gap:5px}
+  body.style2 .auras{left:58px;bottom:calc(100% + 6px);gap:5px}
 
   body.style2 .target .portrait,
-  body.style2 .focus .portrait{left:auto;right:6px}
+  body.style2 .focus .portrait{left:auto;right:0}
 
   body.style2 .target .name,
-  body.style2 .focus .name{left:6px;right:66px}
+  body.style2 .focus .name{left:4px;right:58px}
 
   body.style2 .target .health,
-  body.style2 .focus .health{left:6px;right:66px}
+  body.style2 .focus .health{left:4px;right:58px}
 
   body.style2 .target .power,
-  body.style2 .focus .power{left:6px;right:66px}
+  body.style2 .focus .power{left:4px;right:58px}
 
   body.style2 .target .auras,
-  body.style2 .focus .auras{left:6px;right:66px}
+  body.style2 .focus .auras{left:4px;right:58px}
 
   body.style2 .target .cast,
-  body.style2 .focus .cast{left:6px;right:66px}
+  body.style2 .focus .cast{left:4px;right:58px}
   body.style2 .secondary.has-resource{display:flex}
-  body.style2 .frame.has-secondary .cast{top:calc(100% + 21px)}
+  body.style2 .frame.has-secondary .cast{top:calc(100% + 17px)}
   body.style2 .cast{display:block}
   body.style1 .player-pos .auras{display:none}
   body.style1 .cast{display:none}
@@ -243,7 +245,7 @@
   <div class="stage">
     <div class="guide">
       <strong>Objetivo de Estilo 2</strong>
-      <p>Player con icono a la izquierda; Target/Focus espejados con icono a la derecha. Buffs del Player mas pequeños, circulares y sutiles.</p>
+      <p>Spec final: icono circular 48×48; Player a la izquierda, Target/Focus a la derecha; auras 20×20; barras 234 px; recursos 8 px; castbar 14 px.</p>
     </div>
 
     <div class="spec">
@@ -254,8 +256,8 @@
         <li>Sin fondo, borde ni linea exterior.</li>
         <li>Player: icono izquierda.</li>
         <li>Target/Focus: icono derecha.</li>
-        <li>Buffs del Player: mini iconos circulares, maximo 5.</li>
-        <li>Auras superiores con ancho útil del frame.</li>
+        <li>Player: buffs cortos de combate, 20×20, maximo 5.</li>
+        <li>Target/Focus: solo debuffs tuyos (HARMFUL|PLAYER), maximo 5.</li>
         <li>Castbar inferior independiente.</li>
       </ul>
     </div>
