@@ -18,10 +18,6 @@ local function applyBrand()
         frame.RapzoQoLBadge:Hide()
     end
 
-    if frame.title then
-        frame.title:SetText("|cff5DE7FFRAPZO|r |cffF4F7FBQoL|r")
-    end
-
     if frame.quote then
         frame.quote:SetText("Quality of life, the Rapzo way.")
     end
