@@ -359,6 +359,17 @@ local function applyDisplayColor(display, color)
     for _, edge in ipairs(display.edges or {}) do
         edge:SetColorTexture(color[1], color[2], color[3], 0.30)
     end
+
+    -- Style 2 uses neutral/black borders only. The class/reaction color
+    -- belongs to the health fill, never to the frame outline.
+    if type(HUD.GetStyle) == "function" and HUD:GetStyle() == 2 then
+        for _, edge in ipairs(display.health and display.health.RapzoQoLEdges or {}) do
+            edge:SetColorTexture(0.01, 0.01, 0.01, 1)
+        end
+        for _, edge in ipairs(display.power and display.power.RapzoQoLEdges or {}) do
+            edge:SetColorTexture(0.01, 0.01, 0.01, 1)
+        end
+    end
 end
 
 local function formatCompactNumber(value)
@@ -573,12 +584,16 @@ function HUD:CreateCursorRing()
     return frame
 end
 
-local function createMinimapBorder()
-    if not _G.Minimap then return end
-    if HUD.minimapBorder then return HUD.minimapBorder end
-
-    HUD.minimapBorder = createEdges(_G.Minimap, getAccentColor(), 0.72, 2)
-    return HUD.minimapBorder
+local function hideMinimapBorder()
+    for _, edge in ipairs(HUD.minimapBorder or {}) do
+        if edge and type(edge.Hide) == "function" then
+            edge:Hide()
+        end
+        if edge and type(edge.SetAlpha) == "function" then
+            edge:SetAlpha(0)
+        end
+    end
+    HUD.minimapBorder = nil
 end
 
 function HUD:StyleMinimap()
@@ -592,7 +607,11 @@ function HUD:StyleMinimap()
         setRegionAlpha(_G.MinimapBackdrop.StaticOverlayTexture, 0)
     end
 
-    createMinimapBorder()
+    -- Rapzo QoL keeps the minimap square but completely borderless.
+    hideMinimapBorder()
+    setRegionAlpha(_G.MinimapBorder, 0)
+    setRegionAlpha(_G.MinimapBorderTop, 0)
+    setRegionAlpha(_G.MiniMapTrackingBorder, 0)
 end
 
 function HUD:ApplyTheme()
@@ -602,9 +621,8 @@ function HUD:ApplyTheme()
         self.cursorFrame.outer:SetVertexColor(accent[1], accent[2], accent[3], 1.00)
     end
 
-    for _, edge in ipairs(self.minimapBorder or {}) do
-        edge:SetColorTexture(accent[1], accent[2], accent[3], 0.72)
-    end
+    -- Minimap intentionally has no accent border.
+    hideMinimapBorder()
 end
 
 function HUD:Apply()
