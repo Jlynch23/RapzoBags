@@ -39,11 +39,13 @@ local function getConfig()
 
     cfg.cursorSize = math.max(36, math.min(90, tonumber(cfg.cursorSize) or 58))
     RB:SetFeatureEnabled("hud", cfg.enabled, true)
+    HUD.config = cfg
     return cfg
 end
 
 function HUD:IsEnabled()
-    return getConfig().enabled ~= false and RB:IsFeatureEnabled("hud")
+    local cfg = self.config or getConfig()
+    return cfg.enabled ~= false and RB:IsFeatureEnabled("hud")
 end
 
 local function setRegionAlpha(region, alpha)
@@ -149,6 +151,11 @@ local function hidePlayerArt(parts)
     setRegionAlpha(c.VehicleFrameTexture, 0)
     setRegionAlpha(c.AlternatePowerFrameTexture, 0)
     setRegionAlpha(c.FrameFlash, 0)
+
+    if _G.PlayerFrame and _G.PlayerFrame.PlayerFrameContent then
+        local contextual = _G.PlayerFrame.PlayerFrameContent.PlayerFrameContentContextual
+        setRegionAlpha(contextual, 0)
+    end
 end
 
 local function hideTargetArt(parts)
@@ -163,6 +170,19 @@ local function hideTargetArt(parts)
     if parts.main then
         setRegionAlpha(parts.main.ReputationColor, 0)
     end
+end
+
+local function hideTargetBadges(frame)
+    local content = frame and frame.TargetFrameContent
+    local contextual = content and content.TargetFrameContentContextual
+    if not contextual then return end
+
+    setRegionAlpha(contextual.PvpIcon, 0)
+    setRegionAlpha(contextual.PrestigePortrait, 0)
+    setRegionAlpha(contextual.PrestigeBadge, 0)
+    setRegionAlpha(contextual.PetBattleIcon, 0)
+    setRegionAlpha(contextual.BossIcon, 0)
+    setRegionAlpha(contextual.QuestIcon, 0)
 end
 
 local function styleText(parts, color)
@@ -219,12 +239,14 @@ function HUD:StyleUnitFrames()
     if _G.TargetFrame then
         local parts = findTargetParts(_G.TargetFrame)
         hideTargetArt(parts)
+        hideTargetBadges(_G.TargetFrame)
         layoutBars(_G.TargetFrame, parts, COLORS.target)
     end
 
     if _G.FocusFrame then
         local parts = findTargetParts(_G.FocusFrame)
         hideTargetArt(parts)
+        hideTargetBadges(_G.FocusFrame)
         layoutBars(_G.FocusFrame, parts, COLORS.focus)
     end
 end
@@ -253,8 +275,8 @@ function HUD:CreateCursorRing()
     frame.inner = inner
 
     frame:SetScript("OnUpdate", function(self)
-        local cfg = getConfig()
-        if not HUD:IsEnabled() or not cfg.cursor then
+        local cfg = HUD.config or getConfig()
+        if cfg.enabled == false or not cfg.cursor then
             self:Hide()
             return
         end
@@ -325,7 +347,10 @@ function HUD:Apply()
         return
     end
 
-    if cfg.cursor then self:CreateCursorRing() end
+    if cfg.cursor then
+        local cursor = self:CreateCursorRing()
+        if cursor and not cursor:IsShown() then cursor:Show() end
+    end
     if cfg.squareMinimap then self:StyleMinimap() end
     if cfg.unitFrames then self:StyleUnitFrames() end
 end
