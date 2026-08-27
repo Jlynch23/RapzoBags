@@ -4,7 +4,7 @@ if not RB or not RB.HUD then return end
 
 local HUD = RB.HUD
 local WHITE_TEXTURE = "Interface\\Buttons\\WHITE8X8"
-local CLASS_TEXTURE = "Interface\\GLUES\\CHARACTERCREATE\\UI-CHARACTERCREATE-CLASSES"
+local CLASS_TEXTURE = "Interface\\TargetingFrame\\UI-Classes-Circles"
 local FALLBACK_ICON = "Interface\\Icons\\INV_Misc_QuestionMark"
 local PORTRAIT_MASK = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
 
@@ -91,56 +91,59 @@ local function ensureUnitIcon(display)
     holder:SetSize(STYLE2_ICON, STYLE2_ICON)
     holder:SetFrameLevel(display:GetFrameLevel() + 2)
 
-    local ring = holder:CreateTexture(nil, "BACKGROUND")
-    ring:SetAllPoints(holder)
-    ring:SetColorTexture(0.95, 0.70, 0.16, 0.78)
-
-    local inner = holder:CreateTexture(nil, "BORDER")
-    inner:SetPoint("TOPLEFT", holder, "TOPLEFT", 2, -2)
-    inner:SetPoint("BOTTOMRIGHT", holder, "BOTTOMRIGHT", -2, 2)
-    inner:SetColorTexture(0.005, 0.009, 0.015, 1)
-
+    -- No square background or ActionButton border. The class sheet itself is
+    -- circular/transparent; NPC portraits get only a circular mask.
     local icon = holder:CreateTexture(nil, "ARTWORK")
-    icon:SetPoint("TOPLEFT", holder, "TOPLEFT", 4, -4)
-    icon:SetPoint("BOTTOMRIGHT", holder, "BOTTOMRIGHT", -4, 4)
+    icon:SetAllPoints(holder)
     icon:SetTexture(FALLBACK_ICON)
 
     if type(holder.CreateMaskTexture) == "function" and type(icon.AddMaskTexture) == "function" then
         local mask = holder:CreateMaskTexture()
-        mask:SetAllPoints(holder)
+        mask:SetAllPoints(icon)
         mask:SetTexture(PORTRAIT_MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-        ring:AddMaskTexture(mask)
-        inner:AddMaskTexture(mask)
-        icon:AddMaskTexture(mask)
         holder.RapzoQoLMask = mask
     end
 
     holder.icon = icon
-    holder.RapzoQoLRing = ring
     display.RapzoQoLUnitIcon = holder
     return holder
 end
 
-local function setClassIcon(icon, unit)
+local function setClassIcon(holder, unit)
+    if not holder or not holder.icon then return false end
     if type(UnitClass) ~= "function" or type(CLASS_ICON_TCOORDS) ~= "table" then return false end
 
     local ok, _, classFile = pcall(UnitClass, unit)
     if not ok or isSecret(classFile) or type(classFile) ~= "string" then return false end
 
+    classFile = string.upper(classFile)
     local coords = CLASS_ICON_TCOORDS[classFile]
     if type(coords) ~= "table" then return false end
+
+    local icon = holder.icon
+    if holder.RapzoQoLMask and type(icon.RemoveMaskTexture) == "function" then
+        pcall(icon.RemoveMaskTexture, icon, holder.RapzoQoLMask)
+    end
 
     icon:SetTexture(CLASS_TEXTURE)
     icon:SetTexCoord(coords[1], coords[2], coords[3], coords[4])
     return true
 end
 
-local function setReferencePortrait(icon, unit)
+local function setReferencePortrait(holder, unit)
+    if not holder or not holder.icon then return false end
+    local icon = holder.icon
     icon:SetTexCoord(0, 1, 0, 1)
+
+    if holder.RapzoQoLMask and type(icon.AddMaskTexture) == "function" then
+        pcall(icon.AddMaskTexture, icon, holder.RapzoQoLMask)
+    end
+
     if type(SetPortraitTexture) == "function" then
         local ok = pcall(SetPortraitTexture, icon, unit)
         if ok then return true end
     end
+
     icon:SetTexture(FALLBACK_ICON)
     return false
 end
@@ -156,11 +159,6 @@ local function updateUnitIcon(display)
 
     holder:Show()
 
-    local color = display.color or {0.95, 0.70, 0.16}
-    if holder.RapzoQoLRing then
-        holder.RapzoQoLRing:SetColorTexture(color[1], color[2], color[3], 0.78)
-    end
-
     local unit = display.unit
     local isPlayer = false
 
@@ -171,11 +169,11 @@ local function updateUnitIcon(display)
         end
     end
 
-    if isPlayer and setClassIcon(holder.icon, unit) then
+    if isPlayer and setClassIcon(holder, unit) then
         return
     end
 
-    setReferencePortrait(holder.icon, unit)
+    setReferencePortrait(holder, unit)
 end
 
 local function ensureCastBar(display)
