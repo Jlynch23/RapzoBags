@@ -34,6 +34,37 @@ local function safeCall(func, ...)
     return pcall(func, ...)
 end
 
+local function getUnitClassColor(unit, fallback, requirePlayer)
+    fallback = fallback or { 0.92, 0.66, 0.10 }
+
+    if requirePlayer and type(UnitIsPlayer) == "function" then
+        local okPlayer, isPlayer = pcall(UnitIsPlayer, unit)
+        if not okPlayer or isSecret(isPlayer) or isPlayer ~= true then
+            return fallback
+        end
+    end
+
+    if type(UnitClass) ~= "function" or type(RAID_CLASS_COLORS) ~= "table" then
+        return fallback
+    end
+
+    local okClass, _, classFile = pcall(UnitClass, unit)
+    if not okClass or not classFile or isSecret(classFile) then
+        return fallback
+    end
+
+    local classColor = RAID_CLASS_COLORS[classFile]
+    if not classColor then
+        return fallback
+    end
+
+    return {
+        classColor.r or fallback[1],
+        classColor.g or fallback[2],
+        classColor.b or fallback[3],
+    }
+end
+
 local function getConfig()
     local db = RB:EnsureDB()
     db.settings.hud = type(db.settings.hud) == "table" and db.settings.hud or {}
@@ -215,7 +246,7 @@ local function createUnitDisplay(unit, nativeFrame, color)
     accent:SetHeight(2)
     accent:SetColorTexture(color[1], color[2], color[3], 0.95)
 
-    createEdges(display, color, 0.30, 1)
+    local displayEdges = createEdges(display, color, 0.30, 1)
 
     local name = display:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     name:SetPoint("TOPLEFT", display, "TOPLEFT", 6, -8)
@@ -242,10 +273,32 @@ local function createUnitDisplay(unit, nativeFrame, color)
     display.health = health
     display.power = power
     display.nameText = name
+    display.unitTag = unitTag
+    display.accent = accent
+    display.edges = displayEdges
     display.color = color
 
     HUD.unitDisplays[unit] = display
     return display
+end
+
+local function applyDisplayColor(display, color)
+    if not display or not color then return end
+
+    display.color = color
+    display.health:SetStatusBarColor(color[1], color[2], color[3])
+
+    if display.accent then
+        display.accent:SetColorTexture(color[1], color[2], color[3], 0.95)
+    end
+
+    if display.unitTag then
+        display.unitTag:SetTextColor(color[1], color[2], color[3])
+    end
+
+    for _, edge in ipairs(display.edges or {}) do
+        edge:SetColorTexture(color[1], color[2], color[3], 0.30)
+    end
 end
 
 local function updateUnitDisplay(display)
@@ -260,6 +313,15 @@ local function updateUnitDisplay(display)
     display:Show()
 
     local unit = display.unit
+
+    local fallback = COLORS[unit] or COLORS.target
+    local color
+    if unit == "player" then
+        color = getUnitClassColor(unit, fallback, false)
+    else
+        color = getUnitClassColor(unit, fallback, true)
+    end
+    applyDisplayColor(display, color)
 
     local name = UnitName and UnitName(unit)
     setSecretSafeText(display.nameText, name)
@@ -288,17 +350,17 @@ function HUD:CreateUnitDisplays()
 
     if _G.PlayerFrame then
         hidePlayerStaticArt()
-        createUnitDisplay("player", _G.PlayerFrame, COLORS.player)
+        createUnitDisplay("player", _G.PlayerFrame, getUnitClassColor("player", COLORS.player, false))
     end
 
     if _G.TargetFrame then
         hideTargetStaticArt(_G.TargetFrame)
-        createUnitDisplay("target", _G.TargetFrame, COLORS.target)
+        createUnitDisplay("target", _G.TargetFrame, getUnitClassColor("target", COLORS.target, true))
     end
 
     if _G.FocusFrame then
         hideTargetStaticArt(_G.FocusFrame)
-        createUnitDisplay("focus", _G.FocusFrame, COLORS.focus)
+        createUnitDisplay("focus", _G.FocusFrame, getUnitClassColor("focus", COLORS.focus, true))
     end
 end
 
