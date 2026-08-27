@@ -109,6 +109,21 @@ local function ensureUnitIcon(display)
     return holder
 end
 
+local function setIconMask(holder, enabled)
+    if not holder or not holder.icon or not holder.RapzoQoLMask then return end
+    local icon = holder.icon
+
+    if enabled then
+        if not holder.RapzoQoLMaskApplied and type(icon.AddMaskTexture) == "function" then
+            local ok = pcall(icon.AddMaskTexture, icon, holder.RapzoQoLMask)
+            if ok then holder.RapzoQoLMaskApplied = true end
+        end
+    elseif holder.RapzoQoLMaskApplied and type(icon.RemoveMaskTexture) == "function" then
+        local ok = pcall(icon.RemoveMaskTexture, icon, holder.RapzoQoLMask)
+        if ok then holder.RapzoQoLMaskApplied = false end
+    end
+end
+
 local function setClassIcon(holder, unit)
     if not holder or not holder.icon then return false end
     if type(UnitClass) ~= "function" or type(CLASS_ICON_TCOORDS) ~= "table" then return false end
@@ -121,9 +136,7 @@ local function setClassIcon(holder, unit)
     if type(coords) ~= "table" then return false end
 
     local icon = holder.icon
-    if holder.RapzoQoLMask and type(icon.RemoveMaskTexture) == "function" then
-        pcall(icon.RemoveMaskTexture, icon, holder.RapzoQoLMask)
-    end
+    setIconMask(holder, false)
 
     icon:SetTexture(CLASS_TEXTURE)
     icon:SetTexCoord(coords[1], coords[2], coords[3], coords[4])
@@ -135,9 +148,7 @@ local function setReferencePortrait(holder, unit)
     local icon = holder.icon
     icon:SetTexCoord(0, 1, 0, 1)
 
-    if holder.RapzoQoLMask and type(icon.AddMaskTexture) == "function" then
-        pcall(icon.AddMaskTexture, icon, holder.RapzoQoLMask)
-    end
+    setIconMask(holder, true)
 
     if type(SetPortraitTexture) == "function" then
         local ok = pcall(SetPortraitTexture, icon, unit)
