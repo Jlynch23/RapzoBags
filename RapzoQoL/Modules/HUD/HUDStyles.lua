@@ -10,6 +10,7 @@ local STYLE_CURRENT = 1
 local STYLE_ICON = 2
 local STYLE2_WIDTH = 178
 local STYLE2_HEIGHT = 43
+local STYLE2_SCALE = 1.50
 local STYLE2_EDGE = 0
 local STYLE2_CONTENT = 0
 local STYLE2_AURA = 16
@@ -449,6 +450,7 @@ end
 local function applyStyle1(display)
     if not display then return end
 
+    display:SetScale(1)
     setShellVisible(display, true)
     display:SetSize(240, 64)
 
@@ -486,6 +488,10 @@ end
 
 local function applyStyle2(display)
     if not display then return end
+
+    -- Whole Style 2 frame is scaled uniformly so every element keeps
+    -- the same Toxi proportions (text, bars, auras, castbar and resources).
+    display:SetScale(STYLE2_SCALE)
 
     -- Rapzo QoL / ToxiUI-inspired:
     -- name floats above, health is the visual anchor and the power bar stays thin.
