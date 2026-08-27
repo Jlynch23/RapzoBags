@@ -74,9 +74,13 @@ local function getConfig()
     if cfg.cursor == nil then cfg.cursor = true end
     if cfg.squareMinimap == nil then cfg.squareMinimap = true end
     if cfg.unitFrames == nil then cfg.unitFrames = true end
-    if cfg.cursorSize == nil then cfg.cursorSize = 50 end
+    if cfg.cursorSize == nil then cfg.cursorSize = 74 end
+    if cfg.cursorVisualVersion ~= 2 then
+        cfg.cursorSize = math.max(74, tonumber(cfg.cursorSize) or 74)
+        cfg.cursorVisualVersion = 2
+    end
 
-    cfg.cursorSize = math.max(36, math.min(90, tonumber(cfg.cursorSize) or 58))
+    cfg.cursorSize = math.max(48, math.min(120, tonumber(cfg.cursorSize) or 74))
     RB:SetFeatureEnabled("hud", cfg.enabled, true)
     HUD.config = cfg
     return cfg
@@ -419,8 +423,24 @@ function HUD:CreateCursorRing()
     frame:SetFrameLevel(10000)
     frame:EnableMouse(false)
 
+    local shadow = frame:CreateTexture(nil, "OVERLAY")
+    shadow:SetPoint("CENTER", frame, "CENTER", 0, 0)
+    shadow:SetSize(1, 1)
+
+    local shadowAtlasOK = false
+    if type(shadow.SetAtlas) == "function" then
+        shadowAtlasOK = pcall(shadow.SetAtlas, shadow, CURSOR_ATLAS, false)
+    end
+    if not shadowAtlasOK then
+        shadow:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
+    end
+    shadow:SetBlendMode("BLEND")
+    shadow:SetVertexColor(0.00, 0.00, 0.00, 0.92)
+    frame.shadow = shadow
+
     local outer = frame:CreateTexture(nil, "OVERLAY")
-    outer:SetAllPoints(frame)
+    outer:SetPoint("CENTER", frame, "CENTER", 0, 0)
+    outer:SetSize(1, 1)
 
     local atlasOK = false
     if type(outer.SetAtlas) == "function" then
@@ -431,8 +451,22 @@ function HUD:CreateCursorRing()
     end
 
     outer:SetBlendMode("ADD")
-    outer:SetVertexColor(0.05, 0.88, 1.00, 0.95)
+    outer:SetVertexColor(0.18, 0.92, 1.00, 1.00)
     frame.outer = outer
+
+    local core = frame:CreateTexture(nil, "OVERLAY")
+    core:SetTexture(WHITE_TEXTURE)
+    core:SetSize(5, 5)
+    core:SetPoint("CENTER", frame, "CENTER", 0, 0)
+    core:SetVertexColor(1.00, 1.00, 1.00, 0.95)
+    frame.core = core
+
+    local coreShadow = frame:CreateTexture(nil, "ARTWORK")
+    coreShadow:SetTexture(WHITE_TEXTURE)
+    coreShadow:SetSize(9, 9)
+    coreShadow:SetPoint("CENTER", core, "CENTER", 0, 0)
+    coreShadow:SetVertexColor(0.00, 0.00, 0.00, 0.85)
+    frame.coreShadow = coreShadow
 
     frame:SetScript("OnUpdate", function(self)
         local cfg = HUD.config or getConfig()
@@ -445,8 +479,16 @@ function HUD:CreateCursorRing()
         local x, y = GetCursorPosition()
         if not x or not y or not scale or scale == 0 then return end
 
-        local size = cfg.cursorSize
+        local size = tonumber(cfg.cursorSize) or 74
         self:SetSize(size, size)
+
+        if self.shadow then
+            self.shadow:SetSize(size + 16, size + 16)
+        end
+        if self.outer then
+            self.outer:SetSize(size, size)
+        end
+
         self:ClearAllPoints()
         self:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x / scale, y / scale)
         if not self:IsShown() then self:Show() end
@@ -580,6 +622,19 @@ function HUD:HandleSlash(rest)
         return
     end
 
+    if part == "cursorsize" or (part == "cursor" and value:match("^%d+$")) then
+        local cfg = getConfig()
+        local requested = tonumber(value)
+        if not requested then
+            RB:Print("Uso: /rapzo hud cursorsize 48-120")
+            return
+        end
+        cfg.cursorSize = math.max(48, math.min(120, requested))
+        self:Apply()
+        RB:Print("Cursor HUD: " .. tostring(cfg.cursorSize) .. " px")
+        return
+    end
+
     if part == "cursor" or part == "minimap" or part == "frames" then
         if value ~= "on" and value ~= "off" then
             RB:Print("Uso: /rapzo hud " .. part .. " on|off")
@@ -591,7 +646,7 @@ function HUD:HandleSlash(rest)
         return
     end
 
-    RB:Print("Uso: /rapzo hud [status|debug|on|off|cursor on|off|minimap on|off|frames on|off]")
+    RB:Print("Uso: /rapzo hud [status|debug|on|off|cursor on|off|cursorsize 48-120|minimap on|off|frames on|off]")
 end
 
 function HUD:ScheduleApply(delay)
