@@ -33,8 +33,33 @@ The legacy `RapzoBags_*` folders are no longer separate addons.
 - `/rapzo modules`
 - `/rapzo afk preview`
 - `/rapzo hud status`
+- `/rapzo hud style 1` — current compact unit-frame style.
+- `/rapzo hud style 2` — icon/class-or-mob reference, auras on top and cast bar below.
+- `/rapzo hud preview` — toggles the in-game fake/demo unit-frame preview.
+- `/rapzo hud preview on|off`
 
 Legacy aliases `/rbags` and `/rapzobags` remain available.
+
+## Offline HUD preview
+
+Open this file directly in a browser:
+
+`preview/index.html`
+
+It is a self-contained interactive preview that does not require World of Warcraft. It can switch between Style 1 and Style 2, change preview scale and simulate a mob/player target.
+
+The offline preview is for geometry and visual iteration. Protected Blizzard behavior and real aura/cast rendering are validated with the in-game `/rapzo hud preview` mode.
+
+## HUD frame styles
+
+**Style 1** is the existing working Rapzo QoL unit-frame design and is intentionally preserved.
+
+**Style 2** is selectable and adds:
+- class icon for player units;
+- a reference portrait/icon for mobs;
+- helpful player auras in a WoW 12.1 AuraContainer above the player frame;
+- Target/Focus native aura containers re-anchored above the usable frame area;
+- a Rapzo QoL cast bar below the frame using Midnight-safe duration handling when available.
 
 ## Compatibility
 
@@ -43,3 +68,5 @@ The addon intentionally keeps the existing `RapzoBagsDB` SavedVariables name so 
 ## Development
 
 Current development line: **3.0.0-alpha5** for WoW Retail 12.1.0.
+
+Repository workflow rules are documented in `AGENTS.md`. Code changes should be performed directly in the repository when write access is available; users normally only need to sync and test.
