@@ -18,9 +18,11 @@ local DARK = {
     screen = {0.002, 0.004, 0.008},
     card = {0.006, 0.010, 0.016},
     border = {0.10, 0.64, 0.82},
-    cyan = {0.20, 0.84, 1.00},
-    text = {0.92, 0.95, 0.98},
-    muted = {0.58, 0.66, 0.74},
+    cyan = {0.24, 0.90, 1.00},
+    cyanStrong = {0.38, 0.95, 1.00},
+    text = {0.97, 0.98, 1.00},
+    muted = {0.76, 0.81, 0.88},
+    soft = {0.62, 0.72, 0.82},
 }
 
 local function isSecret(value)
@@ -199,7 +201,9 @@ function AFK:CreateFrame()
     if titleFont then
         pcall(title.SetFont, title, titleFont, 28, "OUTLINE")
     end
-    title:SetText("|cff38bdf8RAPZO|r |cffffffffQoL|r")
+    title:SetText("|cff5DE7FFRAPZO|r |cffF4F7FBQoL|r")
+    title:SetShadowColor(0, 0, 0, 1)
+    title:SetShadowOffset(1, -1)
     frame.title = title
 
     local afkText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
@@ -213,12 +217,14 @@ function AFK:CreateFrame()
     end
     afkText:SetText("AFK")
     afkText:SetTextColor(DARK.text[1], DARK.text[2], DARK.text[3])
+    afkText:SetShadowColor(0, 0, 0, 1)
+    afkText:SetShadowOffset(2, -2)
     frame.afkText = afkText
 
     local accent = frame:CreateTexture(nil, "ARTWORK")
     accent:SetPoint("TOP", afkText, "BOTTOM", 0, -18)
     accent:SetSize(420, 1)
-    accent:SetColorTexture(DARK.cyan[1], DARK.cyan[2], DARK.cyan[3], 0.46)
+    accent:SetColorTexture(DARK.cyan[1], DARK.cyan[2], DARK.cyan[3], 0.62)
     frame.accent = accent
 
     local timer = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
@@ -226,7 +232,9 @@ function AFK:CreateFrame()
     if titleFont then
         pcall(timer.SetFont, timer, titleFont, 34, "OUTLINE")
     end
-    timer:SetTextColor(DARK.cyan[1], DARK.cyan[2], DARK.cyan[3])
+    timer:SetTextColor(DARK.cyanStrong[1], DARK.cyanStrong[2], DARK.cyanStrong[3])
+    timer:SetShadowColor(0, 0, 0, 1)
+    timer:SetShadowOffset(1, -1)
     frame.timer = timer
 
     local character = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
@@ -235,6 +243,8 @@ function AFK:CreateFrame()
         pcall(character.SetFont, character, titleFont, 24, "OUTLINE")
     end
     character:SetText("Player")
+    character:SetShadowColor(0, 0, 0, 1)
+    character:SetShadowOffset(1, -1)
     frame.character = character
 
     local detail = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -243,6 +253,8 @@ function AFK:CreateFrame()
         pcall(detail.SetFont, detail, titleFont, 16, "OUTLINE")
     end
     detail:SetTextColor(DARK.muted[1], DARK.muted[2], DARK.muted[3])
+    detail:SetShadowColor(0, 0, 0, 1)
+    detail:SetShadowOffset(1, -1)
     frame.detail = detail
 
     local zone = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -250,7 +262,9 @@ function AFK:CreateFrame()
     if titleFont then
         pcall(zone.SetFont, zone, titleFont, 16, "OUTLINE")
     end
-    zone:SetTextColor(0.48, 0.62, 0.74)
+    zone:SetTextColor(DARK.soft[1], DARK.soft[2], DARK.soft[3])
+    zone:SetShadowColor(0, 0, 0, 1)
+    zone:SetShadowOffset(1, -1)
     frame.zone = zone
 
     local money = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -262,7 +276,9 @@ function AFK:CreateFrame()
     if titleFont then
         pcall(quote.SetFont, quote, titleFont, 14, "OUTLINE")
     end
-    quote:SetTextColor(0.52, 0.58, 0.66)
+    quote:SetTextColor(0.78, 0.82, 0.88)
+    quote:SetShadowColor(0, 0, 0, 1)
+    quote:SetShadowOffset(1, -1)
     quote:SetText("Quality of life, the Rapzo way.")
     frame.quote = quote
 
@@ -271,7 +287,9 @@ function AFK:CreateFrame()
     if titleFont then
         pcall(footer.SetFont, footer, titleFont, 13, "OUTLINE")
     end
-    footer:SetTextColor(0.40, 0.46, 0.54)
+    footer:SetTextColor(0.64, 0.70, 0.78)
+    footer:SetShadowColor(0, 0, 0, 1)
+    footer:SetShadowOffset(1, -1)
     frame.footer = footer
 
     local fadeIn = frame:CreateAnimationGroup()
@@ -335,6 +353,13 @@ function AFK:UpdateDisplay()
     if classFile and RAID_CLASS_COLORS and RAID_CLASS_COLORS[classFile] then
         local color = RAID_CLASS_COLORS[classFile]
         r, g, b = color.r or r, color.g or g, color.b or b
+
+        -- Preserve Blizzard class color but lift it toward white so every
+        -- class remains readable over the dark AFK card.
+        local lift = 0.28
+        r = r + ((1 - r) * lift)
+        g = g + ((1 - g) * lift)
+        b = b + ((1 - b) * lift)
     end
 
     frame.character:SetShown(cfg.showCharacter ~= false)
