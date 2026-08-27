@@ -9,11 +9,12 @@ RapzoBags is a modular inventory addon suite for World of Warcraft Retail.
 - **RapzoBags_Search** — global inventory search.
 - **RapzoBags_Collections** — mount, pet, toy, transmog, recipe and collection detection.
 - **RapzoBags_Vendor** — expanded 4x5 merchant view, collected markers and filters.
+- **RapzoBags_AFK** — fullscreen AFK screen with timer, character, zone and safe Retail 12.x detection.
 - **RapzoBags_Config** — configuration panel.
 
 ## Installation
 
-Copy the six `RapzoBags_*` folders directly into:
+Copy the seven `RapzoBags_*` folders directly into:
 
 `World of Warcraft/_retail_/Interface/AddOns/`
 
@@ -21,17 +22,17 @@ Copy the six `RapzoBags_*` folders directly into:
 
 ## Development version
 
-Current development line: **3.0.0-alpha4** for WoW Retail 12.1.0.
+Current development line: **3.0.0-alpha5** for WoW Retail 12.1.0.
 
-Alpha4: vendor filter bar alignment cleaned up; removed the redundant `Rapzo:` prefix and aligned filters with the merchant item grid.
+Alpha5: first RapzoBags AFK Screen implementation. Adds a fullscreen AFK overlay, elapsed timer, character/zone information, preview command, combat-safe hiding and secret-value-safe AFK detection for Retail 12.x.
 
 ## Releases / WowUp
 
 Release packages are generated automatically when a tag beginning with `v` is pushed, for example:
 
 ```bash
-git tag v3.0.0-alpha4
-git push origin v3.0.0-alpha4
+git tag v3.0.0-alpha5
+git push origin v3.0.0-alpha5
 ```
 
-GitHub Actions will create a ZIP containing only the six addon folders and attach it to the GitHub Release.
+GitHub Actions will create a ZIP containing only the seven addon folders and attach it to the GitHub Release.
