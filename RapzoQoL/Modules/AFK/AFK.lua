@@ -157,88 +157,98 @@ function AFK:CreateFrame()
 
     local background = frame:CreateTexture(nil, "BACKGROUND")
     background:SetAllPoints(frame)
-    background:SetColorTexture(0.005, 0.009, 0.018, getConfig().opacity)
+    background:SetColorTexture(0.005, 0.009, 0.018, math.min(0.62, getConfig().opacity * 0.70))
     frame.background = background
 
     local card = CreateFrame("Frame", nil, frame, "BackdropTemplate")
-    card:SetPoint("CENTER", frame, "CENTER", 0, 18)
-    card:SetSize(760, 520)
+    card:SetPoint("CENTER", frame, "CENTER", 0, 6)
+    card:SetSize(560, 350)
     card:SetBackdrop({
         bgFile = "Interface\\Buttons\\WHITE8X8",
         edgeFile = "Interface\\Buttons\\WHITE8X8",
         edgeSize = 1,
     })
-    card:SetBackdropColor(0.004, 0.008, 0.016, 0.70)
-    card:SetBackdropBorderColor(0.15, 0.70, 0.95, 0.20)
+    card:SetBackdropColor(0.004, 0.008, 0.016, 0.38)
+    card:SetBackdropBorderColor(0.15, 0.70, 0.95, 0.10)
     frame.card = card
 
     local topLine = card:CreateTexture(nil, "ARTWORK")
     topLine:SetPoint("TOP", card, "TOP", 0, 0)
-    topLine:SetSize(260, 2)
-    topLine:SetColorTexture(0.22, 0.83, 0.98, 0.85)
+    topLine:SetSize(110, 1)
+    topLine:SetColorTexture(0.22, 0.83, 0.98, 0.55)
     frame.topLine = topLine
 
     local logo = card:CreateTexture(nil, "OVERLAY")
-    logo:SetPoint("TOP", card, "TOP", 0, -42)
-    logo:SetSize(112, 112)
-    logo:SetTexture("Interface\\AddOns\\RapzoQoL\\Media\\RapzoQoLIcon.tga")
+    logo:SetPoint("TOP", card, "TOP", 0, -28)
+    logo:SetSize(1, 1)
+    logo:SetAlpha(0)
     frame.logo = logo
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    title:SetPoint("TOP", logo, "BOTTOM", 0, -14)
-    title:SetText("|cff38bdf8RAPZO BAGS|r")
+    title:SetPoint("TOP", card, "TOP", 0, -34)
+    local titleFont = STANDARD_TEXT_FONT
+    if titleFont then
+        pcall(title.SetFont, title, titleFont, 18, "OUTLINE")
+    end
+    title:SetText("|cff38bdf8RAPZO|r |cffffffffQoL|r")
     frame.title = title
 
     local afkText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
-    afkText:SetPoint("TOP", title, "BOTTOM", 0, -14)
+    afkText:SetPoint("TOP", title, "BOTTOM", 0, -16)
     local fontPath = STANDARD_TEXT_FONT
     if (not fontPath or fontPath == "") and GameFontNormalHuge and GameFontNormalHuge.GetFont then
         fontPath = select(1, GameFontNormalHuge:GetFont())
     end
     if fontPath then
-        pcall(afkText.SetFont, afkText, fontPath, 96, "OUTLINE")
+        pcall(afkText.SetFont, afkText, fontPath, 58, "OUTLINE")
     end
     afkText:SetText("AFK")
-    afkText:SetTextColor(0.92, 0.96, 1.00)
+    afkText:SetTextColor(0.90, 0.94, 0.98)
     frame.afkText = afkText
 
     local accent = frame:CreateTexture(nil, "ARTWORK")
-    accent:SetPoint("TOP", afkText, "BOTTOM", 0, -12)
-    accent:SetSize(360, 1)
-    accent:SetColorTexture(0.22, 0.74, 0.97, 0.75)
+    accent:SetPoint("TOP", afkText, "BOTTOM", 0, -8)
+    accent:SetSize(220, 1)
+    accent:SetColorTexture(0.22, 0.74, 0.97, 0.36)
     frame.accent = accent
 
+    local timer = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    timer:SetPoint("TOP", accent, "BOTTOM", 0, -16)
+    if titleFont then
+        pcall(timer.SetFont, timer, titleFont, 20, "OUTLINE")
+    end
+    timer:SetTextColor(0.22, 0.83, 0.98)
+    frame.timer = timer
+
     local character = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
-    character:SetPoint("TOP", accent, "BOTTOM", 0, -24)
+    character:SetPoint("TOP", timer, "BOTTOM", 0, -20)
+    if titleFont then
+        pcall(character.SetFont, character, titleFont, 16, "OUTLINE")
+    end
     character:SetText("Player")
     frame.character = character
 
     local detail = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    detail:SetPoint("TOP", character, "BOTTOM", 0, -7)
-    detail:SetTextColor(0.72, 0.78, 0.86)
+    detail:SetPoint("TOP", character, "BOTTOM", 0, -6)
+    detail:SetTextColor(0.70, 0.76, 0.84)
     frame.detail = detail
 
     local zone = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    zone:SetPoint("TOP", detail, "BOTTOM", 0, -12)
-    zone:SetTextColor(0.55, 0.67, 0.78)
+    zone:SetPoint("TOP", detail, "BOTTOM", 0, -8)
+    zone:SetTextColor(0.52, 0.64, 0.76)
     frame.zone = zone
 
-    local timer = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    timer:SetPoint("TOP", zone, "BOTTOM", 0, -24)
-    timer:SetTextColor(0.22, 0.83, 0.98)
-    frame.timer = timer
-
     local money = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    money:SetPoint("TOP", timer, "BOTTOM", 0, -10)
+    money:SetPoint("TOP", zone, "BOTTOM", 0, -8)
     frame.money = money
 
     local quote = card:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    quote:SetPoint("BOTTOM", card, "BOTTOM", 0, 50)
-    quote:SetText("The inventory never sleeps.")
+    quote:SetPoint("BOTTOM", card, "BOTTOM", 0, 38)
+    quote:SetText("Quality of life, the Rapzo way.")
     frame.quote = quote
 
     local footer = card:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    footer:SetPoint("TOP", quote, "BOTTOM", 0, -8)
+    footer:SetPoint("TOP", quote, "BOTTOM", 0, -6)
     frame.footer = footer
 
     local fadeIn = frame:CreateAnimationGroup()
@@ -287,9 +297,9 @@ function AFK:UpdateDisplay()
     local frame = self:CreateFrame()
     local cfg = getConfig()
 
-    frame.background:SetColorTexture(0.005, 0.009, 0.018, cfg.opacity)
+    frame.background:SetColorTexture(0.005, 0.009, 0.018, math.min(0.62, cfg.opacity * 0.70))
     if frame.card then
-        frame.card:SetBackdropColor(0.004, 0.008, 0.016, math.min(0.82, cfg.opacity * 0.82))
+        frame.card:SetBackdropColor(0.004, 0.008, 0.016, math.min(0.44, cfg.opacity * 0.44))
     end
 
     local playerName = RB:GetPlayerNameSafe()
@@ -334,7 +344,7 @@ function AFK:UpdateDisplay()
     if cfg.showClock ~= false and type(date) == "function" then
         footerParts[#footerParts + 1] = date("%H:%M")
     end
-    footerParts[#footerParts + 1] = "RapzoBags " .. tostring(RB.version or "")
+    footerParts[#footerParts + 1] = "Rapzo QoL " .. tostring(RB.version or "")
     frame.footer:SetText(table.concat(footerParts, "   ·   "))
 end
 
