@@ -5,7 +5,7 @@
 ## Version: 3.0.0-alpha5
 ## IconTexture: Interface\AddOns\RapzoBags_Core\Media\RapzoBagsIcon.tga
 ## Dependencies: RapzoBags_Core
-## OptionalDeps: RapzoBags_Tooltip, RapzoBags_Search, RapzoBags_Vendor, RapzoBags_Collections, RapzoBags_AFK
+## OptionalDeps: RapzoBags_Tooltip, RapzoBags_Search, RapzoBags_Vendor, RapzoBags_Collections, RapzoBags_AFK, RapzoBags_HUD
 ## Category: Inventory
 
 Config.lua
