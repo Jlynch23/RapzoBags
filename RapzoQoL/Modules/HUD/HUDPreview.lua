@@ -173,7 +173,7 @@ local function applyPreviewStyle(display, style)
     if not display then return end
 
     if style == 2 then
-        display:SetScale(1.50)
+        display:SetScale((type(HUD.GetFrameScale) == "function" and HUD:GetFrameScale()) or 1.50)
         setPreviewShellVisible(display, false)
         display:SetSize(178, 43)
 
@@ -289,6 +289,42 @@ function HUD:CreatePreview()
     hint:SetText("/rapzo hud style 1|2")
     hint:SetTextColor(0.55, 0.75, 0.95)
 
+    local scaleLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    scaleLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -106)
+    scaleLabel:SetText("Escala exacta Style 2")
+
+    local scaleValue = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    scaleValue:SetPoint("LEFT", scaleLabel, "RIGHT", 10, 0)
+    scaleValue:SetTextColor(1.00, 0.82, 0.15)
+
+    local slider = CreateFrame("Slider", "RapzoQoLHUDScaleSlider", frame, "OptionsSliderTemplate")
+    slider:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -124)
+    slider:SetWidth(300)
+    slider:SetMinMaxValues(0.50, 2.50)
+    slider:SetValueStep(0.01)
+    if type(slider.SetObeyStepOnDrag) == "function" then
+        slider:SetObeyStepOnDrag(true)
+    end
+
+    local low = _G[slider:GetName() .. "Low"]
+    local high = _G[slider:GetName() .. "High"]
+    local label = _G[slider:GetName() .. "Text"]
+    if low then low:SetText("0.50x") end
+    if high then high:SetText("2.50x") end
+    if label then label:SetText("") end
+
+    slider:SetScript("OnValueChanged", function(_, value)
+        value = math.floor((tonumber(value) or 1.50) * 100 + 0.5) / 100
+        scaleValue:SetText(string.format("%.2fx  (~%dx%d px)", value, math.floor(178 * value + 0.5), math.floor(43 * value + 0.5)))
+        if type(HUD.SetFrameScale) == "function" then
+            HUD:SetFrameScale(value, true)
+        end
+    end)
+
+    slider:SetValue((type(HUD.GetFrameScale) == "function" and HUD:GetFrameScale()) or 1.50)
+    frame.RapzoQoLScaleSlider = slider
+    frame.RapzoQoLScaleValue = scaleValue
+
     local player = makeDemo(frame, "player", "Rapzo", getPreviewClassColor("WARRIOR", {0.92, 0.66, 0.10}), "WARRIOR", false)
     player:SetPoint("TOPLEFT", frame, "TOPLEFT", 70, -190)
 
@@ -318,6 +354,17 @@ end
 function HUD:RefreshPreview()
     local frame = self.previewFrame
     if not frame then return end
+
+    if frame.RapzoQoLScaleSlider and type(self.GetFrameScale) == "function" then
+        local scale = self:GetFrameScale()
+        if math.abs((frame.RapzoQoLScaleSlider:GetValue() or 0) - scale) > 0.001 then
+            frame.RapzoQoLScaleSlider:SetValue(scale)
+        end
+        if frame.RapzoQoLScaleValue then
+            frame.RapzoQoLScaleValue:SetText(string.format("%.2fx  (~%dx%d px)", scale, math.floor(178 * scale + 0.5), math.floor(43 * scale + 0.5)))
+        end
+    end
+
     local style = self:GetStyle()
     for _, key in ipairs({"player", "target", "focus"}) do
         applyPreviewStyle(self.previewDisplays[key], style)
