@@ -19,7 +19,7 @@ local function applyBrand()
     end
 
     if frame.title then
-        frame.title:SetText("|cff38bdf8RAPZO|r |cffffffffQoL|r")
+        frame.title:SetText("|cff5DE7FFRAPZO|r |cffF4F7FBQoL|r")
     end
 
     if frame.quote then
