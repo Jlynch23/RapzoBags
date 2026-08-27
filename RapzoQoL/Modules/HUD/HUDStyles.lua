@@ -6,6 +6,7 @@ local HUD = RB.HUD
 local WHITE_TEXTURE = "Interface\\Buttons\\WHITE8X8"
 local CLASS_TEXTURE = "Interface\\GLUES\\CHARACTERCREATE\\UI-CHARACTERCREATE-CLASSES"
 local FALLBACK_ICON = "Interface\\Icons\\INV_Misc_QuestionMark"
+local PORTRAIT_MASK = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
 
 local STYLE_CURRENT = 1
 local STYLE_ICON = 2
@@ -77,17 +78,32 @@ local function ensureUnitIcon(display)
     holder:SetFrameLevel(display:GetFrameLevel() + 2)
 
     local bg = holder:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints(holder)
+    bg:SetPoint("TOPLEFT", holder, "TOPLEFT", 3, -3)
+    bg:SetPoint("BOTTOMRIGHT", holder, "BOTTOMRIGHT", -3, 3)
     bg:SetColorTexture(0.01, 0.02, 0.03, 0.98)
 
     local icon = holder:CreateTexture(nil, "ARTWORK")
-    icon:SetPoint("TOPLEFT", holder, "TOPLEFT", 2, -2)
-    icon:SetPoint("BOTTOMRIGHT", holder, "BOTTOMRIGHT", -2, 2)
+    icon:SetPoint("TOPLEFT", holder, "TOPLEFT", 4, -4)
+    icon:SetPoint("BOTTOMRIGHT", holder, "BOTTOMRIGHT", -4, 4)
     icon:SetTexture(FALLBACK_ICON)
 
-    holder.RapzoQoLEdges = createSimpleEdges(holder, display.color)
+    if type(holder.CreateMaskTexture) == "function" and type(icon.AddMaskTexture) == "function" then
+        local mask = holder:CreateMaskTexture()
+        mask:SetAllPoints(icon)
+        mask:SetTexture(PORTRAIT_MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+        icon:AddMaskTexture(mask)
+        bg:AddMaskTexture(mask)
+        holder.RapzoQoLMask = mask
+    end
+
+    local ring = holder:CreateTexture(nil, "OVERLAY")
+    ring:SetAllPoints(holder)
+    ring:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
+    ring:SetBlendMode("ADD")
+    ring:SetVertexColor(0.95, 0.70, 0.16, 0.98)
 
     holder.icon = icon
+    holder.RapzoQoLRing = ring
     display.RapzoQoLUnitIcon = holder
     return holder
 end
@@ -128,8 +144,8 @@ local function updateUnitIcon(display)
     holder:Show()
 
     local color = display.color or {0.95, 0.70, 0.16}
-    for _, edge in ipairs(holder.RapzoQoLEdges or {}) do
-        edge:SetColorTexture(color[1], color[2], color[3], 0.78)
+    if holder.RapzoQoLRing then
+        holder.RapzoQoLRing:SetVertexColor(color[1], color[2], color[3], 0.98)
     end
 
     local unit = display.unit
