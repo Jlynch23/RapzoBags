@@ -182,6 +182,7 @@ function AFK:CreateFrame()
     card:SetBackdropColor(DARK.card[1], DARK.card[2], DARK.card[3], 0.88)
     card:SetBackdropBorderColor(DARK.border[1], DARK.border[2], DARK.border[3], 0.18)
     frame.card = card
+    card:SetFrameLevel(frame:GetFrameLevel() + 10)
 
     local topLine = card:CreateTexture(nil, "ARTWORK")
     topLine:SetPoint("TOP", card, "TOP", 0, 0)
@@ -195,7 +196,7 @@ function AFK:CreateFrame()
     logo:SetAlpha(0)
     frame.logo = logo
 
-    local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    local title = card:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOP", card, "TOP", 0, -56)
     local titleFont = STANDARD_TEXT_FONT
     if titleFont then
@@ -204,9 +205,10 @@ function AFK:CreateFrame()
     title:SetText("|cff5DE7FFRAPZO|r |cffF4F7FBQoL|r")
     title:SetShadowColor(0, 0, 0, 1)
     title:SetShadowOffset(1, -1)
+    title:SetDrawLayer("OVERLAY", 7)
     frame.title = title
 
-    local afkText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
+    local afkText = card:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
     afkText:SetPoint("TOP", title, "BOTTOM", 0, -24)
     local fontPath = STANDARD_TEXT_FONT
     if (not fontPath or fontPath == "") and GameFontNormalHuge and GameFontNormalHuge.GetFont then
@@ -219,15 +221,16 @@ function AFK:CreateFrame()
     afkText:SetTextColor(DARK.text[1], DARK.text[2], DARK.text[3])
     afkText:SetShadowColor(0, 0, 0, 1)
     afkText:SetShadowOffset(2, -2)
+    afkText:SetDrawLayer("OVERLAY", 7)
     frame.afkText = afkText
 
-    local accent = frame:CreateTexture(nil, "ARTWORK")
+    local accent = card:CreateTexture(nil, "ARTWORK")
     accent:SetPoint("TOP", afkText, "BOTTOM", 0, -18)
     accent:SetSize(420, 1)
     accent:SetColorTexture(DARK.cyan[1], DARK.cyan[2], DARK.cyan[3], 0.62)
     frame.accent = accent
 
-    local timer = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    local timer = card:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     timer:SetPoint("TOP", accent, "BOTTOM", 0, -26)
     if titleFont then
         pcall(timer.SetFont, timer, titleFont, 34, "OUTLINE")
@@ -235,9 +238,10 @@ function AFK:CreateFrame()
     timer:SetTextColor(DARK.cyanStrong[1], DARK.cyanStrong[2], DARK.cyanStrong[3])
     timer:SetShadowColor(0, 0, 0, 1)
     timer:SetShadowOffset(1, -1)
+    timer:SetDrawLayer("OVERLAY", 7)
     frame.timer = timer
 
-    local character = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
+    local character = card:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
     character:SetPoint("TOP", timer, "BOTTOM", 0, -34)
     if titleFont then
         pcall(character.SetFont, character, titleFont, 24, "OUTLINE")
@@ -245,9 +249,10 @@ function AFK:CreateFrame()
     character:SetText("Player")
     character:SetShadowColor(0, 0, 0, 1)
     character:SetShadowOffset(1, -1)
+    character:SetDrawLayer("OVERLAY", 7)
     frame.character = character
 
-    local detail = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    local detail = card:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     detail:SetPoint("TOP", character, "BOTTOM", 0, -10)
     if titleFont then
         pcall(detail.SetFont, detail, titleFont, 16, "OUTLINE")
@@ -255,9 +260,10 @@ function AFK:CreateFrame()
     detail:SetTextColor(DARK.muted[1], DARK.muted[2], DARK.muted[3])
     detail:SetShadowColor(0, 0, 0, 1)
     detail:SetShadowOffset(1, -1)
+    detail:SetDrawLayer("OVERLAY", 7)
     frame.detail = detail
 
-    local zone = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    local zone = card:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     zone:SetPoint("TOP", detail, "BOTTOM", 0, -12)
     if titleFont then
         pcall(zone.SetFont, zone, titleFont, 16, "OUTLINE")
@@ -265,10 +271,12 @@ function AFK:CreateFrame()
     zone:SetTextColor(DARK.soft[1], DARK.soft[2], DARK.soft[3])
     zone:SetShadowColor(0, 0, 0, 1)
     zone:SetShadowOffset(1, -1)
+    zone:SetDrawLayer("OVERLAY", 7)
     frame.zone = zone
 
-    local money = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    local money = card:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     money:SetPoint("TOP", zone, "BOTTOM", 0, -12)
+    money:SetDrawLayer("OVERLAY", 7)
     frame.money = money
 
     local quote = card:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
