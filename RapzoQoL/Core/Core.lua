@@ -356,6 +356,15 @@ SlashCmdList.RAPZOQOL = function(message)
     if handler then handler(rest or "") else RB:PrintHelp() end
 end
 
+-- Alias rapido para recargar la interfaz.
+-- /rl se comporta como /reload, pero queda registrado por Rapzo QoL.
+SLASH_RAPZOQOLRELOAD1 = "/rl"
+SlashCmdList.RAPZOQOLRELOAD = function()
+    if type(ReloadUI) == "function" then
+        ReloadUI()
+    end
+end
+
 RB:RegisterEventSafe(eventFrame, "ADDON_LOADED")
 RB:RegisterEventSafe(eventFrame, "PLAYER_LOGIN")
 RB:RegisterEventSafe(eventFrame, "PLAYER_ENTERING_WORLD")
