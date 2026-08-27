@@ -16,6 +16,7 @@ local function makePanel(parent, width, height, color)
     local bg = frame:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints(frame)
     bg:SetColorTexture(0.005, 0.009, 0.015, 0.96)
+    frame.RapzoQoLPanel = bg
 
     local accent = frame:CreateTexture(nil, "ARTWORK")
     accent:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
@@ -23,8 +24,10 @@ local function makePanel(parent, width, height, color)
     accent:SetHeight(2)
     accent:SetColorTexture(color[1], color[2], color[3], 0.95)
 
+    local edges = {}
     local function edge(a, b, c, d, w, h)
         local tex = frame:CreateTexture(nil, "OVERLAY")
+        edges[#edges + 1] = tex
         tex:SetPoint(a, frame, a, b, c)
         if d then tex:SetPoint(d, frame, d, -b, -c) end
         if w then tex:SetWidth(w) end
@@ -38,6 +41,7 @@ local function makePanel(parent, width, height, color)
     edge("TOPRIGHT", 1, 1, "BOTTOMRIGHT", 1, nil)
 
     frame.RapzoQoLAccent = accent
+    frame.RapzoQoLEdges = edges
     return frame
 end
 
@@ -178,10 +182,20 @@ local function makeDemo(parent, key, title, color, classFile, isMob)
     return display
 end
 
+local function setPreviewShellVisible(display, visible)
+    if not display then return end
+    if display.RapzoQoLPanel then display.RapzoQoLPanel:SetAlpha(visible and 1 or 0) end
+    if display.RapzoQoLAccent then display.RapzoQoLAccent:SetAlpha(visible and 1 or 0) end
+    for _, edge in ipairs(display.RapzoQoLEdges or {}) do
+        edge:SetAlpha(visible and 1 or 0)
+    end
+end
+
 local function applyPreviewStyle(display, style)
     if not display then return end
 
     if style == 2 then
+        setPreviewShellVisible(display, false)
         display:SetSize(296, 72)
 
         display.nameText:ClearAllPoints()
@@ -201,6 +215,7 @@ local function applyPreviewStyle(display, style)
         display.previewCast:Show()
         display.unitTag:Hide()
     else
+        setPreviewShellVisible(display, true)
         display:SetSize(240, 64)
 
         display.nameText:ClearAllPoints()
