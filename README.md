@@ -34,7 +34,7 @@ The legacy `RapzoBags_*` folders are no longer separate addons.
 - `/rapzo afk preview`
 - `/rapzo hud status`
 - `/rapzo hud style 1` — current compact unit-frame style.
-- `/rapzo hud style 2` — icon/class-or-mob reference, auras on top and cast bar below.
+- `/rapzo hud style 2` — clean icon-free layout, auras on top and cast bar below.
 - `/rapzo hud preview` — toggles the in-game fake/demo unit-frame preview.
 - `/rapzo hud preview on|off`
 
@@ -55,8 +55,6 @@ The offline preview is for geometry and visual iteration. Protected Blizzard beh
 **Style 1** is the existing working Rapzo QoL unit-frame design and is intentionally preserved.
 
 **Style 2** is selectable, uses an invisible outer container (no panel, no top line, no exterior border), and adds:
-- class icon for player units;
-- a reference portrait/icon for mobs;
 - class-correct colors from Blizzard's `RAID_CLASS_COLORS`;
 - helpful player auras in a WoW 12.1 AuraContainer above the player frame;
 - Target/Focus native aura containers re-anchored above the usable frame area;
