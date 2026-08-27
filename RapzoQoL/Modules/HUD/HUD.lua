@@ -34,6 +34,14 @@ local function safeCall(func, ...)
     return pcall(func, ...)
 end
 
+local function getAccentColor()
+    if type(RB.GetAccentColor) == "function" then
+        local r, g, b = RB:GetAccentColor()
+        return {r, g, b}
+    end
+    return COLORS.border
+end
+
 local function getUnitClassColor(unit, fallback, requirePlayer)
     fallback = fallback or { 0.92, 0.66, 0.10 }
 
@@ -451,7 +459,8 @@ function HUD:CreateCursorRing()
     end
 
     outer:SetBlendMode("ADD")
-    outer:SetVertexColor(0.18, 0.92, 1.00, 1.00)
+    local accent = getAccentColor()
+    outer:SetVertexColor(accent[1], accent[2], accent[3], 1.00)
     frame.outer = outer
 
     local core = frame:CreateTexture(nil, "OVERLAY")
@@ -502,7 +511,7 @@ local function createMinimapBorder()
     if not _G.Minimap then return end
     if HUD.minimapBorder then return HUD.minimapBorder end
 
-    HUD.minimapBorder = createEdges(_G.Minimap, COLORS.border, 0.72, 2)
+    HUD.minimapBorder = createEdges(_G.Minimap, getAccentColor(), 0.72, 2)
     return HUD.minimapBorder
 end
 
@@ -518,6 +527,18 @@ function HUD:StyleMinimap()
     end
 
     createMinimapBorder()
+end
+
+function HUD:ApplyTheme()
+    local accent = getAccentColor()
+
+    if self.cursorFrame and self.cursorFrame.outer then
+        self.cursorFrame.outer:SetVertexColor(accent[1], accent[2], accent[3], 1.00)
+    end
+
+    for _, edge in ipairs(self.minimapBorder or {}) do
+        edge:SetColorTexture(accent[1], accent[2], accent[3], 0.72)
+    end
 end
 
 function HUD:Apply()
@@ -537,6 +558,7 @@ function HUD:Apply()
 
     if cfg.squareMinimap then self:StyleMinimap() end
     if cfg.unitFrames then self:StyleUnitFrames() end
+    self:ApplyTheme()
 end
 
 function HUD:SetEnabled(enabled)
