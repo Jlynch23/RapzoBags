@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rapzo QoL — HUD Frames Preview</title>
+<style>
+  :root{
+    --bg:#05080d;--panel:#070b12;--panel2:#0b111b;--line:#243447;
+    --gold:#f0a81b;--cyan:#1eb9e6;--red:#ed4d17;--green:#36c85f;
+    --power:#35465e;--text:#eef5ff;--muted:#94a3b8;--scale:1;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;min-height:100vh;color:var(--text);
+    font-family:Inter,Segoe UI,Arial,sans-serif;
+    background:
+      radial-gradient(circle at 50% 18%,rgba(35,79,120,.32),transparent 34%),
+      radial-gradient(circle at 80% 70%,rgba(107,66,15,.18),transparent 30%),
+      linear-gradient(180deg,#101a28 0%,#07101a 48%,#04070b 100%);
+    overflow-x:hidden;
+  }
+  body:before{
+    content:"";position:fixed;inset:0;pointer-events:none;opacity:.17;
+    background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+    background-size:38px 38px;
+  }
+  .app{max-width:1480px;margin:auto;padding:28px 30px 44px}
+  .topbar{display:flex;gap:24px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+  .brand h1{margin:0;font-size:34px;letter-spacing:.4px}
+  .brand h1 span{color:var(--gold)}
+  .brand p{margin:6px 0 0;color:var(--muted)}
+  .controls{
+    display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+    background:rgba(4,8,13,.82);border:1px solid #26384c;border-radius:12px;padding:12px;
+    box-shadow:0 12px 35px rgba(0,0,0,.28)
+  }
+  button,select,input{font:inherit}
+  button{
+    border:1px solid #31465d;background:#0b1420;color:#dce9f8;
+    padding:9px 13px;border-radius:8px;cursor:pointer
+  }
+  button.active{border-color:var(--gold);color:#ffd778;background:#201809}
+  button:hover{filter:brightness(1.16)}
+  .control{display:flex;align-items:center;gap:8px;color:#b8c7d8;font-size:13px}
+  input[type=range]{width:135px}
+  select{background:#0b1420;color:#dce9f8;border:1px solid #31465d;padding:7px 8px;border-radius:7px}
+  .stage{
+    margin-top:26px;min-height:760px;border:1px solid #1f3144;border-radius:16px;
+    position:relative;overflow:hidden;
+    background:
+      linear-gradient(rgba(3,7,12,.08),rgba(3,7,12,.64)),
+      radial-gradient(circle at 52% 42%,rgba(53,97,131,.18),transparent 30%),
+      linear-gradient(135deg,#18263a 0%,#0d1725 46%,#11131a 100%);
+    box-shadow:inset 0 0 80px rgba(0,0,0,.46),0 25px 80px rgba(0,0,0,.32)
+  }
+  .stage:before{
+    content:"OFFLINE HUD PREVIEW";position:absolute;right:22px;bottom:17px;
+    color:rgba(255,255,255,.10);font-weight:800;letter-spacing:4px;font-size:20px
+  }
+  .guide{
+    position:absolute;left:22px;top:20px;width:310px;padding:15px 17px;
+    border:1px solid rgba(240,168,27,.42);border-radius:11px;background:rgba(5,8,13,.78);
+    backdrop-filter:blur(6px)
+  }
+  .guide strong{color:#ffd067}
+  .guide p{margin:6px 0;color:#aab8c8;font-size:13px;line-height:1.45}
+  .viewport{
+    position:absolute;inset:0;transform:scale(var(--scale));transform-origin:50% 50%;
+  }
+  .unit-wrap{position:absolute}
+  .player-pos{left:15%;top:46%}
+  .target-pos{left:57%;top:46%}
+  .focus-pos{left:62%;top:18%}
+  .label{
+    position:absolute;left:0;bottom:calc(100% + 58px);font-size:12px;letter-spacing:1.5px;
+    color:#93a4b9;text-transform:uppercase
+  }
+  .frame{
+    --accent:var(--gold);width:240px;height:64px;position:relative;
+    background:rgba(2,5,9,.94);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);
+    box-shadow:0 8px 28px rgba(0,0,0,.46),inset 0 0 16px rgba(255,255,255,.015);
+  }
+  .frame:before{
+    content:"";position:absolute;left:0;right:0;top:0;height:2px;background:var(--accent)
+  }
+  .frame.player{--accent:#d49a20}
+  .frame.target{--accent:#eb4d16}
+  .frame.focus{--accent:#21b5e7}
+  .name{
+    position:absolute;left:6px;right:6px;top:6px;height:15px;
+    font-size:14px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+  }
+  .tag{float:right;color:var(--accent);font-size:10px;letter-spacing:1.1px;margin-top:2px}
+  .bar{
+    position:absolute;left:6px;right:6px;height:24px;background:#05080d;
+    border:1px solid color-mix(in srgb,var(--accent) 46%,#1b2634);
+    overflow:hidden
+  }
+  .health{top:25px}
+  .power{top:53px;height:10px;border-color:#344960}
+  .fill{position:absolute;inset:0 auto 0 0;width:86%;background:var(--accent)}
+  .power .fill{width:72%;background:var(--power)}
+  .bartext{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:11px;font-weight:700;text-shadow:0 1px 2px #000}
+  .power .bartext{font-size:9px}
+  .portrait{
+    display:none;position:absolute;left:6px;top:9px;width:54px;height:54px;border-radius:50%;
+    border:2px solid var(--accent);background:radial-gradient(circle at 35% 30%,#30435d,#111824 72%);
+    box-shadow:0 0 0 3px rgba(0,0,0,.8),0 0 18px color-mix(in srgb,var(--accent) 24%,transparent);
+    place-items:center;font-size:12px;font-weight:800;color:#f9d778;letter-spacing:.5px
+  }
+  .portrait.mob{font-size:23px;color:#ddd}
+  .auras{
+    position:absolute;left:0;bottom:calc(100% + 7px);height:29px;
+    display:flex;gap:5px;align-items:flex-end
+  }
+  .aura{
+    width:27px;height:27px;border:1px solid #78622d;border-radius:4px;
+    background:
+      radial-gradient(circle at 35% 30%,rgba(255,255,255,.48),transparent 17%),
+      linear-gradient(135deg,#e7a522,#5e2f08);
+    box-shadow:0 2px 8px #000;position:relative
+  }
+  .aura:nth-child(2){background:linear-gradient(135deg,#42b5f5,#243d9b)}
+  .aura:nth-child(3){background:linear-gradient(135deg,#d865ff,#5c1684)}
+  .aura:nth-child(4){background:linear-gradient(135deg,#61d57a,#154d29)}
+  .aura:nth-child(5){background:linear-gradient(135deg,#ff6d4d,#6d1616)}
+  .aura:after{content:attr(data-t);position:absolute;top:29px;left:50%;transform:translateX(-50%);
+    font-size:9px;color:#e7edf6;white-space:nowrap;text-shadow:0 1px 2px #000}
+  .cast{
+    display:none;position:absolute;height:15px;left:66px;right:6px;top:calc(100% + 4px);
+    border:1px solid #3a526c;background:#05080d;overflow:hidden
+  }
+  .cast .fill{width:62%;background:linear-gradient(90deg,#ba7b13,#f5bc37)}
+  .cast span{position:absolute;inset:0;display:grid;place-items:center;font-size:9px;font-weight:700}
+  body.style2 .frame{width:296px;height:72px}
+  body.style2 .portrait{display:grid}
+  body.style2 .name{left:66px;right:6px}
+  body.style2 .health{left:66px;top:25px;right:6px}
+  body.style2 .power{left:66px;top:53px;right:6px}
+  body.style2 .tag{display:none}
+  body.style2 .auras{left:66px}
+  body.style2 .cast{display:block}
+  body.style1 .player-pos .auras{display:none}
+  body.style1 .cast{display:none}
+  .legend{
+    position:absolute;left:50%;bottom:28px;transform:translateX(-50%);
+    width:min(720px,90%);padding:13px 18px;text-align:center;background:rgba(3,7,11,.78);
+    border:1px solid #26384c;border-radius:10px;color:#aab8c8;font-size:13px
+  }
+  .legend b{color:#f3c65d}
+  .spec{
+    position:absolute;right:22px;top:20px;width:300px;padding:14px 16px;
+    background:rgba(4,8,13,.78);border:1px solid #26384c;border-radius:11px
+  }
+  .spec h3{margin:0 0 8px;color:#f2c15a;font-size:14px}
+  .spec ul{padding-left:18px;margin:0;color:#aab8c8;font-size:12px;line-height:1.65}
+  @media(max-width:900px){
+    .stage{min-height:920px}.guide,.spec{position:static;margin:15px;width:auto}
+    .viewport{position:relative;height:700px;transform-origin:top center}
+    .player-pos{left:9%;top:30%}.target-pos{left:9%;top:54%}.focus-pos{left:9%;top:78%}
+  }
+</style>
+</head>
+<body class="style2">
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <h1>RAPZO <span>QoL</span> — Frames Lab</h1>
+      <p>Preview offline del HUD. No necesita World of Warcraft.</p>
+    </div>
+    <div class="controls">
+      <button id="style1">Estilo 1 · Actual</button>
+      <button id="style2" class="active">Estilo 2 · Icon + Buffs TOP + Cast BOT</button>
+      <label class="control">Escala <input id="scale" type="range" min="75" max="135" value="100"><span id="scaleText">100%</span></label>
+      <label class="control">Target
+        <select id="targetType"><option value="mob">Mob</option><option value="player">Player</option></select>
+      </label>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="guide">
+      <strong>Objetivo de Estilo 2</strong>
+      <p>Player/player-target: icono de clase. Mob: icono/representación referencial. Buffs y debuffs arriba. Barra de casteo abajo.</p>
+    </div>
+
+    <div class="spec">
+      <h3>Comparación rápida</h3>
+      <ul>
+        <li>Estilo 1 nunca se elimina.</li>
+        <li>Estilo 2 amplía el frame a 296×72.</li>
+        <li>Zona izquierda reservada al icono.</li>
+        <li>Auras superiores con ancho útil del frame.</li>
+        <li>Castbar inferior independiente.</li>
+      </ul>
+    </div>
+
+    <div class="viewport">
+      <div class="unit-wrap player-pos">
+        <div class="label">Player</div>
+        <div class="frame player">
+          <div class="portrait">WAR</div>
+          <div class="auras"><i class="aura" data-t="2m"></i><i class="aura" data-t="38s"></i><i class="aura" data-t="12s"></i><i class="aura" data-t="1m"></i></div>
+          <div class="name">Rapzo <span class="tag">PLAYER</span></div>
+          <div class="bar health"><i class="fill"></i><span class="bartext">1.24M / 1.24M · 100%</span></div>
+          <div class="bar power"><i class="fill"></i><span class="bartext">RAGE · 72</span></div>
+          <div class="cast"><i class="fill"></i><span>Shield Charge · 0.8 / 1.2</span></div>
+        </div>
+      </div>
+
+      <div class="unit-wrap target-pos">
+        <div class="label">Target</div>
+        <div class="frame target">
+          <div id="targetPortrait" class="portrait mob">☠</div>
+          <div class="auras"><i class="aura" data-t="24s"></i><i class="aura" data-t="18s"></i><i class="aura" data-t="7s"></i><i class="aura" data-t="3s"></i></div>
+          <div id="targetName" class="name">Muñeco de entrenamiento <span class="tag">TARGET</span></div>
+          <div class="bar health"><i class="fill" style="width:64%"></i><span class="bartext">64%</span></div>
+          <div class="bar power"><i class="fill" style="width:34%"></i><span class="bartext">POWER</span></div>
+          <div class="cast"><i class="fill" style="width:48%"></i><span>Golpe demo · 1.2 / 2.0</span></div>
+        </div>
+      </div>
+
+      <div class="unit-wrap focus-pos">
+        <div class="label">Focus</div>
+        <div class="frame focus">
+          <div class="portrait">MAG</div>
+          <div class="auras"><i class="aura" data-t="1m"></i><i class="aura" data-t="22s"></i><i class="aura" data-t="8s"></i></div>
+          <div class="name">Focus Player <span class="tag">FOCUS</span></div>
+          <div class="bar health"><i class="fill" style="width:91%"></i><span class="bartext">91%</span></div>
+          <div class="bar power"><i class="fill" style="width:58%"></i><span class="bartext">MANA · 58%</span></div>
+          <div class="cast"><i class="fill" style="width:73%"></i><span>Arcane Demo · 1.1 / 1.5</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend"><b>Rapzo QoL Frames Lab:</b> este HTML representa geometría, jerarquía y espaciado. El render final de texturas/auras protegidas se valida dentro de WoW con <code>/rapzo hud preview</code>.</div>
+  </div>
+</div>
+
+<script>
+const body=document.body;
+const b1=document.getElementById('style1');
+const b2=document.getElementById('style2');
+const scale=document.getElementById('scale');
+const scaleText=document.getElementById('scaleText');
+const targetType=document.getElementById('targetType');
+const targetPortrait=document.getElementById('targetPortrait');
+const targetName=document.getElementById('targetName');
+
+function setStyle(n){
+  body.classList.toggle('style1',n===1);
+  body.classList.toggle('style2',n===2);
+  b1.classList.toggle('active',n===1);
+  b2.classList.toggle('active',n===2);
+  localStorage.setItem('rapzoPreviewStyle',String(n));
+}
+b1.onclick=()=>setStyle(1);
+b2.onclick=()=>setStyle(2);
+
+scale.oninput=()=>{
+  const n=Number(scale.value);
+  document.documentElement.style.setProperty('--scale',String(n/100));
+  scaleText.textContent=n+'%';
+};
+
+targetType.onchange=()=>{
+  const player=targetType.value==='player';
+  targetPortrait.classList.toggle('mob',!player);
+  targetPortrait.textContent=player?'ROG':'☠';
+  targetName.firstChild.nodeValue=player?'Player enemigo ':'Muñeco de entrenamiento ';
+};
+
+setStyle(Number(localStorage.getItem('rapzoPreviewStyle'))===1?1:2);
+</script>
+</body>
+</html>
