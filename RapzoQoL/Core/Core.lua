@@ -12,6 +12,8 @@ RB.modules = RB.modules or {}
 RB.commands = RB.commands or {}
 RB.helpLines = RB.helpLines or {}
 
+local DEFAULT_ACCENT = { r = 0.22, g = 0.83, b = 0.98 }
+
 local eventFrame = CreateFrame("Frame")
 RB.eventFrame = eventFrame
 
@@ -62,6 +64,12 @@ function RB:EnsureDB()
     db.account.bank = type(db.account.bank) == "table" and db.account.bank or {}
     db.settings = type(db.settings) == "table" and db.settings or {}
     db.settings.modules = type(db.settings.modules) == "table" and db.settings.modules or {}
+    db.settings.theme = type(db.settings.theme) == "table" and db.settings.theme or {}
+    db.settings.theme.accent = type(db.settings.theme.accent) == "table" and db.settings.theme.accent or {
+        r = DEFAULT_ACCENT.r,
+        g = DEFAULT_ACCENT.g,
+        b = DEFAULT_ACCENT.b,
+    }
 
     -- Migracion desde RapzoBags 2.x: conserva tus preferencias existentes.
     if db.settings.tooltip == nil then db.settings.tooltip = true end
@@ -102,6 +110,55 @@ function RB:SetFeatureEnabled(key, enabled, quiet)
     if key == "tooltip" then db.settings.tooltip = enabled and true or false end
     if not quiet then
         self:Print(string.format("Modulo %s: %s", tostring(key), enabled and "ON" or "OFF"))
+    end
+end
+
+local function clamp01(value)
+    value = tonumber(value) or 0
+    if value < 0 then return 0 end
+    if value > 1 then return 1 end
+    return value
+end
+
+function RB:GetAccentColor()
+    local accent = self:EnsureDB().settings.theme.accent
+    return clamp01(accent.r or DEFAULT_ACCENT.r),
+        clamp01(accent.g or DEFAULT_ACCENT.g),
+        clamp01(accent.b or DEFAULT_ACCENT.b)
+end
+
+function RB:ColorToHex(r, g, b)
+    r, g, b = clamp01(r), clamp01(g), clamp01(b)
+    return string.format("%02X%02X%02X", math.floor((r * 255) + 0.5), math.floor((g * 255) + 0.5), math.floor((b * 255) + 0.5))
+end
+
+function RB:RefreshPrefix()
+    local r, g, b = self:GetAccentColor()
+    self.prefix = "|cff" .. self:ColorToHex(r, g, b) .. "Rapzo QoL|r"
+end
+
+function RB:ApplyTheme()
+    self:RefreshPrefix()
+    for _, module in pairs(self.modules or {}) do
+        if module and type(module.ApplyTheme) == "function" then
+            pcall(module.ApplyTheme, module)
+        end
+    end
+end
+
+function RB:SetAccentColor(r, g, b, quiet)
+    local accent = self:EnsureDB().settings.theme.accent
+    accent.r, accent.g, accent.b = clamp01(r), clamp01(g), clamp01(b)
+    self:ApplyTheme()
+    if not quiet then
+        self:Print("Accent Color: #" .. self:ColorToHex(accent.r, accent.g, accent.b))
+    end
+end
+
+function RB:ResetAccentColor(quiet)
+    self:SetAccentColor(DEFAULT_ACCENT.r, DEFAULT_ACCENT.g, DEFAULT_ACCENT.b, true)
+    if not quiet then
+        self:Print("Accent Color restablecido: #" .. self:ColorToHex(DEFAULT_ACCENT.r, DEFAULT_ACCENT.g, DEFAULT_ACCENT.b))
     end
 end
 
@@ -313,6 +370,7 @@ end
 
 function RB:Initialize()
     self:EnsureDB()
+    self:RefreshPrefix()
     self:TouchCharacter()
     self:ApplyBagDirectionDelayed()
     if self.Scanner and self.Scanner.Initialize then self.Scanner:Initialize() end
@@ -326,6 +384,30 @@ RB:RegisterCommand("scan", function()
 end)
 RB:RegisterCommand("status", function() RB:ShowStatus() end)
 RB:RegisterCommand("modules", function() RB:ShowModules() end)
+RB:RegisterCommand("color", function(rest)
+    rest = tostring(rest or ""):gsub("%s+", "")
+    if rest == "" then
+        local r, g, b = RB:GetAccentColor()
+        RB:Print("Accent Color actual: #" .. RB:ColorToHex(r, g, b) .. " | usa /rapzo color #RRGGBB o /rapzo color reset")
+        return
+    end
+
+    if string.lower(rest) == "reset" then
+        RB:ResetAccentColor(false)
+        return
+    end
+
+    local hex = rest:gsub("^#", "")
+    if not hex:match("^[%x][%x][%x][%x][%x][%x]$") then
+        RB:Print("Uso: /rapzo color #RRGGBB | /rapzo color reset")
+        return
+    end
+
+    local r = tonumber(hex:sub(1, 2), 16) / 255
+    local g = tonumber(hex:sub(3, 4), 16) / 255
+    local b = tonumber(hex:sub(5, 6), 16) / 255
+    RB:SetAccentColor(r, g, b, false)
+end, "/rapzo color #RRGGBB|reset - cambia el Accent Color")
 RB:RegisterCommand("help", function() RB:PrintHelp() end)
 RB:RegisterCommand("ayuda", function() RB:PrintHelp() end)
 RB:RegisterCommand("reset", function(rest)
