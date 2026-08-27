@@ -250,10 +250,10 @@ local function createUnitDisplay(unit, nativeFrame, color)
         display:SetPoint("TOPRIGHT", nativeFrame, "TOPRIGHT", 2, -18)
     end
 
-    display:SetFrameStrata("LOW")
-    -- Keep our visual panel below Blizzard's aura container. The previous
-    -- +15 frame level could cover target/focus buffs.
-    display:SetFrameLevel(math.max(1, nativeFrame:GetFrameLevel() - 1))
+    -- BACKGROUND keeps this panel visible over the 3D world while Blizzard's
+    -- native LOW-strata auras/click frames remain above it.
+    display:SetFrameStrata("BACKGROUND")
+    display:SetFrameLevel(50)
     display:EnableMouse(false)
 
     local panel = display:CreateTexture(nil, "BACKGROUND")
@@ -420,7 +420,15 @@ function HUD:CreateCursorRing()
 
     local outer = frame:CreateTexture(nil, "OVERLAY")
     outer:SetAllPoints(frame)
-    outer:SetAtlas(CURSOR_ATLAS, false)
+
+    local atlasOK = false
+    if type(outer.SetAtlas) == "function" then
+        atlasOK = pcall(outer.SetAtlas, outer, CURSOR_ATLAS, false)
+    end
+    if not atlasOK then
+        outer:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
+    end
+
     outer:SetBlendMode("ADD")
     outer:SetVertexColor(0.05, 0.88, 1.00, 0.95)
     frame.outer = outer
@@ -542,6 +550,23 @@ function HUD:HandleSlash(rest)
     elseif part == "off" then
         self:SetEnabled(false)
         return
+    elseif part == "debug" then
+        local cfg = getConfig()
+        local loaded = true
+        if C_AddOns and type(C_AddOns.IsAddOnLoaded) == "function" then
+            local okLoaded, value = pcall(C_AddOns.IsAddOnLoaded, "RapzoBags_HUD")
+            if okLoaded then loaded = value and true or false end
+        end
+
+        RB:Print(string.format(
+            "HUD DEBUG | addon:%s enabled:%s cursor:%s minimap:%s frames:%s",
+            loaded and "LOADED" or "NO",
+            cfg.enabled and "ON" or "OFF",
+            self.cursorFrame and "CREADO" or "NO",
+            _G.Minimap and "OK" or "NO",
+            (self.unitDisplays.player or self.unitDisplays.target or self.unitDisplays.focus) and "CREADOS" or "NO"
+        ))
+        return
     elseif part == "status" or part == "" then
         local cfg = getConfig()
         RB:Print(string.format(
@@ -565,7 +590,7 @@ function HUD:HandleSlash(rest)
         return
     end
 
-    RB:Print("Uso: /rbags hud [status|on|off|cursor on|off|minimap on|off|frames on|off]")
+    RB:Print("Uso: /rbags hud [status|debug|on|off|cursor on|off|minimap on|off|frames on|off]")
 end
 
 function HUD:ScheduleApply(delay)
@@ -666,4 +691,11 @@ function HUD:Initialize()
 end
 
 RB:RegisterCommand("hud", function(rest) HUD:HandleSlash(rest) end, "/rbags hud - cursor, minimapa y unit frames")
-HUD:Initialize()
+
+local initOK, initError = pcall(function()
+    HUD:Initialize()
+end)
+
+if not initOK then
+    RB:Print("HUD no pudo inicializar: " .. tostring(initError))
+end
