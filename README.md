@@ -54,7 +54,7 @@ The offline preview is for geometry and visual iteration. Protected Blizzard beh
 
 **Style 1** is the existing working Rapzo QoL unit-frame design and is intentionally preserved.
 
-**Style 2** is selectable and adds:
+**Style 2** is selectable, uses an invisible outer container (no panel, no top line, no exterior border), and adds:
 - class icon for player units;
 - a reference portrait/icon for mobs;
 - class-correct colors from Blizzard's `RAID_CLASS_COLORS`;
