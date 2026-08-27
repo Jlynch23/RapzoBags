@@ -25,6 +25,27 @@ local DARK = {
     soft = {0.62, 0.72, 0.82},
 }
 
+local function getAccentColor()
+    if type(RB.GetAccentColor) == "function" then
+        return RB:GetAccentColor()
+    end
+    return DARK.cyan[1], DARK.cyan[2], DARK.cyan[3]
+end
+
+local function liftColor(r, g, b, amount)
+    amount = tonumber(amount) or 0
+    return r + ((1 - r) * amount),
+        g + ((1 - g) * amount),
+        b + ((1 - b) * amount)
+end
+
+local function accentHex(r, g, b)
+    if type(RB.ColorToHex) == "function" then
+        return RB:ColorToHex(r, g, b)
+    end
+    return string.format("%02X%02X%02X", math.floor((r * 255) + 0.5), math.floor((g * 255) + 0.5), math.floor((b * 255) + 0.5))
+end
+
 local function isSecret(value)
     return type(issecretvalue) == "function" and issecretvalue(value)
 end
@@ -171,6 +192,9 @@ function AFK:CreateFrame()
     background:SetColorTexture(DARK.screen[1], DARK.screen[2], DARK.screen[3], math.min(0.82, getConfig().opacity * 0.92))
     frame.background = background
 
+    local ar, ag, ab = getAccentColor()
+    local sr, sg, sb = liftColor(ar, ag, ab, 0.18)
+
     local card = CreateFrame("Frame", nil, frame, "BackdropTemplate")
     card:SetPoint("CENTER", frame, "CENTER", 0, 0)
     card:SetSize(880, 560)
@@ -180,14 +204,14 @@ function AFK:CreateFrame()
         edgeSize = 1,
     })
     card:SetBackdropColor(DARK.card[1], DARK.card[2], DARK.card[3], 0.88)
-    card:SetBackdropBorderColor(DARK.border[1], DARK.border[2], DARK.border[3], 0.18)
+    card:SetBackdropBorderColor(ar, ag, ab, 0.22)
     frame.card = card
     card:SetFrameLevel(frame:GetFrameLevel() + 10)
 
     local topLine = card:CreateTexture(nil, "ARTWORK")
     topLine:SetPoint("TOP", card, "TOP", 0, 0)
     topLine:SetSize(180, 2)
-    topLine:SetColorTexture(DARK.cyan[1], DARK.cyan[2], DARK.cyan[3], 0.72)
+    topLine:SetColorTexture(ar, ag, ab, 0.72)
     frame.topLine = topLine
 
     local logo = card:CreateTexture(nil, "OVERLAY")
@@ -202,7 +226,7 @@ function AFK:CreateFrame()
     if titleFont then
         pcall(title.SetFont, title, titleFont, 28, "OUTLINE")
     end
-    title:SetText("|cff5DE7FFRAPZO|r |cffF4F7FBQoL|r")
+    title:SetText("|cff" .. accentHex(sr, sg, sb) .. "RAPZO|r |cffF4F7FBQoL|r")
     title:SetShadowColor(0, 0, 0, 1)
     title:SetShadowOffset(1, -1)
     title:SetDrawLayer("OVERLAY", 7)
@@ -227,7 +251,7 @@ function AFK:CreateFrame()
     local accent = card:CreateTexture(nil, "ARTWORK")
     accent:SetPoint("TOP", afkText, "BOTTOM", 0, -18)
     accent:SetSize(420, 1)
-    accent:SetColorTexture(DARK.cyan[1], DARK.cyan[2], DARK.cyan[3], 0.62)
+    accent:SetColorTexture(ar, ag, ab, 0.62)
     frame.accent = accent
 
     local timer = card:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
@@ -235,7 +259,7 @@ function AFK:CreateFrame()
     if titleFont then
         pcall(timer.SetFont, timer, titleFont, 34, "OUTLINE")
     end
-    timer:SetTextColor(DARK.cyanStrong[1], DARK.cyanStrong[2], DARK.cyanStrong[3])
+    timer:SetTextColor(sr, sg, sb)
     timer:SetShadowColor(0, 0, 0, 1)
     timer:SetShadowOffset(1, -1)
     timer:SetDrawLayer("OVERLAY", 7)
@@ -342,6 +366,30 @@ function AFK:CreateFrame()
     return frame
 end
 
+function AFK:ApplyTheme()
+    local frame = self.frame
+    if not frame then return end
+
+    local r, g, b = getAccentColor()
+    local sr, sg, sb = liftColor(r, g, b, 0.18)
+
+    if frame.card then
+        frame.card:SetBackdropBorderColor(r, g, b, 0.22)
+    end
+    if frame.topLine then
+        frame.topLine:SetColorTexture(r, g, b, 0.72)
+    end
+    if frame.accent then
+        frame.accent:SetColorTexture(r, g, b, 0.62)
+    end
+    if frame.timer then
+        frame.timer:SetTextColor(sr, sg, sb)
+    end
+    if frame.title then
+        frame.title:SetText("|cff" .. accentHex(sr, sg, sb) .. "RAPZO|r |cffF4F7FBQoL|r")
+    end
+end
+
 function AFK:UpdateDisplay()
     local frame = self:CreateFrame()
     local cfg = getConfig()
@@ -349,8 +397,8 @@ function AFK:UpdateDisplay()
     frame.background:SetColorTexture(DARK.screen[1], DARK.screen[2], DARK.screen[3], math.min(0.82, cfg.opacity * 0.92))
     if frame.card then
         frame.card:SetBackdropColor(DARK.card[1], DARK.card[2], DARK.card[3], math.min(0.92, 0.76 + (cfg.opacity * 0.16)))
-        frame.card:SetBackdropBorderColor(DARK.border[1], DARK.border[2], DARK.border[3], 0.18)
     end
+    self:ApplyTheme()
 
     local playerName = RB:GetPlayerNameSafe()
     local realmName = RB:GetRealmNameSafe()
