@@ -4,7 +4,7 @@ if not RB or not RB.HUD then return end
 
 local HUD = RB.HUD
 local WHITE_TEXTURE = "Interface\\Buttons\\WHITE8X8"
-local CLASS_TEXTURE = "Interface\\GLUES\\CHARACTERCREATE\\UI-CHARACTERCREATE-CLASSES"
+local CLASS_TEXTURE = "Interface\\TargetingFrame\\UI-Classes-Circles"
 local PORTRAIT_MASK = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
 
 HUD.previewFrame = nil
@@ -123,32 +123,22 @@ local function makeDemo(parent, key, title, color, classFile, isMob)
     iconFrame:SetSize(48, 48)
     iconFrame:SetPoint("TOPLEFT", display, "TOPLEFT", 0, -12)
 
-    local iconRing = iconFrame:CreateTexture(nil, "BACKGROUND")
-    iconRing:SetAllPoints(iconFrame)
-    iconRing:SetColorTexture(color[1], color[2], color[3], 0.78)
-
-    local iconBg = iconFrame:CreateTexture(nil, "BORDER")
-    iconBg:SetPoint("TOPLEFT", iconFrame, "TOPLEFT", 2, -2)
-    iconBg:SetPoint("BOTTOMRIGHT", iconFrame, "BOTTOMRIGHT", -2, 2)
-    iconBg:SetColorTexture(0.02, 0.03, 0.05, 1)
-
+    -- Same rule as the real Style 2: no square shell behind the icon.
     local icon = iconFrame:CreateTexture(nil, "ARTWORK")
-    icon:SetPoint("TOPLEFT", iconFrame, "TOPLEFT", 4, -4)
-    icon:SetPoint("BOTTOMRIGHT", iconFrame, "BOTTOMRIGHT", -4, 4)
+    icon:SetAllPoints(iconFrame)
+
     if isMob then
         icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
         icon:SetTexCoord(0, 1, 0, 1)
+
+        if type(iconFrame.CreateMaskTexture) == "function" and type(icon.AddMaskTexture) == "function" then
+            local mask = iconFrame:CreateMaskTexture()
+            mask:SetAllPoints(icon)
+            mask:SetTexture(PORTRAIT_MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+            icon:AddMaskTexture(mask)
+        end
     elseif not setFakeClassIcon(icon, classFile) then
         icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
-    end
-
-    if type(iconFrame.CreateMaskTexture) == "function" and type(icon.AddMaskTexture) == "function" then
-        local mask = iconFrame:CreateMaskTexture()
-        mask:SetAllPoints(icon)
-        mask:SetTexture(PORTRAIT_MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-        iconRing:AddMaskTexture(mask)
-        iconBg:AddMaskTexture(mask)
-        icon:AddMaskTexture(mask)
     end
 
     display.previewIcon = iconFrame
@@ -181,13 +171,6 @@ local function makeDemo(parent, key, title, color, classFile, isMob)
             mask:SetTexture(PORTRAIT_MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
             tex:AddMaskTexture(mask)
         end
-
-        local glow = aura:CreateTexture(nil, "OVERLAY")
-        glow:SetPoint("TOPLEFT", aura, "TOPLEFT", -2, 2)
-        glow:SetPoint("BOTTOMRIGHT", aura, "BOTTOMRIGHT", 2, -2)
-        glow:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
-        glow:SetBlendMode("ADD")
-        glow:SetVertexColor(color[1], color[2], color[3], 0.34)
 
         local duration = aura:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
         duration:SetPoint("TOP", aura, "BOTTOM", 0, -1)
