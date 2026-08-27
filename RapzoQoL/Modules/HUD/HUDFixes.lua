@@ -15,12 +15,40 @@ local function safeCall(func, ...)
     return pcall(func, ...)
 end
 
-local function hidePlayerStatusTexture()
+local function hidePlayerNativeRestArt()
     local frame = _G.PlayerFrame
     local content = frame and frame.PlayerFrameContent
     local main = content and content.PlayerFrameContentMain
+    local contextual = content and content.PlayerFrameContentContextual
+
+    -- Yellow flashing status art shown while resting/in combat.
     if main and main.StatusTexture then
+        safeCall(main.StatusTexture.Hide, main.StatusTexture)
         safeCall(main.StatusTexture.SetAlpha, main.StatusTexture, 0)
+    end
+
+    -- This is the large animated yellow ring seen after the portrait was removed.
+    -- Blizzard calls PlayerFrame_UpdatePlayerRestLoop(true) while resting, so
+    -- explicitly stop and hide both the animation frame and its texture.
+    local restLoop = contextual and contextual.PlayerRestLoop
+    if restLoop then
+        if restLoop.PlayerRestLoopAnim then
+            safeCall(restLoop.PlayerRestLoopAnim.Stop, restLoop.PlayerRestLoopAnim)
+        end
+        if restLoop.RestTexture then
+            safeCall(restLoop.RestTexture.SetAlpha, restLoop.RestTexture, 0)
+        end
+        safeCall(restLoop.Hide, restLoop)
+        safeCall(restLoop.SetAlpha, restLoop, 0)
+    end
+
+    -- These belong to Blizzard's portrait treatment and look detached once the
+    -- portrait is hidden. Rapzo QoL uses its own tiny "zzz" indicator instead.
+    if contextual then
+        if contextual.AttackIcon then safeCall(contextual.AttackIcon.SetAlpha, contextual.AttackIcon, 0) end
+        if contextual.PlayerPortraitCornerIcon then
+            safeCall(contextual.PlayerPortraitCornerIcon.SetAlpha, contextual.PlayerPortraitCornerIcon, 0)
+        end
     end
 end
 
@@ -42,7 +70,7 @@ local function ensureRestIndicator()
 end
 
 local function updateRestIndicator()
-    hidePlayerStatusTexture()
+    hidePlayerNativeRestArt()
 
     local text = ensureRestIndicator()
     if not text then return end
@@ -84,7 +112,7 @@ local function applyAnchors()
 end
 
 local function applyAll()
-    hidePlayerStatusTexture()
+    hidePlayerNativeRestArt()
     applyAnchors()
     updateRestIndicator()
 end
@@ -111,8 +139,14 @@ end)
 if type(hooksecurefunc) == "function" then
     if type(PlayerFrame_UpdateStatus) == "function" then
         hooksecurefunc("PlayerFrame_UpdateStatus", function()
-            hidePlayerStatusTexture()
+            hidePlayerNativeRestArt()
             updateRestIndicator()
+        end)
+    end
+
+    if type(PlayerFrame_UpdatePlayerRestLoop) == "function" then
+        hooksecurefunc("PlayerFrame_UpdatePlayerRestLoop", function()
+            hidePlayerNativeRestArt()
         end)
     end
 
