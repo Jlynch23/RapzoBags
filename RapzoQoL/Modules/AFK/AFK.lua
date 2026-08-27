@@ -14,6 +14,15 @@ AFK.preview = false
 AFK.initialized = false
 AFK.lastStateReason = nil
 
+local DARK = {
+    screen = {0.002, 0.004, 0.008},
+    card = {0.006, 0.010, 0.016},
+    border = {0.10, 0.64, 0.82},
+    cyan = {0.20, 0.84, 1.00},
+    text = {0.92, 0.95, 0.98},
+    muted = {0.58, 0.66, 0.74},
+}
+
 local function isSecret(value)
     return type(issecretvalue) == "function" and issecretvalue(value)
 end
@@ -157,25 +166,25 @@ function AFK:CreateFrame()
 
     local background = frame:CreateTexture(nil, "BACKGROUND")
     background:SetAllPoints(frame)
-    background:SetColorTexture(0.005, 0.009, 0.018, math.min(0.62, getConfig().opacity * 0.70))
+    background:SetColorTexture(DARK.screen[1], DARK.screen[2], DARK.screen[3], math.min(0.82, getConfig().opacity * 0.92))
     frame.background = background
 
     local card = CreateFrame("Frame", nil, frame, "BackdropTemplate")
-    card:SetPoint("CENTER", frame, "CENTER", 0, 6)
-    card:SetSize(640, 400)
+    card:SetPoint("CENTER", frame, "CENTER", 0, 0)
+    card:SetSize(880, 560)
     card:SetBackdrop({
         bgFile = "Interface\\Buttons\\WHITE8X8",
         edgeFile = "Interface\\Buttons\\WHITE8X8",
         edgeSize = 1,
     })
-    card:SetBackdropColor(0.004, 0.008, 0.016, 0.38)
-    card:SetBackdropBorderColor(0.15, 0.70, 0.95, 0.10)
+    card:SetBackdropColor(DARK.card[1], DARK.card[2], DARK.card[3], 0.88)
+    card:SetBackdropBorderColor(DARK.border[1], DARK.border[2], DARK.border[3], 0.18)
     frame.card = card
 
     local topLine = card:CreateTexture(nil, "ARTWORK")
     topLine:SetPoint("TOP", card, "TOP", 0, 0)
-    topLine:SetSize(110, 1)
-    topLine:SetColorTexture(0.22, 0.83, 0.98, 0.55)
+    topLine:SetSize(180, 2)
+    topLine:SetColorTexture(DARK.cyan[1], DARK.cyan[2], DARK.cyan[3], 0.72)
     frame.topLine = topLine
 
     local logo = card:CreateTexture(nil, "OVERLAY")
@@ -185,70 +194,84 @@ function AFK:CreateFrame()
     frame.logo = logo
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    title:SetPoint("TOP", card, "TOP", 0, -34)
+    title:SetPoint("TOP", card, "TOP", 0, -56)
     local titleFont = STANDARD_TEXT_FONT
     if titleFont then
-        pcall(title.SetFont, title, titleFont, 22, "OUTLINE")
+        pcall(title.SetFont, title, titleFont, 28, "OUTLINE")
     end
     title:SetText("|cff38bdf8RAPZO|r |cffffffffQoL|r")
     frame.title = title
 
     local afkText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
-    afkText:SetPoint("TOP", title, "BOTTOM", 0, -16)
+    afkText:SetPoint("TOP", title, "BOTTOM", 0, -24)
     local fontPath = STANDARD_TEXT_FONT
     if (not fontPath or fontPath == "") and GameFontNormalHuge and GameFontNormalHuge.GetFont then
         fontPath = select(1, GameFontNormalHuge:GetFont())
     end
     if fontPath then
-        pcall(afkText.SetFont, afkText, fontPath, 72, "OUTLINE")
+        pcall(afkText.SetFont, afkText, fontPath, 110, "OUTLINE")
     end
     afkText:SetText("AFK")
-    afkText:SetTextColor(0.90, 0.94, 0.98)
+    afkText:SetTextColor(DARK.text[1], DARK.text[2], DARK.text[3])
     frame.afkText = afkText
 
     local accent = frame:CreateTexture(nil, "ARTWORK")
-    accent:SetPoint("TOP", afkText, "BOTTOM", 0, -8)
-    accent:SetSize(260, 1)
-    accent:SetColorTexture(0.22, 0.74, 0.97, 0.36)
+    accent:SetPoint("TOP", afkText, "BOTTOM", 0, -18)
+    accent:SetSize(420, 1)
+    accent:SetColorTexture(DARK.cyan[1], DARK.cyan[2], DARK.cyan[3], 0.46)
     frame.accent = accent
 
     local timer = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    timer:SetPoint("TOP", accent, "BOTTOM", 0, -16)
+    timer:SetPoint("TOP", accent, "BOTTOM", 0, -26)
     if titleFont then
-        pcall(timer.SetFont, timer, titleFont, 24, "OUTLINE")
+        pcall(timer.SetFont, timer, titleFont, 34, "OUTLINE")
     end
-    timer:SetTextColor(0.22, 0.83, 0.98)
+    timer:SetTextColor(DARK.cyan[1], DARK.cyan[2], DARK.cyan[3])
     frame.timer = timer
 
     local character = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
-    character:SetPoint("TOP", timer, "BOTTOM", 0, -22)
+    character:SetPoint("TOP", timer, "BOTTOM", 0, -34)
     if titleFont then
-        pcall(character.SetFont, character, titleFont, 18, "OUTLINE")
+        pcall(character.SetFont, character, titleFont, 24, "OUTLINE")
     end
     character:SetText("Player")
     frame.character = character
 
     local detail = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    detail:SetPoint("TOP", character, "BOTTOM", 0, -6)
-    detail:SetTextColor(0.70, 0.76, 0.84)
+    detail:SetPoint("TOP", character, "BOTTOM", 0, -10)
+    if titleFont then
+        pcall(detail.SetFont, detail, titleFont, 16, "OUTLINE")
+    end
+    detail:SetTextColor(DARK.muted[1], DARK.muted[2], DARK.muted[3])
     frame.detail = detail
 
     local zone = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    zone:SetPoint("TOP", detail, "BOTTOM", 0, -8)
-    zone:SetTextColor(0.52, 0.64, 0.76)
+    zone:SetPoint("TOP", detail, "BOTTOM", 0, -12)
+    if titleFont then
+        pcall(zone.SetFont, zone, titleFont, 16, "OUTLINE")
+    end
+    zone:SetTextColor(0.48, 0.62, 0.74)
     frame.zone = zone
 
     local money = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    money:SetPoint("TOP", zone, "BOTTOM", 0, -8)
+    money:SetPoint("TOP", zone, "BOTTOM", 0, -12)
     frame.money = money
 
     local quote = card:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    quote:SetPoint("BOTTOM", card, "BOTTOM", 0, 44)
+    quote:SetPoint("BOTTOM", card, "BOTTOM", 0, 62)
+    if titleFont then
+        pcall(quote.SetFont, quote, titleFont, 14, "OUTLINE")
+    end
+    quote:SetTextColor(0.52, 0.58, 0.66)
     quote:SetText("Quality of life, the Rapzo way.")
     frame.quote = quote
 
     local footer = card:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    footer:SetPoint("TOP", quote, "BOTTOM", 0, -6)
+    footer:SetPoint("TOP", quote, "BOTTOM", 0, -10)
+    if titleFont then
+        pcall(footer.SetFont, footer, titleFont, 13, "OUTLINE")
+    end
+    footer:SetTextColor(0.40, 0.46, 0.54)
     frame.footer = footer
 
     local fadeIn = frame:CreateAnimationGroup()
@@ -297,9 +320,10 @@ function AFK:UpdateDisplay()
     local frame = self:CreateFrame()
     local cfg = getConfig()
 
-    frame.background:SetColorTexture(0.005, 0.009, 0.018, math.min(0.62, cfg.opacity * 0.70))
+    frame.background:SetColorTexture(DARK.screen[1], DARK.screen[2], DARK.screen[3], math.min(0.82, cfg.opacity * 0.92))
     if frame.card then
-        frame.card:SetBackdropColor(0.004, 0.008, 0.016, math.min(0.44, cfg.opacity * 0.44))
+        frame.card:SetBackdropColor(DARK.card[1], DARK.card[2], DARK.card[3], math.min(0.92, 0.76 + (cfg.opacity * 0.16)))
+        frame.card:SetBackdropBorderColor(DARK.border[1], DARK.border[2], DARK.border[3], 0.18)
     end
 
     local playerName = RB:GetPlayerNameSafe()
