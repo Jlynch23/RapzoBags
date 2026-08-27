@@ -175,8 +175,26 @@
       <button id="style1">Estilo 1 · Actual</button>
       <button id="style2" class="active">Estilo 2 · Icon + Buffs TOP + Cast BOT</button>
       <label class="control">Escala <input id="scale" type="range" min="75" max="135" value="100"><span id="scaleText">100%</span></label>
+      <label class="control">Player
+        <select id="playerClass">
+          <option value="WARRIOR">Warrior</option><option value="ROGUE">Rogue</option><option value="MAGE">Mage</option>
+          <option value="HUNTER">Hunter</option><option value="PRIEST">Priest</option><option value="WARLOCK">Warlock</option>
+          <option value="PALADIN">Paladin</option><option value="DRUID">Druid</option><option value="SHAMAN">Shaman</option>
+          <option value="DEATHKNIGHT">Death Knight</option><option value="MONK">Monk</option><option value="DEMONHUNTER">Demon Hunter</option>
+          <option value="EVOKER">Evoker</option>
+        </select>
+      </label>
       <label class="control">Target
         <select id="targetType"><option value="mob">Mob</option><option value="player">Player</option></select>
+      </label>
+      <label class="control">Clase target
+        <select id="targetClass">
+          <option value="ROGUE">Rogue</option><option value="WARRIOR">Warrior</option><option value="MAGE">Mage</option>
+          <option value="HUNTER">Hunter</option><option value="PRIEST">Priest</option><option value="WARLOCK">Warlock</option>
+          <option value="PALADIN">Paladin</option><option value="DRUID">Druid</option><option value="SHAMAN">Shaman</option>
+          <option value="DEATHKNIGHT">Death Knight</option><option value="MONK">Monk</option><option value="DEMONHUNTER">Demon Hunter</option>
+          <option value="EVOKER">Evoker</option>
+        </select>
       </label>
     </div>
   </div>
@@ -201,8 +219,8 @@
     <div class="viewport">
       <div class="unit-wrap player-pos">
         <div class="label">Player</div>
-        <div class="frame player">
-          <div class="portrait">WAR</div>
+        <div id="playerFrame" class="frame player">
+          <div id="playerPortrait" class="portrait">WAR</div>
           <div class="auras"><i class="aura" data-t="2m"></i><i class="aura" data-t="38s"></i><i class="aura" data-t="12s"></i><i class="aura" data-t="1m"></i></div>
           <div class="name">Rapzo <span class="tag">PLAYER</span></div>
           <div class="bar health"><i class="fill"></i><span class="bartext">1.24M / 1.24M · 100%</span></div>
@@ -213,7 +231,7 @@
 
       <div class="unit-wrap target-pos">
         <div class="label">Target</div>
-        <div class="frame target">
+        <div id="targetFrame" class="frame target">
           <div id="targetPortrait" class="portrait mob">☠</div>
           <div class="auras"><i class="aura" data-t="24s"></i><i class="aura" data-t="18s"></i><i class="aura" data-t="7s"></i><i class="aura" data-t="3s"></i></div>
           <div id="targetName" class="name">Muñeco de entrenamiento <span class="tag">TARGET</span></div>
@@ -225,8 +243,8 @@
 
       <div class="unit-wrap focus-pos">
         <div class="label">Focus</div>
-        <div class="frame focus">
-          <div class="portrait">MAG</div>
+        <div id="focusFrame" class="frame focus">
+          <div class="portrait">ROG</div>
           <div class="auras"><i class="aura" data-t="1m"></i><i class="aura" data-t="22s"></i><i class="aura" data-t="8s"></i></div>
           <div class="name">Focus Player <span class="tag">FOCUS</span></div>
           <div class="bar health"><i class="fill" style="width:91%"></i><span class="bartext">91%</span></div>
@@ -247,8 +265,30 @@ const b2=document.getElementById('style2');
 const scale=document.getElementById('scale');
 const scaleText=document.getElementById('scaleText');
 const targetType=document.getElementById('targetType');
+const targetClass=document.getElementById('targetClass');
+const playerClass=document.getElementById('playerClass');
 const targetPortrait=document.getElementById('targetPortrait');
 const targetName=document.getElementById('targetName');
+const targetFrame=document.getElementById('targetFrame');
+const playerFrame=document.getElementById('playerFrame');
+const playerPortrait=document.getElementById('playerPortrait');
+const focusFrame=document.getElementById('focusFrame');
+
+const CLASS_COLORS={
+  WARRIOR:'#C69B6D',ROGUE:'#FFF468',MAGE:'#3FC7EB',HUNTER:'#AAD372',PRIEST:'#FFFFFF',
+  WARLOCK:'#8788EE',PALADIN:'#F48CBA',DRUID:'#FF7C0A',SHAMAN:'#0070DD',DEATHKNIGHT:'#C41E3A',
+  MONK:'#00FF98',DEMONHUNTER:'#A330C9',EVOKER:'#33937F'
+};
+const CLASS_LABELS={
+  WARRIOR:'WAR',ROGUE:'ROG',MAGE:'MAG',HUNTER:'HUN',PRIEST:'PRI',WARLOCK:'WLK',PALADIN:'PAL',
+  DRUID:'DRU',SHAMAN:'SHA',DEATHKNIGHT:'DK',MONK:'MNK',DEMONHUNTER:'DH',EVOKER:'EVO'
+};
+
+function applyClass(frame,portrait,classFile){
+  const color=CLASS_COLORS[classFile]||'#d49a20';
+  frame.style.setProperty('--accent',color);
+  portrait.textContent=CLASS_LABELS[classFile]||classFile.slice(0,3);
+}
 
 function setStyle(n){
   body.classList.toggle('style1',n===1);
@@ -266,13 +306,28 @@ scale.oninput=()=>{
   scaleText.textContent=n+'%';
 };
 
-targetType.onchange=()=>{
+function refreshTarget(){
   const player=targetType.value==='player';
   targetPortrait.classList.toggle('mob',!player);
-  targetPortrait.textContent=player?'ROG':'☠';
-  targetName.firstChild.nodeValue=player?'Player enemigo ':'Muñeco de entrenamiento ';
-};
+  targetClass.disabled=!player;
 
+  if(player){
+    applyClass(targetFrame,targetPortrait,targetClass.value);
+    targetName.firstChild.nodeValue=targetClass.options[targetClass.selectedIndex].text+' enemigo ';
+  }else{
+    targetFrame.style.setProperty('--accent','#eb4d16');
+    targetPortrait.textContent='☠';
+    targetName.firstChild.nodeValue='Muñeco de entrenamiento ';
+  }
+}
+
+playerClass.onchange=()=>applyClass(playerFrame,playerPortrait,playerClass.value);
+targetType.onchange=refreshTarget;
+targetClass.onchange=refreshTarget;
+
+applyClass(playerFrame,playerPortrait,playerClass.value);
+focusFrame.style.setProperty('--accent',CLASS_COLORS.ROGUE);
+refreshTarget();
 setStyle(Number(localStorage.getItem('rapzoPreviewStyle'))===1?1:2);
 </script>
 </body>
