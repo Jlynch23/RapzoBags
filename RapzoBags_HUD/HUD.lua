@@ -67,11 +67,11 @@ local function setSecretSafeText(fontString, value)
 
     if isSecret(value) then
         -- FontString:SetText can consume secret strings directly.
-        safeCall(fontString.SetText, fontString, value)
+        fontString:SetText(value)
         return
     end
 
-    safeCall(fontString.SetText, fontString, value or "")
+    fontString:SetText(value or "")
 end
 
 local function createEdges(parent, color, alpha, thickness)
@@ -269,15 +269,15 @@ local function updateUnitDisplay(display)
     if UnitHealthMax and UnitHealth then
         local maxHealth = UnitHealthMax(unit)
         local health = UnitHealth(unit)
-        safeCall(display.health.SetMinMaxValues, display.health, 0, maxHealth)
-        safeCall(display.health.SetValue, display.health, health)
+        display.health:SetMinMaxValues(0, maxHealth)
+        display.health:SetValue(health)
     end
 
     if UnitPowerMax and UnitPower then
         local maxPower = UnitPowerMax(unit)
         local power = UnitPower(unit)
-        safeCall(display.power.SetMinMaxValues, display.power, 0, maxPower)
-        safeCall(display.power.SetValue, display.power, power)
+        display.power:SetMinMaxValues(0, maxPower)
+        display.power:SetValue(power)
     end
 end
 
