@@ -31,7 +31,7 @@ end
 function Config:CreateFrame()
     if self.frame then return self.frame end
     local frame = CreateFrame("Frame", "RapzoBagsConfigFrame", UIParent, "BasicFrameTemplateWithInset")
-    frame:SetSize(520, 520)
+    frame:SetSize(520, 560)
     frame:SetPoint("CENTER")
     frame:SetMovable(true); frame:EnableMouse(true); frame:RegisterForDrag("LeftButton")
     frame:SetScript("OnDragStart", frame.StartMoving)
@@ -53,7 +53,7 @@ function Config:CreateFrame()
     status:SetText("Estado de modulos")
 
     frame.statusLines = {}
-    local modules = { {"tooltip","Tooltip"}, {"search","Search"}, {"vendor","Vendor"}, {"collections","Collections"} }
+    local modules = { {"tooltip","Tooltip"}, {"search","Search"}, {"vendor","Vendor"}, {"collections","Collections"}, {"afk","AFK Screen"} }
     local y = -112
     for i, entry in ipairs(modules) do
         local line = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -63,34 +63,44 @@ function Config:CreateFrame()
     end
 
     local divider = frame:CreateTexture(nil, "ARTWORK")
-    divider:SetHeight(1); divider:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -205); divider:SetPoint("RIGHT", frame, "RIGHT", -20, 0)
+    divider:SetHeight(1); divider:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -225); divider:SetPoint("RIGHT", frame, "RIGHT", -20, 0)
     divider:SetColorTexture(0.45,0.55,0.65,0.35)
 
     frame.checks = {}
-    frame.checks[#frame.checks+1] = makeCheck(frame, "Tooltip avanzado", -226,
+    frame.checks[#frame.checks+1] = makeCheck(frame, "Tooltip avanzado", -246,
         function() return RB:IsFeatureEnabled("tooltip") end,
         function(v) RB:SetFeatureEnabled("tooltip", v, true); local db=RB:EnsureDB(); db.settings.tooltip=v end,
         function() return RB:IsModulePresent("tooltip") end)
-    frame.checks[#frame.checks+1] = makeCheck(frame, "Expansion del objeto", -258,
+    frame.checks[#frame.checks+1] = makeCheck(frame, "Expansion del objeto", -278,
         function() return RB:EnsureDB().settings.showItemExpansion ~= false end,
         function(v) RB:EnsureDB().settings.showItemExpansion=v end,
         function() return RB:IsModulePresent("tooltip") end)
-    frame.checks[#frame.checks+1] = makeCheck(frame, "Tipo + Item ID", -290,
+    frame.checks[#frame.checks+1] = makeCheck(frame, "Tipo + Item ID", -310,
         function() local s=RB:EnsureDB().settings; return s.showItemType ~= false and s.showItemID ~= false end,
         function(v) local s=RB:EnsureDB().settings; s.showItemType=v; s.showItemID=v end,
         function() return RB:IsModulePresent("tooltip") end)
-    frame.checks[#frame.checks+1] = makeCheck(frame, "Buscador global", -322,
+    frame.checks[#frame.checks+1] = makeCheck(frame, "Buscador global", -342,
         function() return RB:IsFeatureEnabled("search") end,
         function(v) RB:SetFeatureEnabled("search", v, true) end,
         function() return RB:IsModulePresent("search") end)
-    frame.checks[#frame.checks+1] = makeCheck(frame, "Coleccionables (obtenido/no obtenido)", -354,
+    frame.checks[#frame.checks+1] = makeCheck(frame, "Coleccionables (obtenido/no obtenido)", -374,
         function() return RB:IsFeatureEnabled("collections") end,
         function(v) RB:SetFeatureEnabled("collections", v, true); if RB.Collections and RB.Collections.ClearCache then RB.Collections:ClearCache() end end,
         function() return RB:IsModulePresent("collections") end)
-    frame.checks[#frame.checks+1] = makeCheck(frame, "Vendedor extendido", -386,
+    frame.checks[#frame.checks+1] = makeCheck(frame, "Vendedor extendido", -406,
         function() local db=RB:EnsureDB(); return db.settings.vendor and db.settings.vendor.enabled ~= false end,
         function(v) if RB.Vendor and RB.Vendor.SetEnabled then RB.Vendor:SetEnabled(v) else RB:SetFeatureEnabled("vendor",v,true) end end,
         function() return RB:IsModulePresent("vendor") end)
+    frame.checks[#frame.checks+1] = makeCheck(frame, "Pantalla AFK", -438,
+        function() return RB:IsFeatureEnabled("afk") end,
+        function(v)
+            if RB.AFK and RB.AFK.SetEnabled then
+                RB.AFK:SetEnabled(v)
+            else
+                RB:SetFeatureEnabled("afk", v, true)
+            end
+        end,
+        function() return RB:IsModulePresent("afk") end)
 
     local reset = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
     reset:SetSize(150, 26); reset:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 20, 18); reset:SetText("Reescanear ahora")
