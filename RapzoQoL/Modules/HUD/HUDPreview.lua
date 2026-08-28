@@ -12,6 +12,45 @@ local STYLE2_AURA = 16
 HUD.previewFrame = nil
 HUD.previewBackdrop = nil
 HUD.previewDisplays = HUD.previewDisplays or {}
+HUD.previewAuraScenario = HUD.previewAuraScenario or "mixed"
+
+local AURA_SCENARIOS = {
+    buffs = {
+        label = "BUFFS DE PRUEBA",
+        spells = {6673, 21562, 1459, 1126, 19740},
+        durations = {"2m", "38", "18", "9", "4"},
+        counts = {"", "2", "", "", ""},
+    },
+    debuffs = {
+        label = "DEBUFFS DE PRUEBA",
+        spells = {589, 172, 116, 118, 853},
+        durations = {"24", "18", "12", "8", "4"},
+        counts = {"", "", "", "", ""},
+    },
+    stacks = {
+        label = "CARGAS 2 / 5 / 10 / 25 / 99",
+        spells = {6673, 21562, 1459, 1126, 19740},
+        durations = {"30", "30", "30", "30", "30"},
+        counts = {"2", "5", "10", "25", "99"},
+    },
+    timers = {
+        label = "TIEMPOS 2m / 38 / 18 / 9 / 4",
+        spells = {589, 172, 116, 118, 853},
+        durations = {"2m", "38", "18", "9", "4"},
+        counts = {"", "", "", "", ""},
+    },
+}
+
+local function getSpellTexture(spellID)
+    if C_Spell and type(C_Spell.GetSpellTexture) == "function" then
+        local ok, texture = pcall(C_Spell.GetSpellTexture, spellID)
+        if ok and texture then return texture end
+    end
+    if type(GetSpellTexture) == "function" then
+        local ok, texture = pcall(GetSpellTexture, spellID)
+        if ok and texture then return texture end
+    end
+end
 
 local function makePanel(parent, width, height, color)
     local frame = CreateFrame("Frame", nil, parent)
@@ -81,7 +120,7 @@ local function makeDemo(parent, key, title, color, classFile, isMob)
     display.color = color
 
     local label = parent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    label:SetText(string.upper(key))
+    label:SetText(key == "player" and "BUFFS DE PRUEBA" or "DEBUFFS DE PRUEBA")
     label:SetTextColor(color[1], color[2], color[3])
     label:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 0, 42)
     display.previewLabel = label
@@ -140,7 +179,9 @@ local function makeDemo(parent, key, title, color, classFile, isMob)
             {0.94, 0.26, 0.18},
         }
         local c = palette[i]
-        tex:SetColorTexture(c[1], c[2], c[3], 0.94)
+        local initialScenario = key == "player" and AURA_SCENARIOS.buffs or AURA_SCENARIOS.debuffs
+        local spellTexture = getSpellTexture(initialScenario.spells[i])
+        if spellTexture then tex:SetTexture(spellTexture) else tex:SetColorTexture(c[1], c[2], c[3], 0.94) end
         aura.previewTexture = tex
 
         if type(aura.CreateMaskTexture) == "function" and type(tex.AddMaskTexture) == "function" then
@@ -153,13 +194,13 @@ local function makeDemo(parent, key, title, color, classFile, isMob)
         local duration = aura:CreateFontString(nil, "OVERLAY")
         duration:SetFont(STANDARD_TEXT_FONT, 7, "OUTLINE")
         duration:SetPoint("CENTER", aura, "CENTER", 0, 0)
-        duration:SetText(({"2m", "38", "18", "9", "4"})[i])
+        duration:SetText(initialScenario.durations[i])
         aura.previewDuration = duration
 
         local count = aura:CreateFontString(nil, "OVERLAY")
         count:SetFont(STANDARD_TEXT_FONT, 7, "OUTLINE")
         count:SetPoint("BOTTOMRIGHT", aura, "BOTTOMRIGHT", 1, -1)
-        count:SetText(({"", "2", "5", "", "10"})[i])
+        count:SetText(initialScenario.counts[i])
         aura.previewCount = count
         display.previewAuraButtons[i] = aura
     end
@@ -173,6 +214,22 @@ local function makeDemo(parent, key, title, color, classFile, isMob)
 
     HUD.previewDisplays[key] = display
     return display
+end
+
+local function applyAuraScenario(name)
+    HUD.previewAuraScenario = name or "mixed"
+    for key, display in pairs(HUD.previewDisplays or {}) do
+        local scenarioName = HUD.previewAuraScenario
+        if scenarioName == "mixed" then scenarioName = key == "player" and "buffs" or "debuffs" end
+        local scenario = AURA_SCENARIOS[scenarioName] or AURA_SCENARIOS.buffs
+        if display.previewLabel then display.previewLabel:SetText(scenario.label) end
+        for i, aura in ipairs(display.previewAuraButtons or {}) do
+            local spellTexture = getSpellTexture(scenario.spells[i])
+            if spellTexture and aura.previewTexture then aura.previewTexture:SetTexture(spellTexture) end
+            if aura.previewDuration then aura.previewDuration:SetText(scenario.durations[i] or "") end
+            if aura.previewCount then aura.previewCount:SetText(scenario.counts[i] or "") end
+        end
+    end
 end
 
 local function applyPreviewAuraLayout(display)
@@ -227,6 +284,8 @@ local function applyPreviewStyle(display, style)
         local auraX, auraY = 0, 0
         if type(HUD.GetAuraOffset) == "function" then auraX, auraY = HUD:GetAuraOffset() end
         display.previewAuras:SetPoint("BOTTOMLEFT", display, "TOPLEFT", auraX, 18 + auraY)
+        display.previewLabel:ClearAllPoints()
+        display.previewLabel:SetPoint("BOTTOMLEFT", display.previewAuras, "TOPLEFT", 0, 4)
 
         display.previewCast:ClearAllPoints()
         display.previewCast:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 0, -4)
@@ -238,6 +297,7 @@ local function applyPreviewStyle(display, style)
         display.previewCast:SetHeight(10)
 
         display.previewAuras:Show()
+        display.previewLabel:Show()
         display.previewCast:Show()
         display.unitTag:Hide()
     else
@@ -263,8 +323,10 @@ local function applyPreviewStyle(display, style)
 
         if display.key == "player" then
             display.previewAuras:Hide()
+            display.previewLabel:Hide()
         else
             display.previewAuras:Show()
+            display.previewLabel:Show()
             display.previewAuras:ClearAllPoints()
             display.previewAuras:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 0, 7)
         end
@@ -287,7 +349,7 @@ function HUD:CreatePreview()
     self.previewBackdrop = backdrop
 
     local frame = CreateFrame("Frame", "RapzoQoLHUDPreviewFrame", UIParent, "BasicFrameTemplateWithInset")
-    frame:SetSize(920, 650)
+    frame:SetSize(920, 680)
     frame:SetPoint("CENTER")
     frame:SetFrameStrata("FULLSCREEN_DIALOG")
     frame:SetFrameLevel(backdrop:GetFrameLevel() + 10)
@@ -464,15 +526,36 @@ function HUD:CreatePreview()
     frame.RapzoQoLAuraXValue = positionXValue
     frame.RapzoQoLAuraYValue = positionYValue
 
+    local scenarioTitle = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    scenarioTitle:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -224)
+    scenarioTitle:SetText("Caso que quieres probar:")
+
+    local previousButton = scenarioTitle
+    local scenarios = {
+        {"Mixto", "mixed"}, {"Buffs", "buffs"}, {"Debuffs", "debuffs"},
+        {"Cargas", "stacks"}, {"Duraciones", "timers"},
+    }
+    for _, info in ipairs(scenarios) do
+        local scenarioName = info[2]
+        local scenarioButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+        scenarioButton:SetSize(105, 24)
+        scenarioButton:SetPoint("LEFT", previousButton, "RIGHT", 8, 0)
+        scenarioButton:SetText(info[1])
+        scenarioButton:SetScript("OnClick", function()
+            applyAuraScenario(scenarioName)
+        end)
+        previousButton = scenarioButton
+    end
+
     local auraHelp = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    auraHelp:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -224)
-    auraHelp:SetText("Prueba visual: Player muestra buffs; Target y Focus muestran debuffs. Incluye tiempos cortos, minutos y cargas 2 / 5 / 10.")
+    auraHelp:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -258)
+    auraHelp:SetText("Mixto: Player muestra buffs y Target/Focus debuffs. Los otros botones fuerzan el mismo caso en los tres frames.")
 
     local player = makeDemo(frame, "player", "Rapzo", getPreviewClassColor("WARRIOR", {0.92, 0.66, 0.10}), "WARRIOR", false)
-    player:SetPoint("TOPLEFT", frame, "TOPLEFT", 70, -280)
+    player:SetPoint("TOPLEFT", frame, "TOPLEFT", 70, -315)
 
     local target = makeDemo(frame, "target", "Muñeco de entrenamiento", {0.92, 0.30, 0.09}, nil, true)
-    target:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -70, -280)
+    target:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -70, -315)
 
     local focus = makeDemo(frame, "focus", "Focus Rogue", getPreviewClassColor("ROGUE", {1.00, 0.96, 0.41}), "ROGUE", false)
     focus:SetPoint("BOTTOM", frame, "BOTTOM", 0, 82)
@@ -484,6 +567,7 @@ function HUD:CreatePreview()
     note:SetText("Estilo 2 Toxi: nombre arriba, health principal, power fino, sin iconos, auras arriba y castbar abajo.")
 
     self.previewFrame = frame
+    applyAuraScenario(self.previewAuraScenario)
 
     if type(UISpecialFrames) == "table" then
         UISpecialFrames[#UISpecialFrames + 1] = "RapzoQoLHUDPreviewFrame"
