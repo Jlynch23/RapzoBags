@@ -253,6 +253,17 @@ local function initAuraButton(button)
     cooldown:SetAllPoints(button)
     safeCall(cooldown.SetDrawEdge, cooldown, false)
     safeCall(cooldown.SetDrawBling, cooldown, false)
+    if type(cooldown.SetCountdownFont) == "function" and type(CreateFont) == "function" then
+        local fontName = "RapzoQoLAuraCooldownFont"
+        local font = _G[fontName] or CreateFont(fontName)
+        if font and STANDARD_TEXT_FONT then
+            safeCall(font.SetFont, font, STANDARD_TEXT_FONT, 7, "OUTLINE")
+            safeCall(cooldown.SetCountdownFont, cooldown, fontName)
+        end
+    end
+    if type(cooldown.SetCountdownAbbrevThreshold) == "function" then
+        safeCall(cooldown.SetCountdownAbbrevThreshold, cooldown, 60)
+    end
     if type(cooldown.SetHideCountdownNumbers) == "function" then
         safeCall(cooldown.SetHideCountdownNumbers, cooldown, false)
     end
