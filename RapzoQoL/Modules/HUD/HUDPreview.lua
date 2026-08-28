@@ -10,6 +10,7 @@ local STYLE2_HEIGHT = 43
 local STYLE2_AURA = 16
 
 HUD.previewFrame = nil
+HUD.previewBackdrop = nil
 HUD.previewDisplays = HUD.previewDisplays or {}
 
 local function makePanel(parent, width, height, color)
@@ -274,16 +275,31 @@ end
 function HUD:CreatePreview()
     if self.previewFrame then return self.previewFrame end
 
+    local backdrop = CreateFrame("Frame", "RapzoQoLHUDPreviewBackdrop", UIParent)
+    backdrop:SetAllPoints(UIParent)
+    backdrop:SetFrameStrata("FULLSCREEN_DIALOG")
+    backdrop:SetFrameLevel(1)
+    backdrop:EnableMouse(true)
+    local backdropTexture = backdrop:CreateTexture(nil, "BACKGROUND")
+    backdropTexture:SetAllPoints(backdrop)
+    backdropTexture:SetColorTexture(0, 0, 0, 0.88)
+    backdrop:Hide()
+    self.previewBackdrop = backdrop
+
     local frame = CreateFrame("Frame", "RapzoQoLHUDPreviewFrame", UIParent, "BasicFrameTemplateWithInset")
     frame:SetSize(920, 650)
     frame:SetPoint("CENTER")
-    frame:SetFrameStrata("DIALOG")
+    frame:SetFrameStrata("FULLSCREEN_DIALOG")
+    frame:SetFrameLevel(backdrop:GetFrameLevel() + 10)
     frame:SetMovable(true)
     frame:EnableMouse(true)
     frame:RegisterForDrag("LeftButton")
     frame:SetScript("OnDragStart", frame.StartMoving)
     frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
     frame:SetClampedToScreen(true)
+    frame:SetScript("OnHide", function()
+        if HUD.previewBackdrop then HUD.previewBackdrop:Hide() end
+    end)
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     title:SetPoint("LEFT", frame.TitleBg, "LEFT", 6, 0)
@@ -527,12 +543,14 @@ end
 function HUD:ShowPreview()
     local frame = self:CreatePreview()
     self:RefreshPreview()
+    if self.previewBackdrop then self.previewBackdrop:Show() end
     frame:Show()
     frame:Raise()
 end
 
 function HUD:HidePreview()
     if self.previewFrame then self.previewFrame:Hide() end
+    if self.previewBackdrop then self.previewBackdrop:Hide() end
 end
 
 function HUD:TogglePreview(value)
