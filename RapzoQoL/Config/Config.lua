@@ -202,6 +202,15 @@ function Config:CreateFrame()
         end,
         function() return RB:IsModulePresent("hud") end)
 
+    local hudStyleLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    hudStyleLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -632)
+    hudStyleLabel:SetText("Estilo de Unit Frames")
+
+    frame.hudStyleChecks = {
+        makeHUDStyleChoice(frame, "V1 - Clasico", 24, -650, 1),
+        makeHUDStyleChoice(frame, "V2 - ToxiUI", 190, -650, 2),
+    }
+
     local reset = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
     reset:SetSize(150, 26); reset:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 20, 20); reset:SetText("Reescanear ahora")
     reset:SetScript("OnClick", function() if RB.Scanner then RB.Scanner:ScanAll(RB.Scanner.bankOpen); RB:Print("Escaneo actualizado.") end end)
@@ -222,6 +231,7 @@ function Config:Refresh()
         line.text:SetText(string.format("%s: %s   Funcion: %s", line.label, loaded and "|cff38e66bLISTO|r" or "|cffef4444ERROR|r", runtime and "|cff38e66bON|r" or "|cffef4444OFF|r"))
     end
     for _, check in ipairs(frame.checks or {}) do check.refresh() end
+    for _, check in ipairs(frame.hudStyleChecks or {}) do check.refresh() end
 
     if type(RB.GetAccentColor) == "function" then
         local r, g, b = RB:GetAccentColor()
@@ -243,6 +253,42 @@ function Config:Show()
     local frame = self:CreateFrame(); self:Refresh(); frame:Show(); frame:Raise()
 end
 
+
+local function makeHUDStyleChoice(parent, label, x, y, style)
+    local check = CreateFrame("CheckButton", nil, parent, "UICheckButtonTemplate")
+    check:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
+    check:SetSize(24, 24)
+
+    local text = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    text:SetPoint("LEFT", check, "RIGHT", 4, 0)
+    text:SetText(label)
+
+    check.label = text
+    check.refresh = function()
+        local available = RB.HUD and type(RB.HUD.GetStyle) == "function" and type(RB.HUD.SetStyle) == "function"
+        check:SetEnabled(available)
+        local selected = available and RB.HUD:GetStyle() == style
+        check:SetChecked(selected == true)
+        if selected then
+            local r, g, b = RB:GetAccentColor()
+            text:SetTextColor(r, g, b)
+        else
+            text:SetTextColor(available and 1 or 0.45, available and 0.82 or 0.45, available and 0.35 or 0.45)
+        end
+    end
+
+    check:SetScript("OnClick", function(self)
+        if not (RB.HUD and type(RB.HUD.SetStyle) == "function") then
+            self:SetChecked(false)
+            return
+        end
+        RB.HUD:SetStyle(style)
+        if Config.frame then Config:Refresh() end
+        if Config.settingsPanel then Config:RefreshSettingsPanel() end
+    end)
+
+    return check
+end
 
 local function makeSettingsCheck(parent, label, y, checkedFunc, setFunc, enabledFunc)
     local check = CreateFrame("CheckButton", nil, parent, "UICheckButtonTemplate")
@@ -383,14 +429,23 @@ function Config:CreateSettingsPanel()
         end,
         function() return RB:IsModulePresent("hud") end)
 
+    local hudStyleTitle = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    hudStyleTitle:SetPoint("TOPLEFT", panel, "TOPLEFT", 26, -452)
+    hudStyleTitle:SetText("Estilo de Unit Frames")
+
+    panel.hudStyleChecks = {
+        makeHUDStyleChoice(panel, "V1 - Clasico", 26, -472, 1),
+        makeHUDStyleChoice(panel, "V2 - ToxiUI", 210, -472, 2),
+    }
+
     local divider2 = panel:CreateTexture(nil, "ARTWORK")
     divider2:SetHeight(1)
-    divider2:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -462)
+    divider2:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -514)
     divider2:SetPoint("RIGHT", panel, "RIGHT", -24, 0)
     divider2:SetColorTexture(0.45, 0.55, 0.65, 0.35)
 
     local statusTitle = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    statusTitle:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -484)
+    statusTitle:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -536)
     statusTitle:SetText("Estado")
 
     local status = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
@@ -401,7 +456,7 @@ function Config:CreateSettingsPanel()
 
     local rescan = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     rescan:SetSize(150, 26)
-    rescan:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -566)
+    rescan:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -618)
     rescan:SetText("Reescanear ahora")
     rescan:SetScript("OnClick", function()
         if RB.Scanner then
@@ -432,6 +487,9 @@ function Config:RefreshSettingsPanel()
     if not panel then return end
 
     for _, check in ipairs(panel.settingsChecks or {}) do
+        check.refresh()
+    end
+    for _, check in ipairs(panel.hudStyleChecks or {}) do
         check.refresh()
     end
 
