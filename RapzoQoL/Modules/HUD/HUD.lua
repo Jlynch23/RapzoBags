@@ -107,6 +107,37 @@ local function setRegionAlpha(region, alpha)
     end
 end
 
+-- Preserve whatever alpha Blizzard/mUI had before Rapzo QoL hides native art.
+-- This makes the unit-frame toggle fully reversible without requiring /reload.
+local nativeRegionAlpha = setmetatable({}, { __mode = "k" })
+
+local function hideNativeRegion(region)
+    if not region or type(region.SetAlpha) ~= "function" then return end
+
+    if nativeRegionAlpha[region] == nil then
+        local alpha = 1
+        if type(region.GetAlpha) == "function" then
+            local ok, value = pcall(region.GetAlpha, region)
+            if ok and type(value) == "number" then
+                alpha = value
+            end
+        end
+        nativeRegionAlpha[region] = alpha
+    end
+
+    safeCall(region.SetAlpha, region, 0)
+end
+
+local function restoreNativeRegion(region)
+    if not region or type(region.SetAlpha) ~= "function" then return end
+
+    local alpha = nativeRegionAlpha[region]
+    if alpha == nil then return end
+
+    safeCall(region.SetAlpha, region, alpha)
+    nativeRegionAlpha[region] = nil
+end
+
 local function setSecretSafeText(fontString, value)
     if not fontString then return end
 
@@ -171,33 +202,61 @@ local function hidePlayerStaticArt()
     local frame = _G.PlayerFrame
     local container = frame and frame.PlayerFrameContainer
     if container then
-        setRegionAlpha(container.PlayerPortrait, 0)
-        setRegionAlpha(container.PlayerPortraitMask, 0)
-        setRegionAlpha(container.FrameTexture, 0)
-        setRegionAlpha(container.VehicleFrameTexture, 0)
-        setRegionAlpha(container.AlternatePowerFrameTexture, 0)
-        setRegionAlpha(container.FrameFlash, 0)
+        hideNativeRegion(container.PlayerPortrait)
+        hideNativeRegion(container.PlayerPortraitMask)
+        hideNativeRegion(container.FrameTexture)
+        hideNativeRegion(container.VehicleFrameTexture)
+        hideNativeRegion(container.AlternatePowerFrameTexture)
+        hideNativeRegion(container.FrameFlash)
     end
 
     local content = frame and frame.PlayerFrameContent
     local main = content and content.PlayerFrameContentMain
     if main then
-        setRegionAlpha(_G.PlayerName or main.PlayerName, 0)
-        setRegionAlpha(_G.PlayerLevelText or main.PlayerLevelText, 0)
+        hideNativeRegion(_G.PlayerName or main.PlayerName)
+        hideNativeRegion(_G.PlayerLevelText or main.PlayerLevelText)
 
         local healthContainer = main.HealthBarsContainer
         if healthContainer then
-            setRegionAlpha(healthContainer, 0)
+            hideNativeRegion(healthContainer)
         end
 
         local manaArea = main.ManaBarArea
         if manaArea and manaArea.ManaBar then
-            setRegionAlpha(manaArea.ManaBar, 0)
+            hideNativeRegion(manaArea.ManaBar)
         end
     end
 
     local contextual = content and content.PlayerFrameContentContextual
-    if contextual then setRegionAlpha(contextual, 0) end
+    if contextual then hideNativeRegion(contextual) end
+end
+
+local function restorePlayerStaticArt()
+    local frame = _G.PlayerFrame
+    local container = frame and frame.PlayerFrameContainer
+    if container then
+        restoreNativeRegion(container.PlayerPortrait)
+        restoreNativeRegion(container.PlayerPortraitMask)
+        restoreNativeRegion(container.FrameTexture)
+        restoreNativeRegion(container.VehicleFrameTexture)
+        restoreNativeRegion(container.AlternatePowerFrameTexture)
+        restoreNativeRegion(container.FrameFlash)
+    end
+
+    local content = frame and frame.PlayerFrameContent
+    local main = content and content.PlayerFrameContentMain
+    if main then
+        restoreNativeRegion(_G.PlayerName or main.PlayerName)
+        restoreNativeRegion(_G.PlayerLevelText or main.PlayerLevelText)
+        restoreNativeRegion(main.HealthBarsContainer)
+
+        local manaArea = main.ManaBarArea
+        if manaArea then
+            restoreNativeRegion(manaArea.ManaBar)
+        end
+    end
+
+    restoreNativeRegion(content and content.PlayerFrameContentContextual)
 end
 
 local function hideTargetStaticArt(frame)
@@ -205,39 +264,81 @@ local function hideTargetStaticArt(frame)
 
     local container = frame.TargetFrameContainer
     if container then
-        setRegionAlpha(container.Portrait, 0)
-        setRegionAlpha(container.PortraitMask, 0)
-        setRegionAlpha(container.FrameTexture, 0)
-        setRegionAlpha(container.Flash, 0)
-        setRegionAlpha(container.BossPortraitFrameTexture, 0)
+        hideNativeRegion(container.Portrait)
+        hideNativeRegion(container.PortraitMask)
+        hideNativeRegion(container.FrameTexture)
+        hideNativeRegion(container.Flash)
+        hideNativeRegion(container.BossPortraitFrameTexture)
     end
 
     local content = frame.TargetFrameContent
     local main = content and content.TargetFrameContentMain
     if main then
-        setRegionAlpha(main.ReputationColor, 0)
-        setRegionAlpha(main.Name, 0)
-        setRegionAlpha(main.LevelText, 0)
-
-        local healthContainer = main.HealthBarsContainer
-        if healthContainer then setRegionAlpha(healthContainer, 0) end
-        if main.ManaBar then setRegionAlpha(main.ManaBar, 0) end
+        hideNativeRegion(main.ReputationColor)
+        hideNativeRegion(main.Name)
+        hideNativeRegion(main.LevelText)
+        hideNativeRegion(main.HealthBarsContainer)
+        hideNativeRegion(main.ManaBar)
     end
 
     local contextual = content and content.TargetFrameContentContextual
     if contextual then
         -- Keep auras and the raid marker functional/visible.
-        setRegionAlpha(contextual.PvpIcon, 0)
-        setRegionAlpha(contextual.PrestigePortrait, 0)
-        setRegionAlpha(contextual.PrestigeBadge, 0)
-        setRegionAlpha(contextual.PetBattleIcon, 0)
-        setRegionAlpha(contextual.BossIcon, 0)
-        setRegionAlpha(contextual.QuestIcon, 0)
+        hideNativeRegion(contextual.PvpIcon)
+        hideNativeRegion(contextual.PrestigePortrait)
+        hideNativeRegion(contextual.PrestigeBadge)
+        hideNativeRegion(contextual.PetBattleIcon)
+        hideNativeRegion(contextual.BossIcon)
+        hideNativeRegion(contextual.QuestIcon)
     end
+end
+
+local function restoreTargetStaticArt(frame)
+    if not frame then return end
+
+    local container = frame.TargetFrameContainer
+    if container then
+        restoreNativeRegion(container.Portrait)
+        restoreNativeRegion(container.PortraitMask)
+        restoreNativeRegion(container.FrameTexture)
+        restoreNativeRegion(container.Flash)
+        restoreNativeRegion(container.BossPortraitFrameTexture)
+    end
+
+    local content = frame.TargetFrameContent
+    local main = content and content.TargetFrameContentMain
+    if main then
+        restoreNativeRegion(main.ReputationColor)
+        restoreNativeRegion(main.Name)
+        restoreNativeRegion(main.LevelText)
+        restoreNativeRegion(main.HealthBarsContainer)
+        restoreNativeRegion(main.ManaBar)
+    end
+
+    local contextual = content and content.TargetFrameContentContextual
+    if contextual then
+        restoreNativeRegion(contextual.PvpIcon)
+        restoreNativeRegion(contextual.PrestigePortrait)
+        restoreNativeRegion(contextual.PrestigeBadge)
+        restoreNativeRegion(contextual.PetBattleIcon)
+        restoreNativeRegion(contextual.BossIcon)
+        restoreNativeRegion(contextual.QuestIcon)
+    end
+end
+
+local function restoreNativeUnitArt()
+    restorePlayerStaticArt()
+    restoreTargetStaticArt(_G.TargetFrame)
+    restoreTargetStaticArt(_G.FocusFrame)
 end
 
 local function reapplyNativeArtHiding(frame)
     if not frame then return end
+
+    local cfg = HUD.config or getConfig()
+    if not HUD:IsEnabled() or cfg.unitFrames == false then
+        return
+    end
 
     if frame == _G.PlayerFrame then
         hidePlayerStaticArt()
@@ -662,6 +763,7 @@ function HUD:Apply()
         for _, display in pairs(self.unitDisplays) do
             display:Hide()
         end
+        restoreNativeUnitArt()
         return
     end
 
@@ -671,7 +773,14 @@ function HUD:Apply()
     end
 
     if cfg.squareMinimap then self:StyleMinimap() end
-    if cfg.unitFrames then self:StyleUnitFrames() end
+    if cfg.unitFrames then
+        self:StyleUnitFrames()
+    else
+        for _, display in pairs(self.unitDisplays) do
+            display:Hide()
+        end
+        restoreNativeUnitArt()
+    end
     self:ApplyTheme()
 end
 
@@ -685,7 +794,8 @@ function HUD:SetEnabled(enabled)
         for _, display in pairs(self.unitDisplays) do
             display:Hide()
         end
-        RB:Print("HUD visual: OFF. /reload restaura completamente minimapa y unit frames.")
+        restoreNativeUnitArt()
+        RB:Print("HUD visual: OFF. Unit frames nativos restaurados.")
     else
         self:Apply()
         RB:Print("HUD visual: ON")
@@ -707,7 +817,8 @@ function HUD:SetPart(part, enabled)
         cfg.unitFrames = enabled and true or false
         if not cfg.unitFrames then
             for _, display in pairs(self.unitDisplays) do display:Hide() end
-            RB:Print("Unit frames minimalistas OFF; usa /reload para restaurar el arte original.")
+            restoreNativeUnitArt()
+            RB:Print("Unit frames Rapzo OFF; Player/Target/Focus nativos restaurados.")
         end
     else
         return false
