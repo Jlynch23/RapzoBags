@@ -23,7 +23,8 @@ local function makeCheck(parent, label, y, checkedFunc, setFunc, enabledFunc)
     end
     check:SetScript("OnClick", function(self)
         setFunc(self:GetChecked() == true)
-        Config:Refresh()
+        if Config.frame then Config:Refresh() end
+        if Config.settingsPanel then Config:RefreshSettingsPanel() end
     end)
     return check
 end
@@ -37,13 +38,15 @@ local function openAccentPicker()
     local function applyColor()
         local nr, ng, nb = ColorPickerFrame:GetColorRGB()
         RB:SetAccentColor(nr, ng, nb, true)
-        Config:Refresh()
+        if Config.frame then Config:Refresh() end
+        if Config.settingsPanel then Config:RefreshSettingsPanel() end
     end
 
     local function cancelColor(values)
         local old = values or previous
         RB:SetAccentColor(old.r or old[1] or previous.r, old.g or old[2] or previous.g, old.b or old[3] or previous.b, true)
-        Config:Refresh()
+        if Config.frame then Config:Refresh() end
+        if Config.settingsPanel then Config:RefreshSettingsPanel() end
     end
 
     if type(ColorPickerFrame.SetupColorPickerAndShow) == "function" then
@@ -141,7 +144,8 @@ function Config:CreateFrame()
     resetAccent:SetText("Restablecer")
     resetAccent:SetScript("OnClick", function()
         RB:ResetAccentColor(true)
-        Config:Refresh()
+        if Config.frame then Config:Refresh() end
+        if Config.settingsPanel then Config:RefreshSettingsPanel() end
     end)
 
     local appearanceHelp = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
@@ -239,5 +243,278 @@ function Config:Show()
     local frame = self:CreateFrame(); self:Refresh(); frame:Show(); frame:Raise()
 end
 
-RB:RegisterCommand("config", function() Config:Show() end, "/rapzo config - abre el panel modular")
-RB:RegisterCommand("options", function() Config:Show() end)
+
+local function makeSettingsCheck(parent, label, y, checkedFunc, setFunc, enabledFunc)
+    local check = CreateFrame("CheckButton", nil, parent, "UICheckButtonTemplate")
+    check:SetPoint("TOPLEFT", parent, "TOPLEFT", 26, y)
+    check:SetSize(26, 26)
+
+    local text = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    text:SetPoint("LEFT", check, "RIGHT", 5, 0)
+    text:SetText(label)
+
+    check.label = text
+    check.refresh = function()
+        local enabled = not enabledFunc or enabledFunc()
+        check:SetEnabled(enabled)
+        check:SetChecked(enabled and checkedFunc() or false)
+        text:SetTextColor(enabled and 1 or 0.45, enabled and 0.82 or 0.45, enabled and 0.35 or 0.45)
+    end
+
+    check:SetScript("OnClick", function(self)
+        setFunc(self:GetChecked() == true)
+        if Config.frame then Config:Refresh() end
+        Config:RefreshSettingsPanel()
+    end)
+
+    return check
+end
+
+function Config:CreateSettingsPanel()
+    if self.settingsPanel then return self.settingsPanel end
+
+    local panel = CreateFrame("Frame", "RapzoQoLBlizzardSettingsPanel")
+    panel.name = "Rapzo QoL"
+
+    local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+    title:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -18)
+    title:SetText("Rapzo QoL")
+
+    local intro = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    intro:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -8)
+    intro:SetPoint("RIGHT", panel, "RIGHT", -24, 0)
+    intro:SetJustifyH("LEFT")
+    intro:SetText("Configura Rapzo QoL directamente desde Opciones > AddOns. Los cambios se aplican al instante.")
+
+    local appearance = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    appearance:SetPoint("TOPLEFT", intro, "BOTTOMLEFT", 0, -24)
+    appearance:SetText("Apariencia")
+
+    local swatch = CreateFrame("Button", nil, panel, "BackdropTemplate")
+    swatch:SetPoint("TOPLEFT", appearance, "BOTTOMLEFT", 2, -10)
+    swatch:SetSize(42, 24)
+    swatch:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8X8",
+        edgeFile = "Interface\\Buttons\\WHITE8X8",
+        edgeSize = 1,
+    })
+    swatch:SetBackdropColor(0.02, 0.03, 0.05, 1)
+    swatch:SetBackdropBorderColor(0.75, 0.80, 0.88, 0.65)
+
+    local swatchFill = swatch:CreateTexture(nil, "ARTWORK")
+    swatchFill:SetPoint("TOPLEFT", swatch, "TOPLEFT", 3, -3)
+    swatchFill:SetPoint("BOTTOMRIGHT", swatch, "BOTTOMRIGHT", -3, 3)
+    swatch.fill = swatchFill
+    swatch:SetScript("OnClick", openAccentPicker)
+    panel.accentSwatch = swatch
+
+    local hexText = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    hexText:SetPoint("LEFT", swatch, "RIGHT", 10, 0)
+    panel.accentHexText = hexText
+
+    local choose = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    choose:SetSize(120, 24)
+    choose:SetPoint("LEFT", hexText, "RIGHT", 14, 0)
+    choose:SetText("Elegir color")
+    choose:SetScript("OnClick", openAccentPicker)
+
+    local resetAccent = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    resetAccent:SetSize(105, 24)
+    resetAccent:SetPoint("LEFT", choose, "RIGHT", 8, 0)
+    resetAccent:SetText("Restablecer")
+    resetAccent:SetScript("OnClick", function()
+        RB:ResetAccentColor(true)
+        if Config.frame then Config:Refresh() end
+        Config:RefreshSettingsPanel()
+    end)
+
+    local divider = panel:CreateTexture(nil, "ARTWORK")
+    divider:SetHeight(1)
+    divider:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -142)
+    divider:SetPoint("RIGHT", panel, "RIGHT", -24, 0)
+    divider:SetColorTexture(0.45, 0.55, 0.65, 0.35)
+
+    local modulesTitle = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    modulesTitle:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -164)
+    modulesTitle:SetText("Modulos")
+
+    panel.settingsChecks = {}
+    panel.settingsChecks[#panel.settingsChecks + 1] = makeSettingsCheck(panel, "Tooltip avanzado", -192,
+        function() return RB:IsFeatureEnabled("tooltip") end,
+        function(v) RB:SetFeatureEnabled("tooltip", v, true); local db=RB:EnsureDB(); db.settings.tooltip=v end,
+        function() return RB:IsModulePresent("tooltip") end)
+
+    panel.settingsChecks[#panel.settingsChecks + 1] = makeSettingsCheck(panel, "Expansion del objeto", -224,
+        function() return RB:EnsureDB().settings.showItemExpansion ~= false end,
+        function(v) RB:EnsureDB().settings.showItemExpansion=v end,
+        function() return RB:IsModulePresent("tooltip") end)
+
+    panel.settingsChecks[#panel.settingsChecks + 1] = makeSettingsCheck(panel, "Tipo + Item ID", -256,
+        function() local s=RB:EnsureDB().settings; return s.showItemType ~= false and s.showItemID ~= false end,
+        function(v) local s=RB:EnsureDB().settings; s.showItemType=v; s.showItemID=v end,
+        function() return RB:IsModulePresent("tooltip") end)
+
+    panel.settingsChecks[#panel.settingsChecks + 1] = makeSettingsCheck(panel, "Buscador global", -288,
+        function() return RB:IsFeatureEnabled("search") end,
+        function(v) RB:SetFeatureEnabled("search", v, true) end,
+        function() return RB:IsModulePresent("search") end)
+
+    panel.settingsChecks[#panel.settingsChecks + 1] = makeSettingsCheck(panel, "Coleccionables (obtenido/no obtenido)", -320,
+        function() return RB:IsFeatureEnabled("collections") end,
+        function(v) RB:SetFeatureEnabled("collections", v, true); if RB.Collections and RB.Collections.ClearCache then RB.Collections:ClearCache() end end,
+        function() return RB:IsModulePresent("collections") end)
+
+    panel.settingsChecks[#panel.settingsChecks + 1] = makeSettingsCheck(panel, "Vendedor extendido", -352,
+        function() local db=RB:EnsureDB(); return db.settings.vendor and db.settings.vendor.enabled ~= false end,
+        function(v) if RB.Vendor and RB.Vendor.SetEnabled then RB.Vendor:SetEnabled(v) else RB:SetFeatureEnabled("vendor",v,true) end end,
+        function() return RB:IsModulePresent("vendor") end)
+
+    panel.settingsChecks[#panel.settingsChecks + 1] = makeSettingsCheck(panel, "Pantalla AFK", -384,
+        function() return RB:IsFeatureEnabled("afk") end,
+        function(v)
+            if RB.AFK and RB.AFK.SetEnabled then RB.AFK:SetEnabled(v) else RB:SetFeatureEnabled("afk", v, true) end
+        end,
+        function() return RB:IsModulePresent("afk") end)
+
+    panel.settingsChecks[#panel.settingsChecks + 1] = makeSettingsCheck(panel, "HUD visual", -416,
+        function() return RB:IsFeatureEnabled("hud") end,
+        function(v)
+            if RB.HUD and RB.HUD.SetEnabled then RB.HUD:SetEnabled(v) else RB:SetFeatureEnabled("hud", v, true) end
+        end,
+        function() return RB:IsModulePresent("hud") end)
+
+    local divider2 = panel:CreateTexture(nil, "ARTWORK")
+    divider2:SetHeight(1)
+    divider2:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -462)
+    divider2:SetPoint("RIGHT", panel, "RIGHT", -24, 0)
+    divider2:SetColorTexture(0.45, 0.55, 0.65, 0.35)
+
+    local statusTitle = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    statusTitle:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -484)
+    statusTitle:SetText("Estado")
+
+    local status = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    status:SetPoint("TOPLEFT", statusTitle, "BOTTOMLEFT", 2, -8)
+    status:SetPoint("RIGHT", panel, "RIGHT", -24, 0)
+    status:SetJustifyH("LEFT")
+    panel.statusText = status
+
+    local rescan = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    rescan:SetSize(150, 26)
+    rescan:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -566)
+    rescan:SetText("Reescanear ahora")
+    rescan:SetScript("OnClick", function()
+        if RB.Scanner then
+            RB.Scanner:ScanAll(RB.Scanner.bankOpen)
+            RB:Print("Escaneo actualizado.")
+        end
+        Config:RefreshSettingsPanel()
+    end)
+
+    local fullPanel = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    fullPanel:SetSize(185, 26)
+    fullPanel:SetPoint("LEFT", rescan, "RIGHT", 10, 0)
+    fullPanel:SetText("Abrir panel completo")
+    fullPanel:SetScript("OnClick", function()
+        Config:Show()
+    end)
+
+    panel:SetScript("OnShow", function()
+        Config:RefreshSettingsPanel()
+    end)
+
+    self.settingsPanel = panel
+    return panel
+end
+
+function Config:RefreshSettingsPanel()
+    local panel = self.settingsPanel
+    if not panel then return end
+
+    for _, check in ipairs(panel.settingsChecks or {}) do
+        check.refresh()
+    end
+
+    if type(RB.GetAccentColor) == "function" then
+        local r, g, b = RB:GetAccentColor()
+        if panel.accentSwatch and panel.accentSwatch.fill then
+            panel.accentSwatch.fill:SetColorTexture(r, g, b, 1)
+        end
+        if panel.accentHexText then
+            panel.accentHexText:SetText("#" .. RB:ColorToHex(r, g, b))
+            panel.accentHexText:SetTextColor(r, g, b)
+        end
+    end
+
+    if panel.statusText then
+        local enabled, total = 0, 0
+        for _, key in ipairs({"tooltip", "search", "vendor", "collections", "afk", "hud"}) do
+            if RB:IsModulePresent(key) then
+                total = total + 1
+                if RB:IsFeatureEnabled(key) then enabled = enabled + 1 end
+            end
+        end
+        panel.statusText:SetText(string.format(
+            "%d/%d modulos activos.  /rapzo modules muestra el detalle completo en el chat.",
+            enabled,
+            total
+        ))
+    end
+end
+
+function Config:RegisterBlizzardSettings()
+    if self.settingsCategory then return true end
+
+    local panel = self:CreateSettingsPanel()
+
+    if Settings and type(Settings.RegisterCanvasLayoutCategory) == "function"
+        and type(Settings.RegisterAddOnCategory) == "function" then
+        local category = Settings.RegisterCanvasLayoutCategory(panel, "Rapzo QoL")
+        Settings.RegisterAddOnCategory(category)
+        self.settingsCategory = category
+
+        if category and type(category.GetID) == "function" then
+            self.settingsCategoryID = category:GetID()
+        end
+
+        return true
+    end
+
+    if type(InterfaceOptions_AddCategory) == "function" then
+        InterfaceOptions_AddCategory(panel)
+        self.settingsCategory = panel
+        return true
+    end
+
+    return false
+end
+
+function Config:OpenBlizzardSettings()
+    self:RegisterBlizzardSettings()
+
+    if Settings and type(Settings.OpenToCategory) == "function" and self.settingsCategoryID then
+        Settings.OpenToCategory(self.settingsCategoryID)
+        return
+    end
+
+    if type(InterfaceOptionsFrame_OpenToCategory) == "function" and self.settingsPanel then
+        InterfaceOptionsFrame_OpenToCategory(self.settingsPanel)
+        InterfaceOptionsFrame_OpenToCategory(self.settingsPanel)
+        return
+    end
+
+    self:Show()
+end
+
+local settingsLoader = CreateFrame("Frame")
+settingsLoader:RegisterEvent("PLAYER_LOGIN")
+settingsLoader:SetScript("OnEvent", function()
+    Config:RegisterBlizzardSettings()
+    settingsLoader:UnregisterAllEvents()
+end)
+
+Config:RegisterBlizzardSettings()
+
+RB:RegisterCommand("config", function() Config:OpenBlizzardSettings() end, "/rapzo config - abre Opciones > AddOns > Rapzo QoL")
+RB:RegisterCommand("options", function() Config:OpenBlizzardSettings() end)
+
