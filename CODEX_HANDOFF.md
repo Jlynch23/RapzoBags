@@ -74,6 +74,7 @@ Modules/Tooltip/Tooltip.lua
 Modules/Search/Search.lua
 Modules/Collections/Collections.lua
 Modules/Vendor/Vendor.lua
+Modules/QoL/ExpansionFilters.lua
 Modules/AFK/AFK.lua
 Modules/AFK/AFKBrand.lua
 
@@ -113,6 +114,7 @@ La dirección visual elegida para el branding es el **escudo Rapzo** dorado/azul
 | `Modules/Search/Search.lua` | buscador global de inventario y vista de oro |
 | `Modules/Collections/Collections.lua` | detección obtenido/no obtenido para coleccionables |
 | `Modules/Vendor/Vendor.lua` | merchant extendido, grid, filtros, marcas y cantidades |
+| `Modules/QoL/ExpansionFilters.lua` | activa Current Expansion Only al abrir AH y Place Crafting Order |
 | `Modules/AFK/AFK.lua` | pantalla AFK fullscreen |
 | `Modules/AFK/AFKBrand.lua` | branding/textos adicionales de AFK |
 | `Modules/HUD/HUD.lua` | núcleo HUD: cursor, minimapa, unit displays |
@@ -366,6 +368,25 @@ Config default:
 Este módulo ha tenido históricamente trabajo delicado de anchors/tamaño/BuyBack. Antes de tocar
 MerchantFrame, revisar `CaptureOriginalLayout`, `RestoreDefaultMerchantLayout`,
 `PositionMerchantBuyBackItem` y `LayoutMerchantSlots`.
+
+---
+
+## 10.1 Filtro de expansión actual
+
+Archivo:
+
+```text
+Modules/QoL/ExpansionFilters.lua
+```
+
+Rapzo QoL aplica automáticamente **Current Expansion Only** al abrir:
+
+- Auction House / Browse Auctions;
+- Place Crafting Order / Customer Orders.
+
+Para Customer Orders se reaplica después de `SetDefaultFilters()`, después de
+`BrowseOrders:Init()` y en el `OnShow` real de `ProfessionsCustomerOrdersFrame`,
+porque Blizzard reconstruye los filtros cada vez que abre esa ventana.
 
 ---
 

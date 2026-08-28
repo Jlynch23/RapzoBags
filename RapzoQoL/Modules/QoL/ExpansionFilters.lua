@@ -43,24 +43,58 @@ local function applyAuctionHouseFilter(searchBar)
     return true
 end
 
+local function getCraftingOrdersBrowsePage(browsePage)
+    if browsePage and browsePage.SearchBar then
+        return browsePage
+    end
+
+    local frame = _G.ProfessionsCustomerOrdersFrame
+    return frame and frame.BrowseOrders or nil
+end
+
 local function applyCraftingOrdersFilter(browsePage)
     local currentExpansionOnly = getCurrentExpansionFilter()
+    browsePage = getCraftingOrdersBrowsePage(browsePage)
     if currentExpansionOnly == nil or not browsePage then return false end
 
     local searchBar = browsePage.SearchBar
     local dropdown = searchBar and searchBar.FilterDropdown
-    local filters = dropdown and dropdown.filters
-    if type(filters) ~= "table" then return false end
+    if not dropdown then return false end
+
+    local filters = dropdown.filters
+    if type(filters) ~= "table" then
+        -- Blizzard normally creates this table in SetDefaultFilters(). The
+        -- fallback makes the preference resilient if Rapzo QoL hooks a frame
+        -- that has already been constructed but not fully initialized yet.
+        if type(_G.AUCTION_HOUSE_DEFAULT_FILTERS) == "table" and type(CopyTable) == "function" then
+            filters = CopyTable(_G.AUCTION_HOUSE_DEFAULT_FILTERS)
+        else
+            filters = {}
+        end
+        dropdown.filters = filters
+    end
 
     filters[currentExpansionOnly] = true
 
-    -- WowStyle1FilterDropdown can expose this helper depending on the client
-    -- build. It is cosmetic only; the actual search state is the table above.
+    -- Keep the reset-X state synchronized with Blizzard's filter dropdown.
     if type(dropdown.ValidateResetState) == "function" then
         safeCall(dropdown.ValidateResetState, dropdown)
     end
 
-    return true
+    return filters[currentExpansionOnly] == true
+end
+
+local function scheduleCraftingOrdersFilter(browsePage)
+    applyCraftingOrdersFilter(browsePage)
+
+    -- A zero-delay pass runs after the complete Blizzard OnShow/Init chain.
+    -- This is important because BrowseOrders:Init() calls SetDefaultFilters()
+    -- every time the customer-order window opens.
+    if C_Timer and type(C_Timer.After) == "function" then
+        C_Timer.After(0, function()
+            applyCraftingOrdersFilter(browsePage)
+        end)
+    end
 end
 
 function ExpansionFilters:HookAuctionHouse()
@@ -91,7 +125,10 @@ function ExpansionFilters:HookAuctionHouse()
 end
 
 function ExpansionFilters:HookCraftingOrders()
-    if self.craftingOrdersHooked then return end
+    if self.craftingOrdersHooked then
+        scheduleCraftingOrdersFilter(nil)
+        return
+    end
 
     if type(ProfessionsCustomerOrdersBrowsePageMixin) ~= "table"
         or type(ProfessionsCustomerOrdersBrowsePageMixin.SetDefaultFilters) ~= "function"
@@ -102,21 +139,33 @@ function ExpansionFilters:HookCraftingOrders()
 
     self.craftingOrdersHooked = true
 
-    -- Blizzard calls SetDefaultFilters from BrowseOrders:Init(), and Init() is
-    -- called on every ProfessionsCustomerOrdersFrame:OnShow(). Apply our
-    -- preference after Blizzard resets the filters.
+    -- Blizzard resets this table inside BrowseOrders:Init(). Re-apply our
+    -- preference immediately after that reset.
     hooksecurefunc(ProfessionsCustomerOrdersBrowsePageMixin, "SetDefaultFilters", function(browsePage)
         applyCraftingOrdersFilter(browsePage)
     end)
 
-    -- Extra synchronization after the customer-orders frame has fully opened.
-    if type(ProfessionsCustomerOrdersMixin) == "table"
-        and type(ProfessionsCustomerOrdersMixin.OnShow) == "function"
-    then
-        hooksecurefunc(ProfessionsCustomerOrdersMixin, "OnShow", function(frame)
-            applyCraftingOrdersFilter(frame and frame.BrowseOrders)
+    -- This second hook is the definitive guard: it runs after SetDefaultFilters
+    -- AND InitFilterDropdown have both finished.
+    if type(ProfessionsCustomerOrdersBrowsePageMixin.Init) == "function" then
+        hooksecurefunc(ProfessionsCustomerOrdersBrowsePageMixin, "Init", function(browsePage)
+            scheduleCraftingOrdersFilter(browsePage)
         end)
     end
+
+    -- Hook the real Blizzard frame too. This protects the preference even if
+    -- another addon calls/rearranges the mixin methods during the same OnShow.
+    local frame = _G.ProfessionsCustomerOrdersFrame
+    if frame and type(frame.HookScript) == "function" and not frame.RapzoQoLExpansionFilterHooked then
+        frame.RapzoQoLExpansionFilterHooked = true
+        frame:HookScript("OnShow", function(customerOrdersFrame)
+            scheduleCraftingOrdersFilter(customerOrdersFrame and customerOrdersFrame.BrowseOrders)
+        end)
+    end
+
+    -- If the Blizzard UI was already open by the time the module hooked it,
+    -- update the existing frame immediately instead of waiting for reopen.
+    scheduleCraftingOrdersFilter(frame and frame.BrowseOrders)
 end
 
 function ExpansionFilters:TryHookLoadedBlizzardUI()
