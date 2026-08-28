@@ -1,5 +1,7 @@
 # Rapzo QoL — Project Rules
 
+> Before changing Rapzo QoL, read `CODEX_HANDOFF.md` for the current architecture, feature inventory, HUD state, recent commits, testing checklist, and continuity notes.
+
 ## Code ownership and execution
 
 1. When the user requests a code change for Rapzo QoL, the assistant must make the change directly in the GitHub repository whenever GitHub write access is available.
