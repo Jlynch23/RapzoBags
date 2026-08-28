@@ -400,15 +400,21 @@ end
 local function updateUnitDisplay(display)
     if not display or not display.nativeFrame then return end
 
-    local nativeShown = display.nativeFrame:IsShown()
-    if not nativeShown then
-        display:Hide()
-        return
+    local unit = display.unit
+
+    -- Rapzo QoL owns the custom unit-frame visibility. Do not mirror
+    -- Blizzard/mUI's native TargetFrame/FocusFrame visibility because another
+    -- UI addon may intentionally hide those frames while the unit still exists.
+    -- Player is always present; target/focus are driven by UnitExists instead.
+    if unit ~= "player" then
+        local exists = type(UnitExists) == "function" and UnitExists(unit)
+        if not exists then
+            display:Hide()
+            return
+        end
     end
 
     display:Show()
-
-    local unit = display.unit
 
     local fallback = COLORS[unit] or COLORS.target
     local color
