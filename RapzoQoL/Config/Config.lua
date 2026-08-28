@@ -465,7 +465,21 @@ function Config:CreateSettingsPanel()
     hudPreview:SetText("Preview / depurar HUD")
     hudPreview:SetScript("OnClick", function()
         if RB.HUD and type(RB.HUD.ShowPreview) == "function" then
-            RB.HUD:ShowPreview()
+            -- The Blizzard Settings panel is large and captures mouse input,
+            -- so close it before opening the movable HUD laboratory.
+            if SettingsPanel and type(SettingsPanel.Close) == "function" then
+                pcall(SettingsPanel.Close, SettingsPanel)
+            elseif SettingsPanel and type(HideUIPanel) == "function" then
+                pcall(HideUIPanel, SettingsPanel)
+            elseif SettingsPanel and type(SettingsPanel.Hide) == "function" then
+                pcall(SettingsPanel.Hide, SettingsPanel)
+            end
+
+            if C_Timer and type(C_Timer.After) == "function" then
+                C_Timer.After(0, function() RB.HUD:ShowPreview() end)
+            else
+                RB.HUD:ShowPreview()
+            end
         else
             RB:Print("El preview del HUD no está disponible.")
         end
