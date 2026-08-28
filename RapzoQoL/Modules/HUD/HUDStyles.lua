@@ -18,6 +18,9 @@ local STYLE2_CONTENT = 0
 local STYLE2_AURA = 16
 local STYLE2_AURA_WIDTH = STYLE2_WIDTH
 local STYLE2_AURA_Y = 18
+local STYLE2_DEFAULT_AURA_SCALE = 1.00
+local STYLE2_MIN_AURA_SCALE = 0.75
+local STYLE2_MAX_AURA_SCALE = 1.75
 
 local function isSecret(value)
     return type(issecretvalue) == "function" and issecretvalue(value)
@@ -43,6 +46,11 @@ local function getConfig()
     frameScale = math.max(STYLE2_MIN_SCALE, math.min(STYLE2_MAX_SCALE, frameScale))
     cfg.frameScale = frameScale
 
+    local auraScale = tonumber(cfg.auraScale)
+    if not auraScale then auraScale = STYLE2_DEFAULT_AURA_SCALE end
+    auraScale = math.max(STYLE2_MIN_AURA_SCALE, math.min(STYLE2_MAX_AURA_SCALE, auraScale))
+    cfg.auraScale = auraScale
+
     HUD.config = cfg
     return cfg
 end
@@ -53,6 +61,34 @@ end
 
 function HUD:GetFrameScale()
     return getConfig().frameScale
+end
+
+function HUD:GetAuraScale()
+    return getConfig().auraScale
+end
+
+function HUD:SetAuraScale(scale, silent)
+    scale = tonumber(scale)
+    if not scale then return false end
+
+    scale = math.max(STYLE2_MIN_AURA_SCALE, math.min(STYLE2_MAX_AURA_SCALE, scale))
+    getConfig().auraScale = scale
+
+    for _, display in pairs(self.unitDisplays or {}) do
+        local playerAuras = display and display.RapzoQoLPlayerAuras
+        local targetAuras = display and display.RapzoQoLTargetAuras
+        if playerAuras then safeCall(playerAuras.SetScale, playerAuras, scale) end
+        if targetAuras then safeCall(targetAuras.SetScale, targetAuras, scale) end
+    end
+
+    if type(self.RefreshPreview) == "function" then
+        self:RefreshPreview()
+    end
+
+    if not silent then
+        RB:Print(string.format("HUD auras: %.2fx | base aprox. %d px", scale, math.floor(STYLE2_AURA * scale + 0.5)))
+    end
+    return true
 end
 
 function HUD:SetFrameScale(scale, silent)
@@ -297,6 +333,7 @@ local function ensurePlayerAuraContainer(display)
     container:SetSize(STYLE2_AURA_WIDTH, 22)
     container:SetPoint("BOTTOMLEFT", display, "TOPLEFT", STYLE2_CONTENT, STYLE2_AURA_Y)
     container:SetFrameLevel(display:GetFrameLevel() + 4)
+    safeCall(container.SetScale, container, HUD:GetAuraScale())
     container:Show()
 
     local added = safeCall(container.AddAuraGroup, container, "rapzoPlayerHelpful", "HELPFUL", {
@@ -344,6 +381,7 @@ local function ensureTargetAuraContainer(display)
     container:SetSize(STYLE2_AURA_WIDTH, 22)
     container:SetPoint("BOTTOMLEFT", display, "TOPLEFT", STYLE2_EDGE, STYLE2_AURA_Y)
     container:SetFrameLevel(display:GetFrameLevel() + 4)
+    safeCall(container.SetScale, container, HUD:GetAuraScale())
 
     local added = safeCall(container.AddAuraGroup, container, "rapzoTargetHarmfulPlayer", "HARMFUL|PLAYER", {
         maxFrameCount = 5,
@@ -622,6 +660,8 @@ local function applyStyle2(display)
 
     setPlayerAurasEnabled(display, display.unit == "player")
     setTargetAurasEnabled(display, display.unit == "target" or display.unit == "focus")
+    if display.RapzoQoLPlayerAuras then safeCall(display.RapzoQoLPlayerAuras.SetScale, display.RapzoQoLPlayerAuras, HUD:GetAuraScale()) end
+    if display.RapzoQoLTargetAuras then safeCall(display.RapzoQoLTargetAuras.SetScale, display.RapzoQoLTargetAuras, HUD:GetAuraScale()) end
     updateCastBar(display.unit)
 end
 
@@ -761,6 +801,20 @@ function HUD:HandleSlash(rest)
 
         if not self:SetFrameScale(value) then
             RB:Print("Uso: /rapzo hud scale 0.50-2.50")
+        end
+        return
+    elseif part == "aurascale" then
+        if value == "" then
+            local scale = self:GetAuraScale()
+            RB:Print(string.format("HUD aura scale actual: %.2fx | aprox. %d px | usa /rapzo hud aurascale 1.25", scale, math.floor(STYLE2_AURA * scale + 0.5)))
+            return
+        elseif value == "reset" then
+            self:SetAuraScale(STYLE2_DEFAULT_AURA_SCALE)
+            return
+        end
+
+        if not self:SetAuraScale(value) then
+            RB:Print("Uso: /rapzo hud aurascale 0.75-1.75")
         end
         return
     elseif part == "preview" then

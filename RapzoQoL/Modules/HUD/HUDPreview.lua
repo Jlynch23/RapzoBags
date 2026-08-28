@@ -7,6 +7,7 @@ local WHITE_TEXTURE = "Interface\\Buttons\\WHITE8X8"
 local PORTRAIT_MASK = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
 local STYLE2_WIDTH = 150
 local STYLE2_HEIGHT = 43
+local STYLE2_AURA = 16
 
 HUD.previewFrame = nil
 HUD.previewDisplays = HUD.previewDisplays or {}
@@ -121,11 +122,12 @@ local function makeDemo(parent, key, title, color, classFile, isMob)
     auraRow:SetSize(STYLE2_WIDTH, 18)
     auraRow:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 6, 6)
     display.previewAuras = auraRow
+    display.previewAuraButtons = {}
 
     for i = 1, 5 do
         local aura = CreateFrame("Frame", nil, auraRow)
-        aura:SetSize(20, 20)
-        aura:SetPoint("LEFT", auraRow, "LEFT", (i - 1) * 25, 0)
+        aura:SetSize(STYLE2_AURA, STYLE2_AURA)
+        aura:SetPoint("LEFT", auraRow, "LEFT", (i - 1) * 21, 0)
 
         local tex = aura:CreateTexture(nil, "ARTWORK")
         tex:SetAllPoints(aura)
@@ -138,6 +140,7 @@ local function makeDemo(parent, key, title, color, classFile, isMob)
         }
         local c = palette[i]
         tex:SetColorTexture(c[1], c[2], c[3], 0.94)
+        aura.previewTexture = tex
 
         if type(aura.CreateMaskTexture) == "function" and type(tex.AddMaskTexture) == "function" then
             local mask = aura:CreateMaskTexture()
@@ -146,9 +149,18 @@ local function makeDemo(parent, key, title, color, classFile, isMob)
             tex:AddMaskTexture(mask)
         end
 
-        local duration = aura:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-        duration:SetPoint("TOP", aura, "BOTTOM", 0, -1)
-        duration:SetText(({"2m", "38s", "18s", "9s", "4s"})[i])
+        local duration = aura:CreateFontString(nil, "OVERLAY")
+        duration:SetFont(STANDARD_TEXT_FONT, 7, "OUTLINE")
+        duration:SetPoint("CENTER", aura, "CENTER", 0, 0)
+        duration:SetText(({"2m", "38", "18", "9", "4"})[i])
+        aura.previewDuration = duration
+
+        local count = aura:CreateFontString(nil, "OVERLAY")
+        count:SetFont(STANDARD_TEXT_FONT, 7, "OUTLINE")
+        count:SetPoint("BOTTOMRIGHT", aura, "BOTTOMRIGHT", 1, -1)
+        count:SetText(({"", "2", "5", "", "10"})[i])
+        aura.previewCount = count
+        display.previewAuraButtons[i] = aura
     end
 
     local cast = makeStatusBar(display, 14, {0.92, 0.63, 0.12})
@@ -162,6 +174,19 @@ local function makeDemo(parent, key, title, color, classFile, isMob)
     return display
 end
 
+local function applyPreviewAuraLayout(display)
+    if not display or not display.previewAuras then return end
+    local auraScale = (type(HUD.GetAuraScale) == "function" and HUD:GetAuraScale()) or 1
+    local size = STYLE2_AURA * auraScale
+    local spacing = 5 * auraScale
+
+    for i, aura in ipairs(display.previewAuraButtons or {}) do
+        aura:ClearAllPoints()
+        aura:SetSize(size, size)
+        aura:SetPoint("LEFT", display.previewAuras, "LEFT", (i - 1) * (size + spacing), 0)
+    end
+end
+
 local function setPreviewShellVisible(display, visible)
     if not display then return end
     if display.RapzoQoLPanel then display.RapzoQoLPanel:SetAlpha(visible and 1 or 0) end
@@ -173,6 +198,7 @@ end
 
 local function applyPreviewStyle(display, style)
     if not display then return end
+    applyPreviewAuraLayout(display)
 
     if style == 2 then
         display:SetScale((type(HUD.GetFrameScale) == "function" and HUD:GetFrameScale()) or 1.50)
@@ -247,7 +273,7 @@ function HUD:CreatePreview()
     if self.previewFrame then return self.previewFrame end
 
     local frame = CreateFrame("Frame", "RapzoQoLHUDPreviewFrame", UIParent, "BasicFrameTemplateWithInset")
-    frame:SetSize(920, 560)
+    frame:SetSize(920, 600)
     frame:SetPoint("CENTER")
     frame:SetFrameStrata("DIALOG")
     frame:SetMovable(true)
@@ -327,11 +353,50 @@ function HUD:CreatePreview()
     frame.RapzoQoLScaleSlider = slider
     frame.RapzoQoLScaleValue = scaleValue
 
+    local auraLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    auraLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 390, -106)
+    auraLabel:SetText("Tamaño de buffs / debuffs V2")
+
+    local auraValue = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    auraValue:SetPoint("LEFT", auraLabel, "RIGHT", 10, 0)
+    auraValue:SetTextColor(1.00, 0.82, 0.15)
+
+    local auraSlider = CreateFrame("Slider", "RapzoQoLHUDAuraScaleSlider", frame, "OptionsSliderTemplate")
+    auraSlider:SetPoint("TOPLEFT", frame, "TOPLEFT", 390, -124)
+    auraSlider:SetWidth(300)
+    auraSlider:SetMinMaxValues(0.75, 1.75)
+    auraSlider:SetValueStep(0.05)
+    if type(auraSlider.SetObeyStepOnDrag) == "function" then
+        auraSlider:SetObeyStepOnDrag(true)
+    end
+
+    local auraLow = _G[auraSlider:GetName() .. "Low"]
+    local auraHigh = _G[auraSlider:GetName() .. "High"]
+    local auraText = _G[auraSlider:GetName() .. "Text"]
+    if auraLow then auraLow:SetText("12 px") end
+    if auraHigh then auraHigh:SetText("28 px") end
+    if auraText then auraText:SetText("") end
+
+    auraSlider:SetScript("OnValueChanged", function(_, value)
+        value = math.floor((tonumber(value) or 1) * 20 + 0.5) / 20
+        auraValue:SetText(string.format("%.2fx  (~%d px base)", value, math.floor(STYLE2_AURA * value + 0.5)))
+        if type(HUD.SetAuraScale) == "function" then
+            HUD:SetAuraScale(value, true)
+        end
+    end)
+    auraSlider:SetValue((type(HUD.GetAuraScale) == "function" and HUD:GetAuraScale()) or 1)
+    frame.RapzoQoLAuraScaleSlider = auraSlider
+    frame.RapzoQoLAuraScaleValue = auraValue
+
+    local auraHelp = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    auraHelp:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -164)
+    auraHelp:SetText("Prueba visual: Player muestra buffs; Target y Focus muestran debuffs. Incluye tiempos cortos, minutos y cargas 2 / 5 / 10.")
+
     local player = makeDemo(frame, "player", "Rapzo", getPreviewClassColor("WARRIOR", {0.92, 0.66, 0.10}), "WARRIOR", false)
-    player:SetPoint("TOPLEFT", frame, "TOPLEFT", 70, -190)
+    player:SetPoint("TOPLEFT", frame, "TOPLEFT", 70, -220)
 
     local target = makeDemo(frame, "target", "Muñeco de entrenamiento", {0.92, 0.30, 0.09}, nil, true)
-    target:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -70, -190)
+    target:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -70, -220)
 
     local focus = makeDemo(frame, "focus", "Focus Rogue", getPreviewClassColor("ROGUE", {1.00, 0.96, 0.41}), "ROGUE", false)
     focus:SetPoint("BOTTOM", frame, "BOTTOM", 0, 82)
@@ -364,6 +429,16 @@ function HUD:RefreshPreview()
         end
         if frame.RapzoQoLScaleValue then
             frame.RapzoQoLScaleValue:SetText(string.format("%.2fx  (~%dx%d px)", scale, math.floor(STYLE2_WIDTH * scale + 0.5), math.floor(STYLE2_HEIGHT * scale + 0.5)))
+        end
+    end
+
+    if frame.RapzoQoLAuraScaleSlider and type(self.GetAuraScale) == "function" then
+        local auraScale = self:GetAuraScale()
+        if math.abs((frame.RapzoQoLAuraScaleSlider:GetValue() or 0) - auraScale) > 0.001 then
+            frame.RapzoQoLAuraScaleSlider:SetValue(auraScale)
+        end
+        if frame.RapzoQoLAuraScaleValue then
+            frame.RapzoQoLAuraScaleValue:SetText(string.format("%.2fx  (~%d px base)", auraScale, math.floor(STYLE2_AURA * auraScale + 0.5)))
         end
     end
 
