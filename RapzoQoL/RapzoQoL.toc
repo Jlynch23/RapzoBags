@@ -5,6 +5,7 @@
 ## Version: 3.0.0-alpha5
 ## SavedVariables: RapzoBagsDB
 ## Category: Rapzo
+## IconTexture: Interface\AddOns\RapzoQoL\Media\RapzoQoL-Icon
 
 Core\Core.lua
 Core\Scanner.lua

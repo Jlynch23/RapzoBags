@@ -8,7 +8,7 @@ local PORTRAIT_MASK = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
 
 local STYLE_CURRENT = 1
 local STYLE_ICON = 2
-local STYLE2_WIDTH = 178
+local STYLE2_WIDTH = 150
 local STYLE2_HEIGHT = 43
 local STYLE2_DEFAULT_SCALE = 1.50
 local STYLE2_MIN_SCALE = 0.50

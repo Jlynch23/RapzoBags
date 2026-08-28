@@ -177,8 +177,11 @@ local function updateRestIndicator()
 
     text:ClearAllPoints()
     local display = HUD.unitDisplays and HUD.unitDisplays.player
-    if display and type(HUD.GetStyle) == "function" and HUD:GetStyle() == 2 and display.health then
-        text:SetPoint("BOTTOMRIGHT", display.health, "TOPRIGHT", -2, 3)
+    if display and type(HUD.GetStyle) == "function" and HUD:GetStyle() == 2
+        and display.levelText and display.health then
+        -- Toxi layout: rest state precedes the level on the same baseline
+        -- instead of replacing/overlapping it in the upper-right corner.
+        text:SetPoint("RIGHT", display.levelText, "LEFT", -4, 0)
     elseif display then
         text:SetPoint("TOPRIGHT", display, "TOPRIGHT", -48, -7)
     end

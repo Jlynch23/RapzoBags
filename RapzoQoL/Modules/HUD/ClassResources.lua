@@ -7,7 +7,7 @@ local WHITE_TEXTURE = "Interface\\Buttons\\WHITE8X8"
 
 local RESOURCE_GAP = 3
 local RESOURCE_HEIGHT = 6
-local RESOURCE_WIDTH = 178
+local RESOURCE_WIDTH = 150
 local RESOURCE_Y = -2
 local CAST_GAP = 3
 local MAX_PIPS = 10

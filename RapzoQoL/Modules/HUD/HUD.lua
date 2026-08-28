@@ -82,13 +82,15 @@ local function getConfig()
     if cfg.cursor == nil then cfg.cursor = true end
     if cfg.squareMinimap == nil then cfg.squareMinimap = true end
     if cfg.unitFrames == nil then cfg.unitFrames = true end
-    if cfg.cursorSize == nil then cfg.cursorSize = 74 end
-    if cfg.cursorVisualVersion ~= 2 then
-        cfg.cursorSize = math.max(74, tonumber(cfg.cursorSize) or 74)
-        cfg.cursorVisualVersion = 2
+    if cfg.cursorSize == nil then cfg.cursorSize = 52 end
+    if cfg.cursorVisualVersion ~= 3 then
+        -- V3 is intentionally compact: the previous 74 px ring covered too
+        -- much of the world around the pointer. Migrate existing users once.
+        cfg.cursorSize = math.min(56, tonumber(cfg.cursorSize) or 52)
+        cfg.cursorVisualVersion = 3
     end
 
-    cfg.cursorSize = math.max(48, math.min(120, tonumber(cfg.cursorSize) or 74))
+    cfg.cursorSize = math.max(36, math.min(96, tonumber(cfg.cursorSize) or 52))
     RB:SetFeatureEnabled("hud", cfg.enabled, true)
     HUD.config = cfg
     return cfg
@@ -587,7 +589,7 @@ function HUD:CreateCursorRing()
         local x, y = GetCursorPosition()
         if not x or not y or not scale or scale == 0 then return end
 
-        local size = tonumber(cfg.cursorSize) or 74
+        local size = tonumber(cfg.cursorSize) or 52
         self:SetSize(size, size)
 
         if self.shadow then
@@ -754,10 +756,10 @@ function HUD:HandleSlash(rest)
         local cfg = getConfig()
         local requested = tonumber(value)
         if not requested then
-            RB:Print("Uso: /rapzo hud cursorsize 48-120")
+            RB:Print("Uso: /rapzo hud cursorsize 36-96")
             return
         end
-        cfg.cursorSize = math.max(48, math.min(120, requested))
+        cfg.cursorSize = math.max(36, math.min(96, requested))
         self:Apply()
         RB:Print("Cursor HUD: " .. tostring(cfg.cursorSize) .. " px")
         return
@@ -774,7 +776,7 @@ function HUD:HandleSlash(rest)
         return
     end
 
-    RB:Print("Uso: /rapzo hud [status|debug|on|off|cursor on|off|cursorsize 48-120|minimap on|off|frames on|off]")
+    RB:Print("Uso: /rapzo hud [status|debug|on|off|cursor on|off|cursorsize 36-96|minimap on|off|frames on|off]")
 end
 
 function HUD:ScheduleApply(delay)

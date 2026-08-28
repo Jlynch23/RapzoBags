@@ -5,6 +5,8 @@ if not RB or not RB.HUD then return end
 local HUD = RB.HUD
 local WHITE_TEXTURE = "Interface\\Buttons\\WHITE8X8"
 local PORTRAIT_MASK = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
+local STYLE2_WIDTH = 150
+local STYLE2_HEIGHT = 43
 
 HUD.previewFrame = nil
 HUD.previewDisplays = HUD.previewDisplays or {}
@@ -72,7 +74,7 @@ local function getPreviewClassColor(classFile, fallback)
 end
 
 local function makeDemo(parent, key, title, color, classFile, isMob)
-    local display = makePanel(parent, 178, 50, color)
+    local display = makePanel(parent, STYLE2_WIDTH, 50, color)
     display.key = key
     display.color = color
 
@@ -116,7 +118,7 @@ local function makeDemo(parent, key, title, color, classFile, isMob)
     display.power = power
 
     local auraRow = CreateFrame("Frame", nil, display)
-    auraRow:SetSize(178, 18)
+    auraRow:SetSize(STYLE2_WIDTH, 18)
     auraRow:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 6, 6)
     display.previewAuras = auraRow
 
@@ -175,7 +177,7 @@ local function applyPreviewStyle(display, style)
     if style == 2 then
         display:SetScale((type(HUD.GetFrameScale) == "function" and HUD:GetFrameScale()) or 1.50)
         setPreviewShellVisible(display, false)
-        display:SetSize(178, 43)
+        display:SetSize(STYLE2_WIDTH, STYLE2_HEIGHT)
 
         display.health:ClearAllPoints()
         display.health:SetHeight(21)
@@ -194,7 +196,7 @@ local function applyPreviewStyle(display, style)
         display.nameText:SetJustifyH("LEFT")
 
         display.previewAuras:ClearAllPoints()
-        display.previewAuras:SetSize(178, 18)
+        display.previewAuras:SetSize(STYLE2_WIDTH, 18)
         display.previewAuras:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 0, 18)
 
         display.previewCast:ClearAllPoints()
@@ -315,7 +317,7 @@ function HUD:CreatePreview()
 
     slider:SetScript("OnValueChanged", function(_, value)
         value = math.floor((tonumber(value) or 1.50) * 100 + 0.5) / 100
-        scaleValue:SetText(string.format("%.2fx  (~%dx%d px)", value, math.floor(178 * value + 0.5), math.floor(43 * value + 0.5)))
+        scaleValue:SetText(string.format("%.2fx  (~%dx%d px)", value, math.floor(STYLE2_WIDTH * value + 0.5), math.floor(STYLE2_HEIGHT * value + 0.5)))
         if type(HUD.SetFrameScale) == "function" then
             HUD:SetFrameScale(value, true)
         end
@@ -361,7 +363,7 @@ function HUD:RefreshPreview()
             frame.RapzoQoLScaleSlider:SetValue(scale)
         end
         if frame.RapzoQoLScaleValue then
-            frame.RapzoQoLScaleValue:SetText(string.format("%.2fx  (~%dx%d px)", scale, math.floor(178 * scale + 0.5), math.floor(43 * scale + 0.5)))
+            frame.RapzoQoLScaleValue:SetText(string.format("%.2fx  (~%dx%d px)", scale, math.floor(STYLE2_WIDTH * scale + 0.5), math.floor(STYLE2_HEIGHT * scale + 0.5)))
         end
     end
 
