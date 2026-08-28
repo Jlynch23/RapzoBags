@@ -7,6 +7,11 @@ RB.Config = Config
 RB:RegisterModule("config", Config)
 Config.frame = nil
 
+-- Forward declaration: CreateFrame() is defined before the shared HUD style
+-- choice builder. Without this local, Lua resolves the earlier reference as a
+-- global and the full Rapzo QoL panel errors when it is opened.
+local makeHUDStyleChoice
+
 local function makeCheck(parent, label, y, checkedFunc, setFunc, enabledFunc)
     local check = CreateFrame("CheckButton", nil, parent, "UICheckButtonTemplate")
     check:SetPoint("TOPLEFT", parent, "TOPLEFT", 22, y)
@@ -207,7 +212,7 @@ function Config:CreateFrame()
     hudStyleLabel:SetText("Estilo de Unit Frames")
 
     frame.hudStyleChecks = {
-        makeHUDStyleChoice(frame, "V1 - Clasico", 24, -650, 1),
+        makeHUDStyleChoice(frame, "V1 - Clásico", 24, -650, 1),
         makeHUDStyleChoice(frame, "V2 - ToxiUI", 190, -650, 2),
     }
 
@@ -254,7 +259,7 @@ function Config:Show()
 end
 
 
-local function makeHUDStyleChoice(parent, label, x, y, style)
+makeHUDStyleChoice = function(parent, label, x, y, style)
     local check = CreateFrame("CheckButton", nil, parent, "UICheckButtonTemplate")
     check:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
     check:SetSize(24, 24)
@@ -434,7 +439,7 @@ function Config:CreateSettingsPanel()
     hudStyleTitle:SetText("Estilo de Unit Frames")
 
     panel.hudStyleChecks = {
-        makeHUDStyleChoice(panel, "V1 - Clasico", 26, -472, 1),
+        makeHUDStyleChoice(panel, "V1 - Clásico", 26, -472, 1),
         makeHUDStyleChoice(panel, "V2 - ToxiUI", 210, -472, 2),
     }
 

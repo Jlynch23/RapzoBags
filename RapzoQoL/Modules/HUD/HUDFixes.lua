@@ -5,6 +5,7 @@ if not RB or not RB.HUD then return end
 local HUD = RB.HUD
 local Fixes = {}
 HUD.Fixes = Fixes
+local nativeCastBarState = setmetatable({}, {__mode = "k"})
 
 local function isSecret(value)
     return type(issecretvalue) == "function" and issecretvalue(value)
@@ -53,20 +54,62 @@ local function getNativeUnitCastBars()
     return list
 end
 
-local function hideNativeUnitCastBars()
-    -- Do not touch nameplate cast bars. Only suppress Blizzard's
-    -- player/target/focus cast bars because Rapzo QoL renders its own.
+local function shouldHideNativeUnitCastBars()
+    if type(HUD.GetStyle) ~= "function" or HUD:GetStyle() ~= 2 then
+        return false
+    end
+    if type(HUD.IsEnabled) == "function" and not HUD:IsEnabled() then
+        return false
+    end
+    return not HUD.config or HUD.config.unitFrames ~= false
+end
+
+local function syncNativeUnitCastBars()
+    -- V2 renders its own player/target/focus cast bars. V1 deliberately keeps
+    -- Blizzard's cast bars, so every change made here must be reversible.
+    local hide = shouldHideNativeUnitCastBars()
     for _, bar in ipairs(getNativeUnitCastBars()) do
+        local state = nativeCastBarState[bar]
+        if not state then
+            state = {}
+            nativeCastBarState[bar] = state
+        end
+        if state.alpha == nil and type(bar.GetAlpha) == "function" then
+            local ok, alpha = pcall(bar.GetAlpha, bar)
+            if ok then state.alpha = alpha end
+        end
+        if state.mouseEnabled == nil and type(bar.IsMouseEnabled) == "function" then
+            local ok, enabled = pcall(bar.IsMouseEnabled, bar)
+            if ok then state.mouseEnabled = enabled and true or false end
+        end
+        if not state.onShowHooked and type(bar.HookScript) == "function" then
+            state.onShowHooked = true
+            safeCall(bar.HookScript, bar, "OnShow", function()
+                -- Blizzard may show/reset its bar when a cast starts. Reconcile
+                -- on the next tick without registering a second spellcast
+                -- event family alongside HUDStyles.lua.
+                if C_Timer and type(C_Timer.After) == "function" then
+                    C_Timer.After(0, syncNativeUnitCastBars)
+                else
+                    syncNativeUnitCastBars()
+                end
+            end)
+        end
+
         if type(bar.SetAlpha) == "function" then
-            safeCall(bar.SetAlpha, bar, 0)
+            safeCall(bar.SetAlpha, bar, hide and 0 or (state.alpha or 1))
         end
         if type(bar.EnableMouse) == "function" then
-            safeCall(bar.EnableMouse, bar, false)
+            local enabled = not hide and state.mouseEnabled == true
+            safeCall(bar.EnableMouse, bar, enabled)
         end
     end
 end
 
-HUD.HideNativeUnitCastBars = hideNativeUnitCastBars
+HUD.SyncNativeUnitCastBars = syncNativeUnitCastBars
+-- Compatibility for any external caller from an earlier alpha. The function
+-- now synchronizes instead of hiding unconditionally.
+HUD.HideNativeUnitCastBars = syncNativeUnitCastBars
 
 local function hidePlayerNativeRestArt()
     local frame = _G.PlayerFrame
@@ -167,7 +210,12 @@ local function anchorDisplay(unit)
     if not nativeFrame then return end
 
     display:ClearAllPoints()
-    display:SetPoint("TOPLEFT", nativeFrame, "TOPLEFT", -2, -18)
+    if unit ~= "player" and type(HUD.GetStyle) == "function" and HUD:GetStyle() == 1 then
+        -- Preserve the mirrored target/focus placement of the classic style.
+        display:SetPoint("TOPRIGHT", nativeFrame, "TOPRIGHT", 2, -18)
+    else
+        display:SetPoint("TOPLEFT", nativeFrame, "TOPLEFT", -2, -18)
+    end
 end
 
 local function applyAnchors()
@@ -178,10 +226,12 @@ end
 
 local function applyAll()
     hidePlayerNativeRestArt()
-    hideNativeUnitCastBars()
+    syncNativeUnitCastBars()
     applyAnchors()
     updateRestIndicator()
 end
+
+HUD.ApplyStyleFixes = applyAll
 
 local events = CreateFrame("Frame")
 events:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -189,20 +239,8 @@ events:RegisterEvent("PLAYER_UPDATE_RESTING")
 events:RegisterEvent("PLAYER_TARGET_CHANGED")
 events:RegisterEvent("PLAYER_FOCUS_CHANGED")
 events:RegisterEvent("PLAYER_REGEN_ENABLED")
-events:RegisterEvent("UNIT_SPELLCAST_START")
-events:RegisterEvent("UNIT_SPELLCAST_STOP")
-events:RegisterEvent("UNIT_SPELLCAST_FAILED")
-events:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
-events:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
-events:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
-events:RegisterEvent("UNIT_SPELLCAST_EMPOWER_START")
-events:RegisterEvent("UNIT_SPELLCAST_EMPOWER_STOP")
 
-events:SetScript("OnEvent", function(_, event, unit)
-    if event:find("^UNIT_SPELLCAST") and unit ~= "player" and unit ~= "target" and unit ~= "focus" then
-        return
-    end
-
+events:SetScript("OnEvent", function(_, event)
     if C_Timer and C_Timer.After then
         C_Timer.After(0, applyAll)
         if event == "PLAYER_ENTERING_WORLD" then
@@ -234,25 +272,19 @@ if type(hooksecurefunc) == "function" then
         end)
     end
 
-    if type(HUD.UpdateUnitFrames) == "function" then
-        hooksecurefunc(HUD, "UpdateUnitFrames", function()
-            applyAnchors()
-            updateRestIndicator()
-        end)
-    end
-
-    if type(HUD.ApplyFrameStyle) == "function" then
-        hooksecurefunc(HUD, "ApplyFrameStyle", function(_, unit)
-            hideNativeUnitCastBars()
-            if unit == nil or unit == "player" then
-                updateRestIndicator()
-            end
-        end)
-    end
-
     if type(HUD.Apply) == "function" then
         hooksecurefunc(HUD, "Apply", function()
-            hideNativeUnitCastBars()
+            syncNativeUnitCastBars()
+        end)
+    end
+
+    if type(HUD.SetEnabled) == "function" then
+        hooksecurefunc(HUD, "SetEnabled", syncNativeUnitCastBars)
+    end
+
+    if type(HUD.SetPart) == "function" then
+        hooksecurefunc(HUD, "SetPart", function(_, part)
+            if part == "frames" then syncNativeUnitCastBars() end
         end)
     end
 end

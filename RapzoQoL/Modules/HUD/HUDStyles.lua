@@ -620,6 +620,10 @@ function HUD:ApplyFrameStyle(unit)
     if type(self.ReanchorAuras) == "function" then
         self:ReanchorAuras()
     end
+
+    if type(self.ApplyStyleFixes) == "function" then
+        self:ApplyStyleFixes()
+    end
 end
 
 function HUD:SetStyle(style)
