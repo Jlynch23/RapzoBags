@@ -26,6 +26,25 @@ local DARK = {
 }
 
 local function getAccentColor()
+    -- The AFK screen follows the current player's Blizzard class color.
+    -- The global Rapzo QoL accent remains available to the rest of the addon.
+    if type(UnitClass) == "function" and type(RAID_CLASS_COLORS) == "table" then
+        local ok, _, classFile = pcall(UnitClass, "player")
+        local secretClass = classFile
+            and type(issecretvalue) == "function"
+            and issecretvalue(classFile)
+
+        if ok and classFile and not secretClass then
+            local color = RAID_CLASS_COLORS[classFile]
+            if color then
+                return color.r or DARK.cyan[1],
+                    color.g or DARK.cyan[2],
+                    color.b or DARK.cyan[3]
+            end
+        end
+    end
+
+    -- Fallback for login/loading edge cases where the class is not available yet.
     if type(RB.GetAccentColor) == "function" then
         return RB:GetAccentColor()
     end
