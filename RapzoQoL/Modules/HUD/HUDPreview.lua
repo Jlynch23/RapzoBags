@@ -223,7 +223,9 @@ local function applyPreviewStyle(display, style)
 
         display.previewAuras:ClearAllPoints()
         display.previewAuras:SetSize(STYLE2_WIDTH, 18)
-        display.previewAuras:SetPoint("BOTTOMLEFT", display, "TOPLEFT", 0, 18)
+        local auraX, auraY = 0, 0
+        if type(HUD.GetAuraOffset) == "function" then auraX, auraY = HUD:GetAuraOffset() end
+        display.previewAuras:SetPoint("BOTTOMLEFT", display, "TOPLEFT", auraX, 18 + auraY)
 
         display.previewCast:ClearAllPoints()
         display.previewCast:SetPoint("TOPLEFT", display, "BOTTOMLEFT", 0, -4)
@@ -273,7 +275,7 @@ function HUD:CreatePreview()
     if self.previewFrame then return self.previewFrame end
 
     local frame = CreateFrame("Frame", "RapzoQoLHUDPreviewFrame", UIParent, "BasicFrameTemplateWithInset")
-    frame:SetSize(920, 600)
+    frame:SetSize(920, 650)
     frame:SetPoint("CENTER")
     frame:SetFrameStrata("DIALOG")
     frame:SetMovable(true)
@@ -388,15 +390,73 @@ function HUD:CreatePreview()
     frame.RapzoQoLAuraScaleSlider = auraSlider
     frame.RapzoQoLAuraScaleValue = auraValue
 
+    local positionXValue = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    positionXValue:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -164)
+    positionXValue:SetTextColor(1.00, 0.82, 0.15)
+
+    local positionYValue = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    positionYValue:SetPoint("TOPLEFT", frame, "TOPLEFT", 390, -164)
+    positionYValue:SetTextColor(1.00, 0.82, 0.15)
+
+    local function makePositionSlider(name, x, minValue, maxValue, onChanged)
+        local control = CreateFrame("Slider", name, frame, "OptionsSliderTemplate")
+        control:SetPoint("TOPLEFT", frame, "TOPLEFT", x, -184)
+        control:SetWidth(300)
+        control:SetMinMaxValues(minValue, maxValue)
+        control:SetValueStep(1)
+        if type(control.SetObeyStepOnDrag) == "function" then control:SetObeyStepOnDrag(true) end
+        local lowText = _G[control:GetName() .. "Low"]
+        local highText = _G[control:GetName() .. "High"]
+        local titleText = _G[control:GetName() .. "Text"]
+        if lowText then lowText:SetText(tostring(minValue)) end
+        if highText then highText:SetText(tostring(maxValue)) end
+        if titleText then titleText:SetText("") end
+        control:SetScript("OnValueChanged", onChanged)
+        return control
+    end
+
+    local positionXSlider = makePositionSlider("RapzoQoLHUDAuraXSlider", 20, -150, 150, function(_, value)
+        value = math.floor((tonumber(value) or 0) + 0.5)
+        local _, currentY = HUD:GetAuraOffset()
+        positionXValue:SetText(string.format("Horizontal: %d  (izquierda / derecha)", value))
+        HUD:SetAuraOffset(value, currentY, true)
+    end)
+
+    local positionYSlider = makePositionSlider("RapzoQoLHUDAuraYSlider", 390, -60, 100, function(_, value)
+        value = math.floor((tonumber(value) or 0) + 0.5)
+        local currentX = HUD:GetAuraOffset()
+        positionYValue:SetText(string.format("Vertical: %d  (abajo / arriba)", value))
+        HUD:SetAuraOffset(currentX, value, true)
+    end)
+
+    local resetPosition = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    resetPosition:SetSize(150, 24)
+    resetPosition:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -20, -174)
+    resetPosition:SetText("Centrar auras")
+    resetPosition:SetScript("OnClick", function()
+        HUD:SetAuraOffset(0, 0, true)
+        positionXSlider:SetValue(0)
+        positionYSlider:SetValue(0)
+        HUD:RefreshPreview()
+    end)
+
+    local initialX, initialY = HUD:GetAuraOffset()
+    positionXSlider:SetValue(initialX)
+    positionYSlider:SetValue(initialY)
+    frame.RapzoQoLAuraXSlider = positionXSlider
+    frame.RapzoQoLAuraYSlider = positionYSlider
+    frame.RapzoQoLAuraXValue = positionXValue
+    frame.RapzoQoLAuraYValue = positionYValue
+
     local auraHelp = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    auraHelp:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -164)
+    auraHelp:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -224)
     auraHelp:SetText("Prueba visual: Player muestra buffs; Target y Focus muestran debuffs. Incluye tiempos cortos, minutos y cargas 2 / 5 / 10.")
 
     local player = makeDemo(frame, "player", "Rapzo", getPreviewClassColor("WARRIOR", {0.92, 0.66, 0.10}), "WARRIOR", false)
-    player:SetPoint("TOPLEFT", frame, "TOPLEFT", 70, -220)
+    player:SetPoint("TOPLEFT", frame, "TOPLEFT", 70, -280)
 
     local target = makeDemo(frame, "target", "Muñeco de entrenamiento", {0.92, 0.30, 0.09}, nil, true)
-    target:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -70, -220)
+    target:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -70, -280)
 
     local focus = makeDemo(frame, "focus", "Focus Rogue", getPreviewClassColor("ROGUE", {1.00, 0.96, 0.41}), "ROGUE", false)
     focus:SetPoint("BOTTOM", frame, "BOTTOM", 0, 82)
@@ -439,6 +499,22 @@ function HUD:RefreshPreview()
         end
         if frame.RapzoQoLAuraScaleValue then
             frame.RapzoQoLAuraScaleValue:SetText(string.format("%.2fx  (~%d px base)", auraScale, math.floor(STYLE2_AURA * auraScale + 0.5)))
+        end
+    end
+
+    if type(self.GetAuraOffset) == "function" then
+        local auraX, auraY = self:GetAuraOffset()
+        if frame.RapzoQoLAuraXSlider and frame.RapzoQoLAuraXSlider:GetValue() ~= auraX then
+            frame.RapzoQoLAuraXSlider:SetValue(auraX)
+        end
+        if frame.RapzoQoLAuraYSlider and frame.RapzoQoLAuraYSlider:GetValue() ~= auraY then
+            frame.RapzoQoLAuraYSlider:SetValue(auraY)
+        end
+        if frame.RapzoQoLAuraXValue then
+            frame.RapzoQoLAuraXValue:SetText(string.format("Horizontal: %d  (izquierda / derecha)", auraX))
+        end
+        if frame.RapzoQoLAuraYValue then
+            frame.RapzoQoLAuraYValue:SetText(string.format("Vertical: %d  (abajo / arriba)", auraY))
         end
     end
 

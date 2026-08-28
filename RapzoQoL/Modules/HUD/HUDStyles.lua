@@ -21,6 +21,10 @@ local STYLE2_AURA_Y = 18
 local STYLE2_DEFAULT_AURA_SCALE = 1.00
 local STYLE2_MIN_AURA_SCALE = 0.75
 local STYLE2_MAX_AURA_SCALE = 1.75
+local STYLE2_MIN_AURA_X = -150
+local STYLE2_MAX_AURA_X = 150
+local STYLE2_MIN_AURA_Y = -60
+local STYLE2_MAX_AURA_Y = 100
 
 local function isSecret(value)
     return type(issecretvalue) == "function" and issecretvalue(value)
@@ -51,6 +55,9 @@ local function getConfig()
     auraScale = math.max(STYLE2_MIN_AURA_SCALE, math.min(STYLE2_MAX_AURA_SCALE, auraScale))
     cfg.auraScale = auraScale
 
+    cfg.auraOffsetX = math.max(STYLE2_MIN_AURA_X, math.min(STYLE2_MAX_AURA_X, tonumber(cfg.auraOffsetX) or 0))
+    cfg.auraOffsetY = math.max(STYLE2_MIN_AURA_Y, math.min(STYLE2_MAX_AURA_Y, tonumber(cfg.auraOffsetY) or 0))
+
     HUD.config = cfg
     return cfg
 end
@@ -65,6 +72,34 @@ end
 
 function HUD:GetAuraScale()
     return getConfig().auraScale
+end
+
+function HUD:GetAuraOffset()
+    local cfg = getConfig()
+    return cfg.auraOffsetX, cfg.auraOffsetY
+end
+
+function HUD:SetAuraOffset(x, y, silent)
+    x, y = tonumber(x), tonumber(y)
+    if not x or not y then return false end
+
+    x = math.max(STYLE2_MIN_AURA_X, math.min(STYLE2_MAX_AURA_X, x))
+    y = math.max(STYLE2_MIN_AURA_Y, math.min(STYLE2_MAX_AURA_Y, y))
+    local cfg = getConfig()
+    cfg.auraOffsetX, cfg.auraOffsetY = x, y
+
+    for _, display in pairs(self.unitDisplays or {}) do
+        for _, container in pairs({display and display.RapzoQoLPlayerAuras, display and display.RapzoQoLTargetAuras}) do
+            if container then
+                safeCall(container.ClearAllPoints, container)
+                safeCall(container.SetPoint, container, "BOTTOMLEFT", display, "TOPLEFT", x, STYLE2_AURA_Y + y)
+            end
+        end
+    end
+
+    if type(self.RefreshPreview) == "function" then self:RefreshPreview() end
+    if not silent then RB:Print(string.format("HUD auras: X %d | Y %d", x, y)) end
+    return true
 end
 
 function HUD:SetAuraScale(scale, silent)
@@ -331,7 +366,8 @@ local function ensurePlayerAuraContainer(display)
     end
 
     container:SetSize(STYLE2_AURA_WIDTH, 22)
-    container:SetPoint("BOTTOMLEFT", display, "TOPLEFT", STYLE2_CONTENT, STYLE2_AURA_Y)
+    local auraX, auraY = HUD:GetAuraOffset()
+    container:SetPoint("BOTTOMLEFT", display, "TOPLEFT", STYLE2_CONTENT + auraX, STYLE2_AURA_Y + auraY)
     container:SetFrameLevel(display:GetFrameLevel() + 4)
     safeCall(container.SetScale, container, HUD:GetAuraScale())
     container:Show()
@@ -379,7 +415,8 @@ local function ensureTargetAuraContainer(display)
     if not ok or not container or type(container.AddAuraGroup) ~= "function" then return nil end
 
     container:SetSize(STYLE2_AURA_WIDTH, 22)
-    container:SetPoint("BOTTOMLEFT", display, "TOPLEFT", STYLE2_EDGE, STYLE2_AURA_Y)
+    local auraX, auraY = HUD:GetAuraOffset()
+    container:SetPoint("BOTTOMLEFT", display, "TOPLEFT", STYLE2_EDGE + auraX, STYLE2_AURA_Y + auraY)
     container:SetFrameLevel(display:GetFrameLevel() + 4)
     safeCall(container.SetScale, container, HUD:GetAuraScale())
 
@@ -662,6 +699,13 @@ local function applyStyle2(display)
     setTargetAurasEnabled(display, display.unit == "target" or display.unit == "focus")
     if display.RapzoQoLPlayerAuras then safeCall(display.RapzoQoLPlayerAuras.SetScale, display.RapzoQoLPlayerAuras, HUD:GetAuraScale()) end
     if display.RapzoQoLTargetAuras then safeCall(display.RapzoQoLTargetAuras.SetScale, display.RapzoQoLTargetAuras, HUD:GetAuraScale()) end
+    local auraX, auraY = HUD:GetAuraOffset()
+    for _, container in pairs({display.RapzoQoLPlayerAuras, display.RapzoQoLTargetAuras}) do
+        if container then
+            safeCall(container.ClearAllPoints, container)
+            safeCall(container.SetPoint, container, "BOTTOMLEFT", display, "TOPLEFT", auraX, STYLE2_AURA_Y + auraY)
+        end
+    end
     updateCastBar(display.unit)
 end
 
@@ -815,6 +859,20 @@ function HUD:HandleSlash(rest)
 
         if not self:SetAuraScale(value) then
             RB:Print("Uso: /rapzo hud aurascale 0.75-1.75")
+        end
+        return
+    elseif part == "aurax" or part == "auray" then
+        local x, y = self:GetAuraOffset()
+        if value == "reset" then
+            self:SetAuraOffset(0, 0)
+        elseif value == "" then
+            RB:Print(string.format("HUD aura position: X %d | Y %d | usa /rapzo hud aurax -30 o auray 20", x, y))
+        elseif part == "aurax" and tonumber(value) then
+            self:SetAuraOffset(value, y)
+        elseif part == "auray" and tonumber(value) then
+            self:SetAuraOffset(x, value)
+        else
+            RB:Print("Uso: /rapzo hud aurax -150..150 | auray -60..100 | reset")
         end
         return
     elseif part == "preview" then
