@@ -12,9 +12,9 @@ Config.frame = nil
 -- global and the full Rapzo QoL panel errors when it is opened.
 local makeHUDStyleChoice
 
-local function makeCheck(parent, label, y, checkedFunc, setFunc, enabledFunc)
+local function makeCheck(parent, label, y, checkedFunc, setFunc, enabledFunc, x)
     local check = CreateFrame("CheckButton", nil, parent, "UICheckButtonTemplate")
-    check:SetPoint("TOPLEFT", parent, "TOPLEFT", 22, y)
+    check:SetPoint("TOPLEFT", parent, "TOPLEFT", x or 22, y)
     check:SetSize(26, 26)
     local text = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     text:SetPoint("LEFT", check, "RIGHT", 4, 0)
@@ -32,6 +32,25 @@ local function makeCheck(parent, label, y, checkedFunc, setFunc, enabledFunc)
         if Config.settingsPanel then Config:RefreshSettingsPanel() end
     end)
     return check
+end
+
+local function isCursorRingEnabled()
+    local db = RB:EnsureDB()
+    db.settings = type(db.settings) == "table" and db.settings or {}
+    local hud = db.settings.hud
+    return type(hud) ~= "table" or hud.cursor ~= false
+end
+
+local function setCursorRingEnabled(enabled)
+    if RB.HUD and type(RB.HUD.SetPart) == "function" then
+        RB.HUD:SetPart("cursor", enabled)
+        return
+    end
+
+    local db = RB:EnsureDB()
+    db.settings = type(db.settings) == "table" and db.settings or {}
+    db.settings.hud = type(db.settings.hud) == "table" and db.settings.hud or {}
+    db.settings.hud.cursor = enabled and true or false
 end
 
 local function openAccentPicker()
@@ -196,7 +215,7 @@ function Config:CreateFrame()
             end
         end,
         function() return RB:IsModulePresent("afk") end)
-    frame.checks[#frame.checks+1] = makeCheck(frame, "HUD visual (cursor + minimapa + unit frames)", -596,
+    frame.checks[#frame.checks+1] = makeCheck(frame, "HUD visual (frames + minimapa)", -596,
         function() return RB:IsFeatureEnabled("hud") end,
         function(v)
             if RB.HUD and RB.HUD.SetEnabled then
@@ -206,6 +225,11 @@ function Config:CreateFrame()
             end
         end,
         function() return RB:IsModulePresent("hud") end)
+    frame.checks[#frame.checks+1] = makeCheck(frame, "Aro del mouse", -596,
+        isCursorRingEnabled,
+        setCursorRingEnabled,
+        function() return RB:IsModulePresent("hud") end,
+        310)
 
     local hudStyleLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     hudStyleLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -632)
@@ -295,9 +319,9 @@ makeHUDStyleChoice = function(parent, label, x, y, style)
     return check
 end
 
-local function makeSettingsCheck(parent, label, y, checkedFunc, setFunc, enabledFunc)
+local function makeSettingsCheck(parent, label, y, checkedFunc, setFunc, enabledFunc, x)
     local check = CreateFrame("CheckButton", nil, parent, "UICheckButtonTemplate")
-    check:SetPoint("TOPLEFT", parent, "TOPLEFT", 26, y)
+    check:SetPoint("TOPLEFT", parent, "TOPLEFT", x or 26, y)
     check:SetSize(26, 26)
 
     local text = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -433,6 +457,12 @@ function Config:CreateSettingsPanel()
             if RB.HUD and RB.HUD.SetEnabled then RB.HUD:SetEnabled(v) else RB:SetFeatureEnabled("hud", v, true) end
         end,
         function() return RB:IsModulePresent("hud") end)
+
+    panel.settingsChecks[#panel.settingsChecks + 1] = makeSettingsCheck(panel, "Aro del mouse", -416,
+        isCursorRingEnabled,
+        setCursorRingEnabled,
+        function() return RB:IsModulePresent("hud") end,
+        250)
 
     local hudStyleTitle = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
     hudStyleTitle:SetPoint("TOPLEFT", panel, "TOPLEFT", 26, -452)

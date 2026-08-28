@@ -687,7 +687,7 @@ function HUD:CreateCursorRing()
 
     frame:SetScript("OnUpdate", function(self)
         local cfg = HUD.config or getConfig()
-        if cfg.enabled == false or not cfg.cursor then
+        if not cfg.cursor then
             self:Hide()
             return
         end
@@ -758,18 +758,23 @@ end
 
 function HUD:Apply()
     local cfg = getConfig()
+
+    -- The cursor ring is intentionally independent from the visual HUD master
+    -- toggle. Players can keep the mouse highlight while using Blizzard/mUI
+    -- unit frames and minimap visuals.
+    if cfg.cursor then
+        local cursor = self:CreateCursorRing()
+        if cursor and not cursor:IsShown() then cursor:Show() end
+    elseif self.cursorFrame then
+        self.cursorFrame:Hide()
+    end
+
     if not self:IsEnabled() then
-        if self.cursorFrame then self.cursorFrame:Hide() end
         for _, display in pairs(self.unitDisplays) do
             display:Hide()
         end
         restoreNativeUnitArt()
         return
-    end
-
-    if cfg.cursor then
-        local cursor = self:CreateCursorRing()
-        if cursor and not cursor:IsShown() then cursor:Show() end
     end
 
     if cfg.squareMinimap then self:StyleMinimap() end
@@ -789,15 +794,13 @@ function HUD:SetEnabled(enabled)
     cfg.enabled = enabled and true or false
     RB:SetFeatureEnabled("hud", cfg.enabled, true)
 
+    -- Apply always synchronizes the cursor first, even when the visual HUD is
+    -- disabled, so the mouse ring remains controlled exclusively by cfg.cursor.
+    self:Apply()
+
     if not cfg.enabled then
-        if self.cursorFrame then self.cursorFrame:Hide() end
-        for _, display in pairs(self.unitDisplays) do
-            display:Hide()
-        end
-        restoreNativeUnitArt()
-        RB:Print("HUD visual: OFF. Unit frames nativos restaurados.")
+        RB:Print("HUD visual: OFF. Aro del mouse conserva su ajuste independiente.")
     else
-        self:Apply()
         RB:Print("HUD visual: ON")
     end
 end

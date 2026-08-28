@@ -464,6 +464,13 @@ rango permitido: 36..96 px
 visual version actual: 3
 ```
 
+Desde 2026-08-28, el **aro del mouse es independiente del HUD visual**:
+
+- `settings.hud.enabled` / feature `hud` controla frames + minimapa;
+- `settings.hud.cursor` controla exclusivamente el aro;
+- apagar **HUD visual** no debe ocultar el aro si `cursor = ON`;
+- el panel propio y Blizzard Settings muestran ambos toggles por separado.
+
 ## 12.2 Estilo V1 — Clásico
 
 **Debe preservarse.**
@@ -709,6 +716,7 @@ El panel de Blizzard actualmente permite:
 - Vendedor extendido;
 - Pantalla AFK;
 - HUD visual;
+- Aro del mouse (independiente del HUD visual);
 - **V1 - Clásico**;
 - **V2 - ToxiUI**;
 - Reescanear;
