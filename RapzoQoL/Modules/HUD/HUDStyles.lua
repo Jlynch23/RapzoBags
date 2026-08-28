@@ -222,24 +222,20 @@ end
 local function initAuraButton(button)
     button:SetSize(STYLE2_AURA, STYLE2_AURA)
 
-    -- CustomAuraContainerTemplate inherits Blizzard's stack counter, whose
-    -- default font is sized for much larger icons. Keep two-digit stacks
-    -- readable without letting them cover the whole 16 px aura.
-    local count = button.Count or button.count or button.CountText or button.countText
-    if count then
-        if STANDARD_TEXT_FONT and type(count.SetFont) == "function" then
-            safeCall(count.SetFont, count, STANDARD_TEXT_FONT, 8, "OUTLINE")
-        elseif type(count.SetScale) == "function" then
-            safeCall(count.SetScale, count, 0.65)
-        end
-        if type(count.ClearAllPoints) == "function" and type(count.SetPoint) == "function" then
-            safeCall(count.ClearAllPoints, count)
-            safeCall(count.SetPoint, count, "BOTTOMRIGHT", button, "BOTTOMRIGHT", 1, -1)
-        end
-        if type(count.SetTextColor) == "function" then
-            safeCall(count.SetTextColor, count, 1, 1, 1, 1)
-        end
+    -- AuraContainer does not expose a prebuilt Count region. Register our own
+    -- compact application counter so Blizzard does not create/use its large
+    -- default presentation on these 16 px buttons.
+    local count = button:CreateFontString(nil, "OVERLAY")
+    if STANDARD_TEXT_FONT then
+        count:SetFont(STANDARD_TEXT_FONT, 8, "OUTLINE")
+    else
+        count:SetFontObject("NumberFontNormalSmall")
+        count:SetScale(0.65)
     end
+    count:SetJustifyH("RIGHT")
+    count:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 1, -1)
+    count:SetTextColor(1, 1, 1, 1)
+    safeCall(button.SetApplicationCount, button, count, {})
 
     local icon = button:CreateTexture(nil, "ARTWORK")
     icon:SetAllPoints(button)
