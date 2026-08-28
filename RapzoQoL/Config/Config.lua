@@ -459,6 +459,18 @@ function Config:CreateSettingsPanel()
     status:SetJustifyH("LEFT")
     panel.statusText = status
 
+    local hudPreview = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    hudPreview:SetSize(185, 26)
+    hudPreview:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -584)
+    hudPreview:SetText("Preview / depurar HUD")
+    hudPreview:SetScript("OnClick", function()
+        if RB.HUD and type(RB.HUD.ShowPreview) == "function" then
+            RB.HUD:ShowPreview()
+        else
+            RB:Print("El preview del HUD no está disponible.")
+        end
+    end)
+
     local rescan = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     rescan:SetSize(150, 26)
     rescan:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -618)
