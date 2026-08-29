@@ -5,6 +5,22 @@ if not RB or not RB.HUD then return end
 local HUD = RB.HUD
 local anchoring = false
 
+-- Native Target/Focus aura containers belong to Blizzard (and may also be
+-- managed by mUI). When Rapzo's visual HUD or unit frames are disabled, this
+-- module must become a true no-op so Edit Mode cannot inherit addon taint.
+local function hudFramesActive()
+    if type(HUD.IsEnabled) == "function" and not HUD:IsEnabled() then
+        return false
+    end
+
+    local cfg = HUD.config
+    if cfg and cfg.unitFrames == false then
+        return false
+    end
+
+    return true
+end
+
 local function safeCall(func, ...)
     if type(func) ~= "function" then return false end
     return pcall(func, ...)
@@ -30,7 +46,7 @@ local function auraRightInset(unit)
 end
 
 local function anchorAuraContainer(unit)
-    if anchoring then return end
+    if anchoring or not hudFramesActive() then return end
 
     local display = HUD.unitDisplays and HUD.unitDisplays[unit]
     local nativeFrame = nativeFrameFor(unit)
@@ -76,6 +92,8 @@ end
 
 HUD.ReanchorAuras = anchorAllAuras
 HUD.ScheduleAuraAnchors = function(_, unit)
+    if not hudFramesActive() then return end
+
     if C_Timer and type(C_Timer.After) == "function" then
         C_Timer.After(0, function()
             if unit then
@@ -102,6 +120,8 @@ events:RegisterEvent("PLAYER_FOCUS_CHANGED")
 events:RegisterEvent("PLAYER_REGEN_ENABLED")
 
 events:SetScript("OnEvent", function(_, event)
+    if not hudFramesActive() then return end
+
     if event == "PLAYER_TARGET_CHANGED" then
         schedule("target")
     elseif event == "PLAYER_FOCUS_CHANGED" then
