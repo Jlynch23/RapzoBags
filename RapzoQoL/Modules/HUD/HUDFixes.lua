@@ -16,6 +16,14 @@ local function safeCall(func, ...)
     return pcall(func, ...)
 end
 
+local function hudFramesActive()
+    if type(HUD.IsEnabled) == "function" and not HUD:IsEnabled() then
+        return false
+    end
+
+    local cfg = HUD.config
+    return not cfg or cfg.unitFrames ~= false
+end
 
 local function addUniqueFrame(list, seen, frame)
     if not frame or seen[frame] then return end
@@ -55,19 +63,38 @@ local function getNativeUnitCastBars()
 end
 
 local function shouldHideNativeUnitCastBars()
-    if type(HUD.GetStyle) ~= "function" or HUD:GetStyle() ~= 2 then
-        return false
+    return hudFramesActive()
+        and type(HUD.GetStyle) == "function"
+        and HUD:GetStyle() == 2
+end
+
+local function restoreNativeUnitCastBars()
+    -- If Rapzo previously hid a Blizzard cast bar, restore it exactly once.
+    -- With HUD/frames already OFF and no Rapzo state recorded this function is
+    -- a no-op and, importantly, never touches TargetFrameSpellBar/FocusFrameSpellBar.
+    for bar, state in pairs(nativeCastBarState) do
+        if state and state.modified then
+            if type(bar.SetAlpha) == "function" and state.alpha ~= nil then
+                safeCall(bar.SetAlpha, bar, state.alpha)
+            end
+            if type(bar.EnableMouse) == "function" and state.mouseEnabled ~= nil then
+                safeCall(bar.EnableMouse, bar, state.mouseEnabled == true)
+            end
+            state.modified = false
+        end
     end
-    if type(HUD.IsEnabled) == "function" and not HUD:IsEnabled() then
-        return false
-    end
-    return not HUD.config or HUD.config.unitFrames ~= false
 end
 
 local function syncNativeUnitCastBars()
-    -- V2 renders its own player/target/focus cast bars. V1 deliberately keeps
-    -- Blizzard's cast bars, so every change made here must be reversible.
+    -- V2 renders its own player/target/focus cast bars. Outside active V2 we
+    -- only restore bars that Rapzo itself changed; otherwise do not mutate
+    -- Blizzard/mUI cast bars at all.
     local hide = shouldHideNativeUnitCastBars()
+    if not hide then
+        restoreNativeUnitCastBars()
+        return
+    end
+
     for _, bar in ipairs(getNativeUnitCastBars()) do
         local state = nativeCastBarState[bar]
         if not state then
@@ -85,9 +112,9 @@ local function syncNativeUnitCastBars()
         if not state.onShowHooked and type(bar.HookScript) == "function" then
             state.onShowHooked = true
             safeCall(bar.HookScript, bar, "OnShow", function()
-                -- Blizzard may show/reset its bar when a cast starts. Reconcile
-                -- on the next tick without registering a second spellcast
-                -- event family alongside HUDStyles.lua.
+                -- Only reconcile while Rapzo V2 is actively owning the visual
+                -- castbar state. Once disabled/restored, this hook becomes inert.
+                if not shouldHideNativeUnitCastBars() then return end
                 if C_Timer and type(C_Timer.After) == "function" then
                     C_Timer.After(0, syncNativeUnitCastBars)
                 else
@@ -96,12 +123,12 @@ local function syncNativeUnitCastBars()
             end)
         end
 
+        state.modified = true
         if type(bar.SetAlpha) == "function" then
-            safeCall(bar.SetAlpha, bar, hide and 0 or (state.alpha or 1))
+            safeCall(bar.SetAlpha, bar, 0)
         end
         if type(bar.EnableMouse) == "function" then
-            local enabled = not hide and state.mouseEnabled == true
-            safeCall(bar.EnableMouse, bar, enabled)
+            safeCall(bar.EnableMouse, bar, false)
         end
     end
 end
@@ -112,6 +139,8 @@ HUD.SyncNativeUnitCastBars = syncNativeUnitCastBars
 HUD.HideNativeUnitCastBars = syncNativeUnitCastBars
 
 local function hidePlayerNativeRestArt()
+    if not hudFramesActive() then return end
+
     local frame = _G.PlayerFrame
     local content = frame and frame.PlayerFrameContent
     local main = content and content.PlayerFrameContentMain
@@ -170,6 +199,14 @@ local function ensureRestIndicator()
 end
 
 local function updateRestIndicator()
+    if not hudFramesActive() then
+        local display = HUD.unitDisplays and HUD.unitDisplays.player
+        if display and display.RapzoQoLRestText then
+            display.RapzoQoLRestText:Hide()
+        end
+        return
+    end
+
     hidePlayerNativeRestArt()
 
     local text = ensureRestIndicator()
@@ -222,12 +259,19 @@ local function anchorDisplay(unit)
 end
 
 local function applyAnchors()
+    if not hudFramesActive() then return end
     anchorDisplay("player")
     anchorDisplay("target")
     anchorDisplay("focus")
 end
 
 local function applyAll()
+    if not hudFramesActive() then
+        restoreNativeUnitCastBars()
+        updateRestIndicator()
+        return
+    end
+
     hidePlayerNativeRestArt()
     syncNativeUnitCastBars()
     applyAnchors()
@@ -258,6 +302,7 @@ end)
 if type(hooksecurefunc) == "function" then
     if type(PlayerFrame_UpdateStatus) == "function" then
         hooksecurefunc("PlayerFrame_UpdateStatus", function()
+            if not hudFramesActive() then return end
             hidePlayerNativeRestArt()
             updateRestIndicator()
         end)
@@ -265,6 +310,7 @@ if type(hooksecurefunc) == "function" then
 
     if type(PlayerFrame_UpdatePlayerRestLoop) == "function" then
         hooksecurefunc("PlayerFrame_UpdatePlayerRestLoop", function()
+            if not hudFramesActive() then return end
             hidePlayerNativeRestArt()
         end)
     end
