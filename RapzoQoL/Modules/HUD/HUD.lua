@@ -808,8 +808,7 @@ end
 
 function HUD:SetEnabled(enabled)
     -- Legacy API: "HUD on/off" now controls Rapzo unit frames only.
-    self:SetPart("frames", enabled)
-    RB:Print("Unit Frames Rapzo: " .. (enabled and "ON" or "OFF"))
+    return self:SetPart("frames", enabled)
 end
 
 function HUD:SetPart(part, enabled)
