@@ -78,7 +78,23 @@ local function getConfig()
     db.settings.hud = type(db.settings.hud) == "table" and db.settings.hud or {}
     local cfg = db.settings.hud
 
-    if cfg.enabled == nil then cfg.enabled = RB:IsFeatureEnabled("hud") end
+    -- Separation v1: HUD is only the internal container. Cursor, minimap and
+    -- Rapzo unit frames keep their own switches and never depend on a master
+    -- visual toggle.
+    if cfg.separationVersion ~= 1 then
+        local legacyEnabled = cfg.enabled
+        if legacyEnabled == nil then
+            legacyEnabled = RB:IsFeatureEnabled("hud")
+        end
+
+        -- Preserve the old master-OFF intent for unit frames only. Cursor and
+        -- minimap retain their own existing choices.
+        if cfg.unitFrames == nil or legacyEnabled == false then
+            cfg.unitFrames = legacyEnabled ~= false
+        end
+        cfg.separationVersion = 1
+    end
+
     if cfg.cursor == nil then cfg.cursor = true end
     if cfg.squareMinimap == nil then cfg.squareMinimap = true end
     if cfg.unitFrames == nil then cfg.unitFrames = true end
@@ -91,14 +107,20 @@ local function getConfig()
     end
 
     cfg.cursorSize = math.max(36, math.min(96, tonumber(cfg.cursorSize) or 52))
-    RB:SetFeatureEnabled("hud", cfg.enabled, true)
+
+    -- cfg.enabled belonged to the old master toggle. Keep the module container
+    -- loaded so its independent parts can continue working.
+    cfg.enabled = nil
+    RB:SetFeatureEnabled("hud", true, true)
     HUD.config = cfg
     return cfg
 end
 
 function HUD:IsEnabled()
+    -- Compatibility name used by HUD frame helpers. From separation v1 this
+    -- means "Rapzo unit frames enabled", not a master switch for minimap/cursor.
     local cfg = self.config or getConfig()
-    return cfg.enabled ~= false and RB:IsFeatureEnabled("hud")
+    return cfg.unitFrames ~= false
 end
 
 local function setRegionAlpha(region, alpha)
@@ -729,7 +751,7 @@ end
 
 function HUD:StyleMinimap()
     local cfg = getConfig()
-    if not self:IsEnabled() or not cfg.squareMinimap or not _G.Minimap then return end
+    if not cfg.squareMinimap or not _G.Minimap then return end
 
     safeCall(_G.Minimap.SetMaskTexture, _G.Minimap, WHITE_TEXTURE)
     setRegionAlpha(_G.MinimapCompassTexture, 0)
@@ -759,9 +781,8 @@ end
 function HUD:Apply()
     local cfg = getConfig()
 
-    -- The cursor ring is intentionally independent from the visual HUD master
-    -- toggle. Players can keep the mouse highlight while using Blizzard/mUI
-    -- unit frames and minimap visuals.
+    -- Every visual component is independent. Applying one must never gate the
+    -- other two.
     if cfg.cursor then
         local cursor = self:CreateCursorRing()
         if cursor and not cursor:IsShown() then cursor:Show() end
@@ -769,15 +790,10 @@ function HUD:Apply()
         self.cursorFrame:Hide()
     end
 
-    if not self:IsEnabled() then
-        for _, display in pairs(self.unitDisplays) do
-            display:Hide()
-        end
-        restoreNativeUnitArt()
-        return
+    if cfg.squareMinimap then
+        self:StyleMinimap()
     end
 
-    if cfg.squareMinimap then self:StyleMinimap() end
     if cfg.unitFrames then
         self:StyleUnitFrames()
     else
@@ -786,23 +802,14 @@ function HUD:Apply()
         end
         restoreNativeUnitArt()
     end
+
     self:ApplyTheme()
 end
 
 function HUD:SetEnabled(enabled)
-    local cfg = getConfig()
-    cfg.enabled = enabled and true or false
-    RB:SetFeatureEnabled("hud", cfg.enabled, true)
-
-    -- Apply always synchronizes the cursor first, even when the visual HUD is
-    -- disabled, so the mouse ring remains controlled exclusively by cfg.cursor.
-    self:Apply()
-
-    if not cfg.enabled then
-        RB:Print("HUD visual: OFF. Aro del mouse conserva su ajuste independiente.")
-    else
-        RB:Print("HUD visual: ON")
-    end
+    -- Legacy API: "HUD on/off" now controls Rapzo unit frames only.
+    self:SetPart("frames", enabled)
+    RB:Print("Unit Frames Rapzo: " .. (enabled and "ON" or "OFF"))
 end
 
 function HUD:SetPart(part, enabled)
@@ -814,7 +821,7 @@ function HUD:SetPart(part, enabled)
     elseif part == "minimap" then
         cfg.squareMinimap = enabled and true or false
         if not cfg.squareMinimap then
-            RB:Print("Minimapa cuadrado OFF; usa /reload para restaurar la mascara redonda.")
+            RB:Print("Minimapa Rapzo: OFF. Si ya estaba cuadrado, /reload restaura la mascara del UI que uses.")
         end
     elseif part == "frames" then
         cfg.unitFrames = enabled and true or false
@@ -827,7 +834,9 @@ function HUD:SetPart(part, enabled)
         return false
     end
 
-    if enabled then self:Apply() end
+    -- Apply on both ON and OFF so the other independent components keep their
+    -- requested state and frame restoration happens immediately.
+    self:Apply()
     return true
 end
 
@@ -852,22 +861,21 @@ function HUD:HandleSlash(rest)
         end
 
         RB:Print(string.format(
-            "HUD DEBUG | addon:%s enabled:%s cursor:%s minimap:%s frames:%s",
+            "HUD DEBUG | addon:%s frames:%s cursor:%s minimap:%s displays:%s",
             loaded and "LOADED" or "NO",
-            cfg.enabled and "ON" or "OFF",
-            self.cursorFrame and "CREADO" or "NO",
-            _G.Minimap and "OK" or "NO",
+            cfg.unitFrames and "ON" or "OFF",
+            cfg.cursor and "ON" or "OFF",
+            cfg.squareMinimap and "ON" or "OFF",
             (self.unitDisplays.player or self.unitDisplays.target or self.unitDisplays.focus) and "CREADOS" or "NO"
         ))
         return
     elseif part == "status" or part == "" then
         local cfg = getConfig()
         RB:Print(string.format(
-            "HUD %s | cursor:%s | minimapa:%s | frames:%s",
-            self:IsEnabled() and "ON" or "OFF",
-            cfg.cursor and "ON" or "OFF",
+            "Rapzo visual | frames:%s | minimapa:%s | cursor:%s",
+            cfg.unitFrames and "ON" or "OFF",
             cfg.squareMinimap and "ON" or "OFF",
-            cfg.unitFrames and "ON" or "OFF"
+            cfg.cursor and "ON" or "OFF"
         ))
         return
     end
@@ -896,7 +904,7 @@ function HUD:HandleSlash(rest)
         return
     end
 
-    RB:Print("Uso: /rapzo hud [status|debug|on|off|cursor on|off|cursorsize 36-96|minimap on|off|frames on|off]")
+    RB:Print("Uso: /rapzo hud [status|debug|frames on|off|minimap on|off|cursor on|off|cursorsize 36-96]")
 end
 
 function HUD:ScheduleApply(delay)
