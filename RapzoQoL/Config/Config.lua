@@ -53,6 +53,40 @@ local function setCursorRingEnabled(enabled)
     db.settings.hud.cursor = enabled and true or false
 end
 
+local function isMinimapEnabled()
+    local db = RB:EnsureDB()
+    local hud = db.settings and db.settings.hud
+    return type(hud) ~= "table" or hud.squareMinimap ~= false
+end
+
+local function setMinimapEnabled(enabled)
+    if RB.HUD and type(RB.HUD.SetPart) == "function" then
+        RB.HUD:SetPart("minimap", enabled)
+        return
+    end
+
+    local db = RB:EnsureDB()
+    db.settings.hud = type(db.settings.hud) == "table" and db.settings.hud or {}
+    db.settings.hud.squareMinimap = enabled and true or false
+end
+
+local function areUnitFramesEnabled()
+    local db = RB:EnsureDB()
+    local hud = db.settings and db.settings.hud
+    return type(hud) ~= "table" or hud.unitFrames ~= false
+end
+
+local function setUnitFramesEnabled(enabled)
+    if RB.HUD and type(RB.HUD.SetPart) == "function" then
+        RB.HUD:SetPart("frames", enabled)
+        return
+    end
+
+    local db = RB:EnsureDB()
+    db.settings.hud = type(db.settings.hud) == "table" and db.settings.hud or {}
+    db.settings.hud.unitFrames = enabled and true or false
+end
+
 local function openAccentPicker()
     if not ColorPickerFrame or type(RB.GetAccentColor) ~= "function" then return end
 
@@ -96,7 +130,7 @@ end
 function Config:CreateFrame()
     if self.frame then return self.frame end
     local frame = CreateFrame("Frame", "RapzoQoLConfigFrame", UIParent, "BasicFrameTemplateWithInset")
-    frame:SetSize(540, 720)
+    frame:SetSize(540, 760)
     frame:SetPoint("CENTER")
     frame:SetMovable(true); frame:EnableMouse(true); frame:RegisterForDrag("LeftButton")
     frame:SetScript("OnDragStart", frame.StartMoving)
@@ -118,7 +152,7 @@ function Config:CreateFrame()
     status:SetText("Estado de modulos")
 
     frame.statusLines = {}
-    local modules = { {"tooltip","Tooltip"}, {"search","Search"}, {"vendor","Vendor"}, {"collections","Collections"}, {"afk","AFK Screen"}, {"hud","HUD Visual"} }
+    local modules = { {"tooltip","Tooltip"}, {"search","Search"}, {"vendor","Vendor"}, {"collections","Collections"}, {"afk","AFK Screen"}, {"hud","Unit Frames"} }
     local y = -112
     for i, entry in ipairs(modules) do
         local line = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -215,29 +249,27 @@ function Config:CreateFrame()
             end
         end,
         function() return RB:IsModulePresent("afk") end)
-    frame.checks[#frame.checks+1] = makeCheck(frame, "HUD visual (frames + minimapa)", -596,
-        function() return RB:IsFeatureEnabled("hud") end,
-        function(v)
-            if RB.HUD and RB.HUD.SetEnabled then
-                RB.HUD:SetEnabled(v)
-            else
-                RB:SetFeatureEnabled("hud", v, true)
-            end
-        end,
+    frame.checks[#frame.checks+1] = makeCheck(frame, "Unit Frames Rapzo", -596,
+        areUnitFramesEnabled,
+        setUnitFramesEnabled,
         function() return RB:IsModulePresent("hud") end)
-    frame.checks[#frame.checks+1] = makeCheck(frame, "Aro del mouse", -596,
+    frame.checks[#frame.checks+1] = makeCheck(frame, "Minimapa cuadrado", -596,
+        isMinimapEnabled,
+        setMinimapEnabled,
+        function() return RB:IsModulePresent("hud") end,
+        270)
+    frame.checks[#frame.checks+1] = makeCheck(frame, "Aro del mouse", -628,
         isCursorRingEnabled,
         setCursorRingEnabled,
-        function() return RB:IsModulePresent("hud") end,
-        310)
+        function() return RB:IsModulePresent("hud") end)
 
     local hudStyleLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    hudStyleLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -632)
+    hudStyleLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -664)
     hudStyleLabel:SetText("Estilo de Unit Frames")
 
     frame.hudStyleChecks = {
-        makeHUDStyleChoice(frame, "V1 - Clásico", 24, -650, 1),
-        makeHUDStyleChoice(frame, "V2 - ToxiUI", 190, -650, 2),
+        makeHUDStyleChoice(frame, "V1 - Clásico", 24, -682, 1),
+        makeHUDStyleChoice(frame, "V2 - ToxiUI", 190, -682, 2),
     }
 
     local reset = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
@@ -256,7 +288,7 @@ function Config:Refresh()
     local frame = self:CreateFrame()
     for _, line in ipairs(frame.statusLines or {}) do
         local loaded = RB:IsModulePresent(line.key)
-        local runtime = RB:IsFeatureEnabled(line.key)
+        local runtime = line.key == "hud" and areUnitFramesEnabled() or RB:IsFeatureEnabled(line.key)
         line.text:SetText(string.format("%s: %s   Funcion: %s", line.label, loaded and "|cff38e66bLISTO|r" or "|cffef4444ERROR|r", runtime and "|cff38e66bON|r" or "|cffef4444OFF|r"))
     end
     for _, check in ipairs(frame.checks or {}) do check.refresh() end
@@ -451,36 +483,39 @@ function Config:CreateSettingsPanel()
         end,
         function() return RB:IsModulePresent("afk") end)
 
-    panel.settingsChecks[#panel.settingsChecks + 1] = makeSettingsCheck(panel, "HUD visual", -416,
-        function() return RB:IsFeatureEnabled("hud") end,
-        function(v)
-            if RB.HUD and RB.HUD.SetEnabled then RB.HUD:SetEnabled(v) else RB:SetFeatureEnabled("hud", v, true) end
-        end,
+    panel.settingsChecks[#panel.settingsChecks + 1] = makeSettingsCheck(panel, "Unit Frames Rapzo", -416,
+        areUnitFramesEnabled,
+        setUnitFramesEnabled,
         function() return RB:IsModulePresent("hud") end)
 
-    panel.settingsChecks[#panel.settingsChecks + 1] = makeSettingsCheck(panel, "Aro del mouse", -416,
-        isCursorRingEnabled,
-        setCursorRingEnabled,
+    panel.settingsChecks[#panel.settingsChecks + 1] = makeSettingsCheck(panel, "Minimapa cuadrado", -416,
+        isMinimapEnabled,
+        setMinimapEnabled,
         function() return RB:IsModulePresent("hud") end,
         250)
 
+    panel.settingsChecks[#panel.settingsChecks + 1] = makeSettingsCheck(panel, "Aro del mouse", -448,
+        isCursorRingEnabled,
+        setCursorRingEnabled,
+        function() return RB:IsModulePresent("hud") end)
+
     local hudStyleTitle = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    hudStyleTitle:SetPoint("TOPLEFT", panel, "TOPLEFT", 26, -452)
+    hudStyleTitle:SetPoint("TOPLEFT", panel, "TOPLEFT", 26, -484)
     hudStyleTitle:SetText("Estilo de Unit Frames")
 
     panel.hudStyleChecks = {
-        makeHUDStyleChoice(panel, "V1 - Clásico", 26, -472, 1),
-        makeHUDStyleChoice(panel, "V2 - ToxiUI", 210, -472, 2),
+        makeHUDStyleChoice(panel, "V1 - Clásico", 26, -504, 1),
+        makeHUDStyleChoice(panel, "V2 - ToxiUI", 210, -504, 2),
     }
 
     local divider2 = panel:CreateTexture(nil, "ARTWORK")
     divider2:SetHeight(1)
-    divider2:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -514)
+    divider2:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -546)
     divider2:SetPoint("RIGHT", panel, "RIGHT", -24, 0)
     divider2:SetColorTexture(0.45, 0.55, 0.65, 0.35)
 
     local statusTitle = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    statusTitle:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -536)
+    statusTitle:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -568)
     statusTitle:SetText("Estado")
 
     local status = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
@@ -491,7 +526,7 @@ function Config:CreateSettingsPanel()
 
     local hudPreview = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     hudPreview:SetSize(185, 26)
-    hudPreview:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -584)
+    hudPreview:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -616)
     hudPreview:SetText("Preview / depurar HUD")
     hudPreview:SetScript("OnClick", function()
         if RB.HUD and type(RB.HUD.ShowPreview) == "function" then
@@ -503,7 +538,7 @@ function Config:CreateSettingsPanel()
 
     local rescan = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     rescan:SetSize(150, 26)
-    rescan:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -618)
+    rescan:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -650)
     rescan:SetText("Reescanear ahora")
     rescan:SetScript("OnClick", function()
         if RB.Scanner then
