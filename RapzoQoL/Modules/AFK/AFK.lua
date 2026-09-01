@@ -559,10 +559,16 @@ function AFK:RefreshState()
     self.lastStateReason = reason
 
     -- Retail 12.x can return a secret value for UnitIsAFK during chat
-    -- messaging lockdown. Never branch on that secret: fail closed and wait
-    -- for a later unrestricted event/state refresh.
+    -- messaging lockdown. Never branch on that secret: keep the current
+    -- screen state untouched and retry until the state is readable again.
     if isAFK == nil then
-        self:HideScreen(true)
+        if not self.secretRetryPending and C_Timer and type(C_Timer.After) == "function" then
+            self.secretRetryPending = true
+            C_Timer.After(2, function()
+                AFK.secretRetryPending = nil
+                AFK:RefreshState()
+            end)
+        end
         return
     end
 
@@ -600,10 +606,26 @@ function AFK:TogglePreview()
         return
     end
 
+    local cfg = getConfig()
+    if cfg.hideInCombat and type(InCombatLockdown) == "function" and InCombatLockdown() then
+        RB:Print("La vista previa AFK no puede abrirse en combate.")
+        return
+    end
+
     self.preview = true
     self.afkStartedAt = type(GetTime) == "function" and GetTime() or 0
     self:ShowScreen()
-    RB:Print("Vista previa AFK activa. Pulsa ESC o repite /rapzo afk preview para salir.")
+
+    if self.frame and self.frame:IsShown() then
+        RB:Print("Vista previa AFK activa. Pulsa ESC o repite /rapzo afk preview para salir.")
+    else
+        -- ShowScreen refused to show (state changed between the checks).
+        -- Never leave the preview flag armed with no visible screen: it would
+        -- suppress the real AFK screen for the rest of the session.
+        self.preview = false
+        self.afkStartedAt = nil
+        RB:Print("La vista previa AFK no pudo abrirse ahora mismo.")
+    end
 end
 
 function AFK:HandleSlash(rest)
@@ -668,8 +690,11 @@ function AFK:Initialize()
     events:SetScript("OnEvent", function(_, event, unitTarget)
         if event == "PLAYER_FLAGS_CHANGED" then
             if isSecret(unitTarget) then
+                -- The event cannot be attributed to a unit (it may be a
+                -- groupmate's flags). Do not hide a legitimately visible AFK
+                -- screen; re-evaluate shortly instead.
                 AFK.lastStateReason = "secret-event"
-                AFK:HideScreen(true)
+                AFK:ScheduleRefresh(1)
                 return
             end
             if unitTarget ~= "player" then return end
