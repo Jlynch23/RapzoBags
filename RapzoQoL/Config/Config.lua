@@ -236,7 +236,7 @@ function Config:CreateFrame()
         function(v) RB:SetFeatureEnabled("collections", v, true); if RB.Collections and RB.Collections.ClearCache then RB.Collections:ClearCache() end end,
         function() return RB:IsModulePresent("collections") end)
     frame.checks[#frame.checks+1] = makeCheck(frame, "Vendedor extendido", -532,
-        function() local db=RB:EnsureDB(); return db.settings.vendor and db.settings.vendor.enabled ~= false end,
+        function() local vendor=RB:EnsureDB().settings.vendor; return type(vendor) ~= "table" or vendor.enabled ~= false end,
         function(v) if RB.Vendor and RB.Vendor.SetEnabled then RB.Vendor:SetEnabled(v) else RB:SetFeatureEnabled("vendor",v,true) end end,
         function() return RB:IsModulePresent("vendor") end)
     frame.checks[#frame.checks+1] = makeCheck(frame, "Pantalla AFK", -564,
@@ -288,7 +288,14 @@ function Config:Refresh()
     local frame = self:CreateFrame()
     for _, line in ipairs(frame.statusLines or {}) do
         local loaded = RB:IsModulePresent(line.key)
-        local runtime = line.key == "hud" and areUnitFramesEnabled() or RB:IsFeatureEnabled(line.key)
+        local runtime
+        if line.key == "hud" then
+            -- modules.hud is always true (container); the real state is the
+            -- unit-frames switch. `and/or` would fall through when it is false.
+            runtime = areUnitFramesEnabled()
+        else
+            runtime = RB:IsFeatureEnabled(line.key)
+        end
         line.text:SetText(string.format("%s: %s   Funcion: %s", line.label, loaded and "|cff38e66bLISTO|r" or "|cffef4444ERROR|r", runtime and "|cff38e66bON|r" or "|cffef4444OFF|r"))
     end
     for _, check in ipairs(frame.checks or {}) do check.refresh() end
@@ -472,7 +479,7 @@ function Config:CreateSettingsPanel()
         function() return RB:IsModulePresent("collections") end)
 
     panel.settingsChecks[#panel.settingsChecks + 1] = makeSettingsCheck(panel, "Vendedor extendido", -352,
-        function() local db=RB:EnsureDB(); return db.settings.vendor and db.settings.vendor.enabled ~= false end,
+        function() local vendor=RB:EnsureDB().settings.vendor; return type(vendor) ~= "table" or vendor.enabled ~= false end,
         function(v) if RB.Vendor and RB.Vendor.SetEnabled then RB.Vendor:SetEnabled(v) else RB:SetFeatureEnabled("vendor",v,true) end end,
         function() return RB:IsModulePresent("vendor") end)
 
@@ -591,7 +598,14 @@ function Config:RefreshSettingsPanel()
         for _, key in ipairs({"tooltip", "search", "vendor", "collections", "afk", "hud"}) do
             if RB:IsModulePresent(key) then
                 total = total + 1
-                if RB:IsFeatureEnabled(key) then enabled = enabled + 1 end
+                local active
+                if key == "hud" then
+                    -- modules.hud is always true; count the unit-frames switch.
+                    active = areUnitFramesEnabled()
+                else
+                    active = RB:IsFeatureEnabled(key)
+                end
+                if active then enabled = enabled + 1 end
             end
         end
         panel.statusText:SetText(string.format(
