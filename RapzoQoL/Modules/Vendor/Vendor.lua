@@ -339,7 +339,7 @@ end
 function Vendor:CreateFilterBar()
     if self.filterBar or not MerchantFrame then return self.filterBar end
 
-    local bar = CreateFrame("Frame", "RapzoBagsVendorFilterBar", MerchantFrame)
+    local bar = CreateFrame("Frame", "RapzoQoLVendorFilterBar", MerchantFrame)
     local barWidth = 0
     for index, def in ipairs(FILTER_BUTTONS) do
         barWidth = barWidth + def.width
@@ -392,7 +392,7 @@ end
 function Vendor:SetFilterMode(mode)
     mode = string.lower(tostring(mode or "all"))
     if mode ~= "all" and not self:HasCollections() then
-        RB:Print("Ese filtro necesita RapzoBags_Collections. Activalo en la pantalla de AddOns.")
+        RB:Print("Ese filtro necesita el modulo Collections. Activalo con /rapzo collections on.")
         mode = "all"
     end
     if not VALID_FILTERS[mode] then

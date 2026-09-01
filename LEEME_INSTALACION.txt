@@ -16,6 +16,7 @@ Subcarpetas internas:
 - Modules\Vendor
 - Modules\AFK
 - Modules\HUD
+- Modules\QoL
 - Config
 - Media
 
@@ -34,8 +35,10 @@ COMANDOS
 /rapzo scan
 /rapzo afk preview
 /rapzo hud status
+/rapzo expfilter on|off
 
-Los alias antiguos /rbags y /rapzobags siguen funcionando.
+Los alias antiguos /rbags y /rapzobags siguen funcionando, y /rqol es un
+alias corto de /rapzo. Ademas, /rl recarga la interfaz (equivale a /reload).
 
 DATOS
 -----

@@ -16,6 +16,7 @@ Internal modules:
 - Vendor — expanded merchant view and filters.
 - AFK — fullscreen AFK screen.
 - HUD — cursor ring, square minimap and minimalist Player/Target/Focus visuals.
+- QoL — "current expansion only" filter preset for the Auction House and customer Crafting Orders searches.
 - Config — runtime module controls.
 
 ## Installation
@@ -37,8 +38,9 @@ The legacy `RapzoBags_*` folders are no longer separate addons.
 - `/rapzo hud style 2` — clean icon-free layout, auras on top and cast bar below.
 - `/rapzo hud preview` — toggles the in-game fake/demo unit-frame preview.
 - `/rapzo hud preview on|off`
+- `/rapzo expfilter on|off` — "current expansion only" preset in AH/Crafting Orders searches.
 
-Legacy aliases `/rbags` and `/rapzobags` remain available.
+Legacy aliases `/rbags` and `/rapzobags` remain available, and `/rqol` is a short alias for `/rapzo`. The addon also registers `/rl` as a quick `/reload` shortcut (another addon registering `/rl` may take precedence depending on load order).
 
 ## Offline HUD preview
 

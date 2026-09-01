@@ -201,7 +201,7 @@ function Search:CreateFrame()
         return self.frame
     end
 
-    local frame = CreateFrame("Frame", "RapzoBagsSearchFrame", UIParent, "BasicFrameTemplateWithInset")
+    local frame = CreateFrame("Frame", "RapzoQoLSearchFrame", UIParent, "BasicFrameTemplateWithInset")
     frame:SetSize(760, 520)
     frame:SetPoint("CENTER")
     frame:SetMovable(true)
@@ -246,7 +246,7 @@ function Search:CreateFrame()
     rightPanel:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -14, 14)
     frame.rightPanel = rightPanel
 
-    local scroll = CreateFrame("ScrollFrame", "RapzoBagsSearchScrollFrame", leftPanel, "UIPanelScrollFrameTemplate")
+    local scroll = CreateFrame("ScrollFrame", "RapzoQoLSearchScrollFrame", leftPanel, "UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT", leftPanel, "TOPLEFT", 5, -6)
     scroll:SetPoint("BOTTOMRIGHT", leftPanel, "BOTTOMRIGHT", -27, 6)
 
