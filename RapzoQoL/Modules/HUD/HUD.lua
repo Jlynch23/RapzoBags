@@ -9,7 +9,6 @@ RB:RegisterModule("hud", HUD)
 HUD.initialized = false
 HUD.eventFrame = nil
 HUD.cursorFrame = nil
-HUD.minimapBorder = nil
 HUD.unitDisplays = {}
 HUD.config = nil
 
@@ -121,12 +120,6 @@ function HUD:IsEnabled()
     -- means "Rapzo unit frames enabled", not a master switch for minimap/cursor.
     local cfg = self.config or getConfig()
     return cfg.unitFrames ~= false
-end
-
-local function setRegionAlpha(region, alpha)
-    if region and type(region.SetAlpha) == "function" then
-        safeCall(region.SetAlpha, region, alpha)
-    end
 end
 
 -- Preserve whatever alpha Blizzard/mUI had before Rapzo QoL hides native art.
@@ -737,34 +730,36 @@ function HUD:CreateCursorRing()
     return frame
 end
 
-local function hideMinimapBorder()
-    for _, edge in ipairs(HUD.minimapBorder or {}) do
-        if edge and type(edge.Hide) == "function" then
-            edge:Hide()
-        end
-        if edge and type(edge.SetAlpha) == "function" then
-            edge:SetAlpha(0)
-        end
-    end
-    HUD.minimapBorder = nil
-end
-
 function HUD:StyleMinimap()
     local cfg = getConfig()
-    if not cfg.squareMinimap or not _G.Minimap then return end
-
-    safeCall(_G.Minimap.SetMaskTexture, _G.Minimap, WHITE_TEXTURE)
-    setRegionAlpha(_G.MinimapCompassTexture, 0)
-
-    if _G.MinimapBackdrop and _G.MinimapBackdrop.StaticOverlayTexture then
-        setRegionAlpha(_G.MinimapBackdrop.StaticOverlayTexture, 0)
+    if not _G.Minimap then return end
+    if not cfg.squareMinimap then
+        self:RestoreMinimapArt()
+        return
     end
 
-    -- Rapzo QoL keeps the minimap square but completely borderless.
-    hideMinimapBorder()
-    setRegionAlpha(_G.MinimapBorder, 0)
-    setRegionAlpha(_G.MinimapBorderTop, 0)
-    setRegionAlpha(_G.MiniMapTrackingBorder, 0)
+    safeCall(_G.Minimap.SetMaskTexture, _G.Minimap, WHITE_TEXTURE)
+
+    -- Rapzo QoL keeps the minimap square but completely borderless. The
+    -- original alphas are snapshotted so the toggle restores the native art
+    -- without a /reload (only the square mask itself needs one).
+    hideNativeRegion(_G.MinimapCompassTexture)
+    if _G.MinimapBackdrop then
+        hideNativeRegion(_G.MinimapBackdrop.StaticOverlayTexture)
+    end
+    hideNativeRegion(_G.MinimapBorder)
+    hideNativeRegion(_G.MinimapBorderTop)
+    hideNativeRegion(_G.MiniMapTrackingBorder)
+end
+
+function HUD:RestoreMinimapArt()
+    restoreNativeRegion(_G.MinimapCompassTexture)
+    if _G.MinimapBackdrop then
+        restoreNativeRegion(_G.MinimapBackdrop.StaticOverlayTexture)
+    end
+    restoreNativeRegion(_G.MinimapBorder)
+    restoreNativeRegion(_G.MinimapBorderTop)
+    restoreNativeRegion(_G.MiniMapTrackingBorder)
 end
 
 function HUD:ApplyTheme()
@@ -773,9 +768,6 @@ function HUD:ApplyTheme()
     if self.cursorFrame and self.cursorFrame.outer then
         self.cursorFrame.outer:SetVertexColor(accent[1], accent[2], accent[3], 1.00)
     end
-
-    -- Minimap intentionally has no accent border.
-    hideMinimapBorder()
 end
 
 function HUD:Apply()
@@ -792,6 +784,8 @@ function HUD:Apply()
 
     if cfg.squareMinimap then
         self:StyleMinimap()
+    else
+        self:RestoreMinimapArt()
     end
 
     if cfg.unitFrames then
@@ -820,7 +814,8 @@ function HUD:SetPart(part, enabled)
     elseif part == "minimap" then
         cfg.squareMinimap = enabled and true or false
         if not cfg.squareMinimap then
-            RB:Print("Minimapa Rapzo: OFF. Si ya estaba cuadrado, /reload restaura la mascara del UI que uses.")
+            self:RestoreMinimapArt()
+            RB:Print("Minimapa Rapzo: OFF. Bordes y brujula restaurados; la mascara cuadrada necesita /reload.")
         end
     elseif part == "frames" then
         cfg.unitFrames = enabled and true or false
@@ -841,9 +836,11 @@ end
 
 function HUD:HandleSlash(rest)
     rest = tostring(rest or "")
-    local part, value = rest:match("^(%S+)%s*(%S*)$")
-    part = string.lower(part or "status")
-    value = string.lower(value or "")
+    -- Tolerate leading/trailing whitespace and extra tokens.
+    local part = rest:match("^%s*(%S+)") or "status"
+    local value = rest:match("^%s*%S+%s+(%S+)") or ""
+    part = string.lower(part)
+    value = string.lower(value)
 
     if part == "on" then
         self:SetEnabled(true)
@@ -930,6 +927,7 @@ function HUD:Initialize()
         pcall(events.RegisterEvent, events, event)
     end
 
+    register("ADDON_LOADED")
     register("PLAYER_LOGIN")
     register("PLAYER_ENTERING_WORLD")
     register("PLAYER_REGEN_ENABLED")
@@ -943,6 +941,15 @@ function HUD:Initialize()
     register("UNIT_NAME_UPDATE")
 
     events:SetScript("OnEvent", function(_, event, unit)
+        if event == "ADDON_LOADED" then
+            -- This file runs before the SavedVariables load, so the initial
+            -- getConfig() worked on a placeholder table. Re-read the real one.
+            if unit == RB.coreAddonName then
+                getConfig()
+            end
+            return
+        end
+
         if event == "PLAYER_REGEN_ENABLED" then
             reapplyNativeArtHiding(_G.PlayerFrame)
             reapplyNativeArtHiding(_G.TargetFrame)

@@ -35,6 +35,19 @@ local function safeCall(func, ...)
     return pcall(func, ...)
 end
 
+-- When the Rapzo unit frames are toggled off, the style/castbar pipeline must
+-- stay inert: no restyling per unit event and no cast bar creation.
+local function hudFramesActive()
+    local cfg = HUD.config
+    if cfg and cfg.unitFrames == false then
+        return false
+    end
+    if type(HUD.IsEnabled) == "function" and not HUD:IsEnabled() then
+        return false
+    end
+    return true
+end
+
 local function getConfig()
     local db = RB:EnsureDB()
     db.settings.hud = type(db.settings.hud) == "table" and db.settings.hud or {}
@@ -233,6 +246,11 @@ end
 local function updateCastBar(unit)
     local display = HUD.unitDisplays and HUD.unitDisplays[unit]
     if not display then return end
+
+    if not hudFramesActive() then
+        if display.RapzoQoLCastBar then display.RapzoQoLCastBar:Hide() end
+        return
+    end
 
     local bar = ensureCastBar(display)
     if HUD:GetStyle() ~= STYLE_ICON then
@@ -718,6 +736,8 @@ local function applyDisplayStyle(display)
 end
 
 function HUD:ApplyFrameStyle(unit)
+    if not hudFramesActive() then return end
+
     if unit then
         applyDisplayStyle(self.unitDisplays and self.unitDisplays[unit])
         return
@@ -820,9 +840,11 @@ end)
 local baseHandleSlash = HUD.HandleSlash
 function HUD:HandleSlash(rest)
     rest = tostring(rest or "")
-    local part, value = rest:match("^(%S+)%s*(%S*)$")
-    part = string.lower(part or "")
-    value = string.lower(value or "")
+    -- Tolerate leading/trailing whitespace and extra tokens.
+    local part = rest:match("^%s*(%S+)") or ""
+    local value = rest:match("^%s*%S+%s+(%S+)") or ""
+    part = string.lower(part)
+    value = string.lower(value)
 
     if part == "style" then
         if value == "" then

@@ -138,6 +138,34 @@ HUD.SyncNativeUnitCastBars = syncNativeUnitCastBars
 -- now synchronizes instead of hiding unconditionally.
 HUD.HideNativeUnitCastBars = syncNativeUnitCastBars
 
+-- Alphas of the rest/status art Rapzo dims, saved once so disabling the
+-- unit frames restores Blizzard's PlayerFrame without a /reload.
+local restArtAlpha = setmetatable({}, { __mode = "k" })
+local restArtModified = false
+
+local function dimRestArtRegion(region)
+    if not region or type(region.SetAlpha) ~= "function" then return end
+
+    if restArtAlpha[region] == nil then
+        local alpha = 1
+        if type(region.GetAlpha) == "function" then
+            local ok, value = pcall(region.GetAlpha, region)
+            if ok and type(value) == "number" then alpha = value end
+        end
+        restArtAlpha[region] = alpha
+    end
+
+    restArtModified = true
+    safeCall(region.SetAlpha, region, 0)
+end
+
+local function restoreRestArtRegion(region)
+    if region and restArtAlpha[region] ~= nil then
+        safeCall(region.SetAlpha, region, restArtAlpha[region])
+        restArtAlpha[region] = nil
+    end
+end
+
 local function hidePlayerNativeRestArt()
     if not hudFramesActive() then return end
 
@@ -148,8 +176,8 @@ local function hidePlayerNativeRestArt()
 
     -- Yellow flashing status art shown while resting/in combat.
     if main and main.StatusTexture then
+        dimRestArtRegion(main.StatusTexture)
         safeCall(main.StatusTexture.Hide, main.StatusTexture)
-        safeCall(main.StatusTexture.SetAlpha, main.StatusTexture, 0)
     end
 
     -- This is the large animated yellow ring seen after the portrait was removed.
@@ -160,19 +188,54 @@ local function hidePlayerNativeRestArt()
         if restLoop.PlayerRestLoopAnim then
             safeCall(restLoop.PlayerRestLoopAnim.Stop, restLoop.PlayerRestLoopAnim)
         end
-        if restLoop.RestTexture then
-            safeCall(restLoop.RestTexture.SetAlpha, restLoop.RestTexture, 0)
-        end
+        dimRestArtRegion(restLoop.RestTexture)
+        dimRestArtRegion(restLoop)
         safeCall(restLoop.Hide, restLoop)
-        safeCall(restLoop.SetAlpha, restLoop, 0)
     end
 
     -- These belong to Blizzard's portrait treatment and look detached once the
     -- portrait is hidden. Rapzo QoL uses its own tiny "zzz" indicator instead.
     if contextual then
-        if contextual.AttackIcon then safeCall(contextual.AttackIcon.SetAlpha, contextual.AttackIcon, 0) end
-        if contextual.PlayerPortraitCornerIcon then
-            safeCall(contextual.PlayerPortraitCornerIcon.SetAlpha, contextual.PlayerPortraitCornerIcon, 0)
+        dimRestArtRegion(contextual.AttackIcon)
+        dimRestArtRegion(contextual.PlayerPortraitCornerIcon)
+    end
+end
+
+local function restorePlayerNativeRestArt()
+    if not restArtModified then return end
+    restArtModified = false
+
+    local frame = _G.PlayerFrame
+    local content = frame and frame.PlayerFrameContent
+    local main = content and content.PlayerFrameContentMain
+    local contextual = content and content.PlayerFrameContentContextual
+    local restLoop = contextual and contextual.PlayerRestLoop
+
+    restoreRestArtRegion(main and main.StatusTexture)
+    if restLoop then
+        restoreRestArtRegion(restLoop.RestTexture)
+        restoreRestArtRegion(restLoop)
+    end
+    restoreRestArtRegion(contextual and contextual.AttackIcon)
+    restoreRestArtRegion(contextual and contextual.PlayerPortraitCornerIcon)
+
+    -- Blizzard re-shows this art on the next status change; if the player is
+    -- resting right now, bring the rest visuals back immediately.
+    local resting = false
+    if type(IsResting) == "function" then
+        local ok, value = pcall(IsResting)
+        if ok and not isSecret(value) then resting = value == true end
+    end
+
+    if resting then
+        if main and main.StatusTexture then
+            safeCall(main.StatusTexture.Show, main.StatusTexture)
+        end
+        if restLoop then
+            safeCall(restLoop.Show, restLoop)
+            if restLoop.PlayerRestLoopAnim then
+                safeCall(restLoop.PlayerRestLoopAnim.Play, restLoop.PlayerRestLoopAnim)
+            end
         end
     end
 end
@@ -268,6 +331,7 @@ end
 local function applyAll()
     if not hudFramesActive() then
         restoreNativeUnitCastBars()
+        restorePlayerNativeRestArt()
         updateRestIndicator()
         return
     end
@@ -327,13 +391,11 @@ if type(hooksecurefunc) == "function" then
         end)
     end
 
-    if type(HUD.SetEnabled) == "function" then
-        hooksecurefunc(HUD, "SetEnabled", syncNativeUnitCastBars)
-    end
-
+    -- SetEnabled delegates to SetPart("frames"); applyAll both applies the
+    -- active state and, when frames are off, restores cast bars and rest art.
     if type(HUD.SetPart) == "function" then
         hooksecurefunc(HUD, "SetPart", function(_, part)
-            if part == "frames" then syncNativeUnitCastBars() end
+            if part == "frames" then applyAll() end
         end)
     end
 end

@@ -328,6 +328,20 @@ function HUD:UpdateClassResource()
     local display = self.unitDisplays and self.unitDisplays.player
     if not display then return end
 
+    -- Stay inert while the Rapzo unit frames are toggled off: never create
+    -- the resource frame and hide any existing one.
+    local cfg = self.config
+    local framesOff = (cfg and cfg.unitFrames == false)
+        or (type(self.IsEnabled) == "function" and not self:IsEnabled())
+    if framesOff then
+        local existing = display.RapzoQoLClassResource
+        if existing then
+            setRuneAnimation(existing, false)
+            existing:Hide()
+        end
+        return
+    end
+
     local frame = ensureResourceFrame(display)
     if not frame then return end
 
