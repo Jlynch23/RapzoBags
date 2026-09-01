@@ -22,17 +22,40 @@ local function getCurrentExpansionFilter()
         and Enum.AuctionHouseFilter.CurrentExpansionOnly
 end
 
+local function getAuctionHouseSearchBar(searchBar)
+    if searchBar then return searchBar end
+    local frame = _G.AuctionHouseFrame
+    return frame and frame.SearchBar or nil
+end
+
 local function applyAuctionHouseFilter(searchBar)
+    if not RB:IsFeatureEnabled("expansionFilters") then return false end
+
     local currentExpansionOnly = getCurrentExpansionFilter()
     if currentExpansionOnly == nil then return false end
 
-    -- Blizzard_AuctionHouseSearchBar.lua stores the Buy-tab filters here.
+    searchBar = getAuctionHouseSearchBar(searchBar)
+
     -- We only change the filter state; we never send a browse query ourselves.
+    -- Collect every filter table Blizzard may be reading from: the file-level
+    -- state exposed as a global (when it is one) and the live FilterButton's
+    -- own table on the search bar.
+    local applied = false
+
     local state = _G.g_auctionHouseFilters
     local filters = state and state.filters
-    if type(filters) ~= "table" then return false end
+    if type(filters) == "table" then
+        filters[currentExpansionOnly] = true
+        applied = true
+    end
 
-    filters[currentExpansionOnly] = true
+    local filterButton = searchBar and searchBar.FilterButton
+    if filterButton and type(filterButton.filters) == "table" then
+        filterButton.filters[currentExpansionOnly] = true
+        applied = true
+    end
+
+    if not applied then return false end
 
     -- Keep the reset/clear-filters visual state in sync when the search bar
     -- already exists.
@@ -53,6 +76,8 @@ local function getCraftingOrdersBrowsePage(browsePage)
 end
 
 local function applyCraftingOrdersFilter(browsePage)
+    if not RB:IsFeatureEnabled("expansionFilters") then return false end
+
     local currentExpansionOnly = getCurrentExpansionFilter()
     browsePage = getCraftingOrdersBrowsePage(browsePage)
     if currentExpansionOnly == nil or not browsePage then return false end
@@ -63,14 +88,10 @@ local function applyCraftingOrdersFilter(browsePage)
 
     local filters = dropdown.filters
     if type(filters) ~= "table" then
-        -- Blizzard normally creates this table in SetDefaultFilters(). The
-        -- fallback makes the preference resilient if Rapzo QoL hooks a frame
-        -- that has already been constructed but not fully initialized yet.
-        if type(_G.AUCTION_HOUSE_DEFAULT_FILTERS) == "table" and type(CopyTable) == "function" then
-            filters = CopyTable(_G.AUCTION_HOUSE_DEFAULT_FILTERS)
-        else
-            filters = {}
-        end
+        -- Blizzard normally creates this table in SetDefaultFilters(). Start
+        -- from an empty set (its own Init/SetDefaultFilters fills the real
+        -- defaults) rather than copying foreign Auction House defaults.
+        filters = {}
         dropdown.filters = filters
     end
 
@@ -98,30 +119,35 @@ local function scheduleCraftingOrdersFilter(browsePage)
 end
 
 function ExpansionFilters:HookAuctionHouse()
-    if self.auctionHouseHooked then
-        applyAuctionHouseFilter(nil)
-        return
-    end
-
-    if type(AuctionHouseSearchBarMixin) ~= "table"
-        or type(AuctionHouseSearchBarMixin.OnShow) ~= "function"
-        or type(hooksecurefunc) ~= "function"
+    if not self.auctionHouseHooked
+        and type(hooksecurefunc) == "function"
+        and type(AuctionHouseSearchBarMixin) == "table"
+        and type(AuctionHouseSearchBarMixin.OnShow) == "function"
     then
-        return
+        self.auctionHouseHooked = true
+
+        -- OnShow runs whenever the AH search bar is shown. This means that even if
+        -- the player manually disables the filter, closing/reopening the AH restores
+        -- "Current Expansion Only" automatically.
+        hooksecurefunc(AuctionHouseSearchBarMixin, "OnShow", function(searchBar)
+            applyAuctionHouseFilter(searchBar)
+        end)
     end
 
-    self.auctionHouseHooked = true
-
-    -- OnShow runs whenever the AH search bar is shown. This means that even if
-    -- the player manually disables the filter, closing/reopening the AH restores
-    -- "Current Expansion Only" automatically.
-    hooksecurefunc(AuctionHouseSearchBarMixin, "OnShow", function(searchBar)
-        applyAuctionHouseFilter(searchBar)
-    end)
+    -- Mixin hooks do not fire for a frame that copied OnShow before the hook
+    -- was installed (the search bar is created while Blizzard_AuctionHouseUI
+    -- loads), so hook the live frame directly as well.
+    local searchBar = getAuctionHouseSearchBar(nil)
+    if searchBar and type(searchBar.HookScript) == "function" and not searchBar.RapzoQoLExpansionFilterHooked then
+        searchBar.RapzoQoLExpansionFilterHooked = true
+        searchBar:HookScript("OnShow", function(bar)
+            applyAuctionHouseFilter(bar)
+        end)
+    end
 
     -- The saved filter table already exists once Blizzard_AuctionHouseUI loads,
     -- so seed it immediately as well.
-    applyAuctionHouseFilter(nil)
+    applyAuctionHouseFilter(searchBar)
 end
 
 function ExpansionFilters:HookCraftingOrders()
@@ -206,5 +232,18 @@ function ExpansionFilters:Initialize()
 
     self:TryHookLoadedBlizzardUI()
 end
+
+RB:RegisterCommand("expfilter", function(rest)
+    rest = string.lower(tostring(rest or "")):match("^%s*(%S*)") or ""
+    if rest == "on" then
+        RB:SetFeatureEnabled("expansionFilters", true)
+    elseif rest == "off" then
+        RB:SetFeatureEnabled("expansionFilters", false)
+    else
+        RB:Print("Filtro de expansion actual: "
+            .. (RB:IsFeatureEnabled("expansionFilters") and "ON" or "OFF")
+            .. " | Uso: /rapzo expfilter on|off")
+    end
+end, "/rapzo expfilter on|off - filtro 'solo expansion actual' en AH y pedidos")
 
 ExpansionFilters:Initialize()

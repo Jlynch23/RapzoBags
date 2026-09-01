@@ -87,6 +87,7 @@ function RB:EnsureDB()
     if modules.collections == nil then modules.collections = true end
     if modules.afk == nil then modules.afk = true end
     if modules.hud == nil then modules.hud = true end
+    if modules.expansionFilters == nil then modules.expansionFilters = true end
     if modules.config == nil then modules.config = true end
 
     self.db = db
@@ -359,7 +360,7 @@ function RB:ShowStatus()
 end
 
 function RB:ShowModules()
-    local labels = {"tooltip", "search", "vendor", "collections", "afk", "hud", "config"}
+    local labels = {"tooltip", "search", "vendor", "collections", "afk", "hud", "expansionFilters", "config"}
     self:Print("Modulos internos de Rapzo QoL:")
     for _, key in ipairs(labels) do
         local present = self:IsModulePresent(key)
