@@ -31,15 +31,21 @@ end
 
 local function announce(spellName, srcName)
     local line = ("Reflejado: %s%s"):format(spellName or "?", srcName and (" (de " .. srcName .. ")") or "")
-    -- aviso grande en pantalla
-    if RaidNotice_AddMessage and RaidWarningFrame then
-        pcall(RaidNotice_AddMessage, RaidWarningFrame, "|cff7fb3e8" .. line .. "|r", ChatTypeInfo["RAID_WARNING"])
+    -- aviso grande en pantalla, SIN codigos de color: el RaidNotice ya colorea solo
+    -- y hay clientes que no reconocen la cadena si va con |cff...|r incrustado
+    local shown = false
+    if RaidNotice_AddMessage and RaidWarningFrame and ChatTypeInfo and ChatTypeInfo["RAID_WARNING"] then
+        shown = pcall(RaidNotice_AddMessage, RaidWarningFrame, line, ChatTypeInfo["RAID_WARNING"])
+    end
+    if not shown and UIErrorsFrame and UIErrorsFrame.AddMessage then
+        -- plan B: la linea amarilla central de la UI, presente en todos los clientes
+        pcall(UIErrorsFrame.AddMessage, UIErrorsFrame, line, 0.5, 0.7, 0.91)
     end
     RB:Print(line)
-    -- aviso epico al grupo (en ingles), si esta activado
+    -- aviso corto al grupo (en ingles), si esta activado
     if getSettings().party and IsInGroup() then
         local chan = IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or "PARTY"
-        local epic = ("Reflected %s - sent it right back! By Varian's blade, FOR THE ALLIANCE!"):format(spellName or "the cast")
+        local epic = ("Reflected %s - FOR THE ALLIANCE!"):format(spellName or "the cast")
         pcall(SendChatMessage, epic, chan)
     end
 end

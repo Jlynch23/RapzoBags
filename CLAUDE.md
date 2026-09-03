@@ -424,9 +424,12 @@ Los indicadores de estado de Vendor y HUD fueron corregidos recientemente: Vendo
 
 Anuncia el hechizo devuelto por Spell Reflection:
 
-- aviso grande en pantalla (RaidWarningFrame);
+- aviso grande en pantalla: RaidWarningFrame SIN codigos de color incrustados (hay clientes que
+  no reconocen la cadena con `|cff...|r` dentro del RaidNotice y no muestran nada), con fallback
+  a `UIErrorsFrame` si el RaidNotice no esta disponible;
 - linea en el chat propio via `RB:Print`;
-- aviso opcional al grupo/instancia en ingles (default ON, `settings.reflectHerald.party`);
+- aviso corto opcional al grupo/instancia en ingles ("Reflected X - FOR THE ALLIANCE!",
+  default ON, `settings.reflectHerald.party`);
 - contador de reflejos por sesion.
 
 Detecta `SPELL_MISSED` con `missType == "REFLECT"` sobre el jugador en
