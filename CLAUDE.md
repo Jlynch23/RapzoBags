@@ -21,6 +21,11 @@ Flujo de trabajo con una sola rama:
 3. Al terminar, actualizar este CLAUDE.md: sumar lo nuevo, borrar lo obsoleto y dejar solo lo
    util. Despues subir todo a `main`.
 
+Regla por repositorio (no mezclar): la rama unica `main` es SOLO de Rapzo QoL, que es el
+proyecto para jugar. El repositorio del negocio, `Jlynch23/textil-inventario` (TexControl,
+ventas, desarrollo serio), trabaja con DOS ramas: `dev` y `main` — alli todo se sube a `dev`
+para probar, y `main` no se toca sin decision de Rapzo.
+
 Los documentos historicos (`AGENTS.md`, `CODEX_HANDOFF.md`) pueden estar atrasados; el codigo
 actual y este archivo mandan.
 
