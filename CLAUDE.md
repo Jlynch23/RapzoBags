@@ -441,11 +441,15 @@ slash command, sin checkbox propio en Config.
 only available to the Blizzard UI"). Leccion general: un `pcall` NO detecta acciones bloqueadas
 por taint, solo errores de Lua. El modulo lo maneja asi:
 
-- escucha `ADDON_ACTION_BLOCKED`/`ADDON_ACTION_FORBIDDEN` y se atribuye solo un bloqueo de
-  `RegisterEvent` ocurrido en los 5 s siguientes a su propio intento;
+- escucha `ADDON_ACTION_BLOCKED`/`ADDON_ACTION_FORBIDDEN` y se atribuye CUALQUIER bloqueo del
+  addon en los ~5 s siguientes a su propio intento — sin filtrar por nombre de funcion, porque
+  el evento puede llegar atribuido a `pcall()` (asi encabeza la pila del taint.log) y no a
+  `RegisterEvent`;
 - al detectarlo persiste `settings.reflectHerald.cleuBlocked = true`, avisa una vez y NO vuelve a
   intentar en logins siguientes (para no repetir el popup);
-- `/rapzo reflect retry` limpia el flag y reintenta (para despues de un parche);
+- `/rapzo reflect retry` limpia el flag y reintenta; por diseño vuelve a provocar el popup una
+  vez, y su status se imprime con ~2 s de retardo porque el bloqueo llega como evento asincrono
+  despues del intento (un "combat log OK" inmediato seria prematuro);
 - solo intenta registrar si el modulo esta habilitado; con el CLEU bloqueado quedan operativos el
   modo test, el toggle de grupo y el status.
 

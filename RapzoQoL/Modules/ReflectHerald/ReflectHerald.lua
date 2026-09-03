@@ -86,12 +86,13 @@ local function tryRegisterCombatLog()
     end
 end
 
-local function onActionBlocked(blockedAddon, blockedFunc)
-    -- solo nos atribuimos un bloqueo inmediato a nuestro intento de RegisterEvent
+local function onActionBlocked(blockedAddon)
+    -- nos atribuimos cualquier bloqueo del addon en la ventana corta tras nuestro intento:
+    -- NO filtrar por nombre de funcion — el evento puede llegar atribuido a pcall()
+    -- (la pila del taint.log llega encabezada por pcall) y no a RegisterEvent
     if not combatLogAttemptAt then return end
     if blockedAddon ~= addonName then return end
     if (GetTime() - combatLogAttemptAt) > 5 then return end
-    if type(blockedFunc) == "string" and blockedFunc ~= "" and not blockedFunc:find("RegisterEvent") then return end
     markCombatLogBlocked()
 end
 
@@ -103,7 +104,7 @@ frame:SetScript("OnEvent", function(_, event, arg1, arg2)
             tryRegisterCombatLog()
         end
     elseif event == "ADDON_ACTION_BLOCKED" or event == "ADDON_ACTION_FORBIDDEN" then
-        onActionBlocked(arg1, arg2)
+        onActionBlocked(arg1)
     elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then
         onCombatLogEvent()
     end
@@ -154,7 +155,13 @@ function ReflectHerald:HandleSlash(rest)
         combatLogAvailable = false
         RB:Print("ReflectHerald: reintentando registrar el combat log...")
         tryRegisterCombatLog()
-        printStatus()
+        -- el bloqueo llega como evento asincrono un instante despues del intento:
+        -- esperar antes de cantar el estado, para no anunciar un OK prematuro
+        if C_Timer and C_Timer.After then
+            C_Timer.After(2, printStatus)
+        else
+            printStatus()
+        end
     elseif command == "stats" then
         RB:Print("ReflectHerald: reflects esta sesion: " .. sessionTotal)
         for name, count in pairs(sessionReflects) do
