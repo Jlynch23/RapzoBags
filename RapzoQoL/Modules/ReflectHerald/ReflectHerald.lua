@@ -3,8 +3,11 @@ local RB = _G.RapzoBags
 if not RB then return end
 
 -- ReflectHerald: anuncia el hechizo devuelto por Spell Reflection.
--- Nota Midnight: el combat log esta restringido para addons en bosses y M+.
--- Donde la API lo permite, canta; donde no, silencio elegante (sin errores).
+-- Nota Midnight: el combat log esta restringido para addons. En este cliente el
+-- REGISTRO de COMBAT_LOG_EVENT_UNFILTERED es una accion bloqueada: no lanza error
+-- de Lua (el pcall no lo ve), el juego la bloquea y avisa con el popup de taint.
+-- Por eso escuchamos ADDON_ACTION_BLOCKED/FORBIDDEN, recordamos el bloqueo en la DB
+-- (settings.reflectHerald.cleuBlocked) y no reintentamos en logins siguientes.
 local ReflectHerald = {}
 RB.ReflectHerald = ReflectHerald
 RB:RegisterModule("reflectHerald", ReflectHerald)
@@ -14,6 +17,7 @@ local playerGUID
 local sessionReflects = {}   -- [spellName] = count
 local sessionTotal = 0
 local combatLogAvailable = false
+local combatLogAttemptAt
 
 local function getSettings()
     local db = RB:EnsureDB()
@@ -55,30 +59,72 @@ local function onCombatLogEvent()
     end)
 end
 
-frame:SetScript("OnEvent", function(_, event)
+local function markCombatLogBlocked()
+    combatLogAvailable = false
+    combatLogAttemptAt = nil
+    local settings = getSettings()
+    if not settings.cleuBlocked then
+        settings.cleuBlocked = true
+        RB:Print("ReflectHerald: el cliente bloquea el combat log para addons (popup de taint). No se reintentara en proximos logins; el modo test sigue disponible. Tras un parche prueba /rapzo reflect retry.")
+    end
+end
+
+local function tryRegisterCombatLog()
+    local settings = getSettings()
+    if settings.cleuBlocked then
+        combatLogAvailable = false
+        return
+    end
+    if combatLogAvailable then return end
+    combatLogAttemptAt = GetTime()
+    -- si el cliente bloquea la accion, no hay error de Lua: llega como
+    -- ADDON_ACTION_BLOCKED/FORBIDDEN y lo maneja el OnEvent de abajo
+    local ok = RB:RegisterEventSafe(frame, "COMBAT_LOG_EVENT_UNFILTERED")
+    combatLogAvailable = ok and true or false
+    if not combatLogAvailable then
+        RB:Print("ReflectHerald: este cliente no expone el combat log a addons; solo funcionara el modo test.")
+    end
+end
+
+local function onActionBlocked(blockedAddon, blockedFunc)
+    -- solo nos atribuimos un bloqueo inmediato a nuestro intento de RegisterEvent
+    if not combatLogAttemptAt then return end
+    if blockedAddon ~= addonName then return end
+    if (GetTime() - combatLogAttemptAt) > 5 then return end
+    if type(blockedFunc) == "string" and blockedFunc ~= "" and not blockedFunc:find("RegisterEvent") then return end
+    markCombatLogBlocked()
+end
+
+frame:SetScript("OnEvent", function(_, event, arg1, arg2)
     if event == "PLAYER_LOGIN" then
         playerGUID = UnitGUID("player")
         getSettings()
-        -- registro defensivo: si el cliente quito el evento, avisar sin crashear
-        combatLogAvailable = RB:RegisterEventSafe(frame, "COMBAT_LOG_EVENT_UNFILTERED") and true or false
-        if not combatLogAvailable then
-            RB:Print("ReflectHerald: este cliente no expone el combat log a addons; solo funcionara el modo test.")
+        if RB:IsFeatureEnabled("reflectHerald") then
+            tryRegisterCombatLog()
         end
+    elseif event == "ADDON_ACTION_BLOCKED" or event == "ADDON_ACTION_FORBIDDEN" then
+        onActionBlocked(arg1, arg2)
     elseif event == "COMBAT_LOG_EVENT_UNFILTERED" then
         onCombatLogEvent()
     end
 end)
 RB:RegisterEventSafe(frame, "PLAYER_LOGIN")
+RB:RegisterEventSafe(frame, "ADDON_ACTION_BLOCKED")
+RB:RegisterEventSafe(frame, "ADDON_ACTION_FORBIDDEN")
+
+local function combatLogStateText()
+    if combatLogAvailable then return "combat log OK" end
+    if getSettings().cleuBlocked then return "combat log BLOQUEADO por el cliente (/rapzo reflect retry)" end
+    return "combat log inactivo"
+end
 
 local function printStatus()
     local settings = getSettings()
-    RB:Print(("ReflectHerald %s - anuncio al grupo %s - reflects esta sesion: %d"):format(
+    RB:Print(("ReflectHerald %s - anuncio al grupo %s - reflects esta sesion: %d - %s"):format(
         RB:IsFeatureEnabled("reflectHerald") and "ON" or "OFF",
         settings.party and "ON" or "OFF",
-        sessionTotal))
-    if not combatLogAvailable then
-        DEFAULT_CHAT_FRAME:AddMessage("  combat log no disponible en este cliente: solo funciona el modo test")
-    end
+        sessionTotal,
+        combatLogStateText()))
 end
 
 function ReflectHerald:HandleSlash(rest)
@@ -87,6 +133,7 @@ function ReflectHerald:HandleSlash(rest)
     command = command or ""
     if command == "on" then
         RB:SetFeatureEnabled("reflectHerald", true)
+        tryRegisterCombatLog()
     elseif command == "off" then
         RB:SetFeatureEnabled("reflectHerald", false)
     elseif command == "party" then
@@ -101,6 +148,13 @@ function ReflectHerald:HandleSlash(rest)
         RB:Print("ReflectHerald: anuncio al grupo " .. (settings.party and "ON" or "OFF"))
     elseif command == "test" then
         announce("Frostbolt", "Dummy")
+    elseif command == "retry" then
+        local settings = getSettings()
+        settings.cleuBlocked = nil
+        combatLogAvailable = false
+        RB:Print("ReflectHerald: reintentando registrar el combat log...")
+        tryRegisterCombatLog()
+        printStatus()
     elseif command == "stats" then
         RB:Print("ReflectHerald: reflects esta sesion: " .. sessionTotal)
         for name, count in pairs(sessionReflects) do
@@ -112,13 +166,14 @@ function ReflectHerald:HandleSlash(rest)
         DEFAULT_CHAT_FRAME:AddMessage("  |cff38bdf8/rapzo reflect party [on|off]|r - anuncio al grupo")
         DEFAULT_CHAT_FRAME:AddMessage("  |cff38bdf8/rapzo reflect test|r - simula un reflejo")
         DEFAULT_CHAT_FRAME:AddMessage("  |cff38bdf8/rapzo reflect stats|r - resumen de la sesion")
+        DEFAULT_CHAT_FRAME:AddMessage("  |cff38bdf8/rapzo reflect retry|r - reintenta el combat log tras un parche")
     else
         printStatus()
     end
 end
 
 RB:RegisterCommand("reflect", function(rest) ReflectHerald:HandleSlash(rest) end,
-    "/rapzo reflect [status|on|off|party|test|stats] - anuncios de Spell Reflection")
+    "/rapzo reflect [status|on|off|party|test|stats|retry] - anuncios de Spell Reflection")
 
 -- Alias rapido heredado del addon ReflectHerald original.
 SLASH_RAPZOQOLREFLECT1 = "/rh"

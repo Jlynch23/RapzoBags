@@ -431,16 +431,29 @@ Anuncia el hechizo devuelto por Spell Reflection:
 
 Detecta `SPELL_MISSED` con `missType == "REFLECT"` sobre el jugador en
 `COMBAT_LOG_EVENT_UNFILTERED`. Todo el handler va dentro de `pcall` porque en contenido
-restringido de Midnight los valores del combat log pueden ser secretos; si el cliente no expone el
-evento, avisa una vez al entrar y solo queda operativo el modo test. El toggle del modulo es
+restringido de Midnight los valores del combat log pueden ser secretos. El toggle del modulo es
 `settings.modules.reflectHerald`. Como el filtro de expansion, por ahora se controla solo por
 slash command, sin checkbox propio en Config.
 
+**Hallazgo real de Midnight (2-sep, taint.log de IRONSIDE): el REGISTRO de
+`COMBAT_LOG_EVENT_UNFILTERED` es una accion bloqueada para addons.** No lanza error de Lua — el
+`pcall` devuelve exito y el juego bloquea la accion con el popup de taint ("blocked from an action
+only available to the Blizzard UI"). Leccion general: un `pcall` NO detecta acciones bloqueadas
+por taint, solo errores de Lua. El modulo lo maneja asi:
+
+- escucha `ADDON_ACTION_BLOCKED`/`ADDON_ACTION_FORBIDDEN` y se atribuye solo un bloqueo de
+  `RegisterEvent` ocurrido en los 5 s siguientes a su propio intento;
+- al detectarlo persiste `settings.reflectHerald.cleuBlocked = true`, avisa una vez y NO vuelve a
+  intentar en logins siguientes (para no repetir el popup);
+- `/rapzo reflect retry` limpia el flag y reintenta (para despues de un parche);
+- solo intenta registrar si el modulo esta habilitado; con el CLEU bloqueado quedan operativos el
+  modo test, el toggle de grupo y el status.
+
 Plan de desarrollo del modulo, en orden:
 
-1. **Validacion en juego del flujo base** (pendiente): `/rapzo reflect test` dentro y fuera de
-   grupo, un reflejo real con Spell Reflection en mazmorra, y el aviso unico cuando el cliente
-   no expone el combat log.
+1. **Validacion en juego del flujo base** — parcial (2-sep, IRONSIDE): el cliente BLOQUEO el
+   registro del combat log (ver hallazgo arriba). Falta validar el modo test, el anuncio de
+   grupo, y que `cleuBlocked` deje el popup en una sola aparicion.
 2. **Estadisticas persistentes**: acumular reflejos por hechizo en `settings.reflectHerald`
    ademas del contador de sesion, con `/rapzo reflect stats` mostrando sesion e historico.
 3. **Anti-spam de grupo**: minimo configurable de segundos entre anuncios al grupo, para
@@ -452,6 +465,9 @@ Plan de desarrollo del modulo, en orden:
 6. **Checkbox en Config** cuando el modulo quede estable, junto al resto de toggles.
 
 Cada fase se valida en juego antes de pasar a la siguiente; no adelantar fases sin necesidad.
+
+Nota (2-sep): con el CLEU bloqueado en el cliente actual, las fases 2-4 dependen de que Blizzard
+reabra el evento o de encontrar la via alternativa de la fase 5, que sube de prioridad.
 
 ## 9. HUD: arquitectura y reglas criticas
 
@@ -705,6 +721,7 @@ ReflectHerald (alias corto `/rh`):
 /rapzo reflect party [on|off]
 /rapzo reflect test
 /rapzo reflect stats
+/rapzo reflect retry
 ```
 
 AFK:
@@ -782,7 +799,8 @@ No asumir que "implementado" equivale a "visualmente perfecto". Pendientes actua
 6. Verificar el filtro de AH y Customer Orders tras cada cambio de Blizzard.
 7. Probar Vendor en Compra/Recompra y con filtros antes de modificar su layout.
 8. Mantener este CLAUDE.md al dia al cierre de cada sesion: sumar lo nuevo, borrar lo obsoleto.
-9. Validar ReflectHerald en juego y avanzar su plan de desarrollo (seccion 8.10).
+9. ReflectHerald: confirmado (2-sep) que el cliente bloquea el registro del CLEU; validar que
+   `cleuBlocked` deja el popup en una sola aparicion y probar test, status y retry (seccion 8.10).
 10. Crear tag/release alpha5 solo por peticion explicita; el ultimo tag observado sigue siendo
     `v3.0.0-alpha3` aunque el codigo declara alpha5.
 
@@ -836,6 +854,8 @@ Despues de cambios ReflectHerald:
 3. Provocar un reflejo real con Spell Reflection (guerrero) en una mazmorra.
 4. Verificar un solo aviso por reflejo y el contador de `/rapzo reflect stats`.
 5. Probar el alias `/rh`.
+6. Si el cliente bloquea el CLEU: confirmar que el popup de taint sale a lo sumo una vez, que
+   `/rapzo reflect status` dice BLOQUEADO, y que tras `/rl` no reaparece ni el popup ni el aviso.
 
 ## 14. Release e instalacion
 
