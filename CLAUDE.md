@@ -456,6 +456,16 @@ por taint, solo errores de Lua. El modulo lo maneja asi:
 - solo intenta registrar si el modulo esta habilitado; con el CLEU bloqueado quedan operativos el
   modo test, el toggle de grupo y el status.
 
+Macro de acompanamiento (en WoW, no en el repo): avisa al ACTIVAR Spell Reflection, mientras el
+modulo anuncia cuando el reflejo conecta. Solo ASCII — WoW no renderiza emojis en el chat (cajas
+vacias) y el guion largo falla segun la fuente; limite de macros: 255 caracteres.
+
+```text
+#showtooltip
+/cast Spell Reflection
+/p Spell Reflection UP - do NOT kick, I send it back! FOR THE ALLIANCE!
+```
+
 Plan de desarrollo del modulo, en orden:
 
 1. **Validacion en juego del flujo base** — parcial (2-sep, IRONSIDE): el cliente BLOQUEO el
