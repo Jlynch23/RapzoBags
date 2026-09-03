@@ -88,7 +88,7 @@ end
 
 local function onActionBlocked(blockedAddon)
     -- nos atribuimos cualquier bloqueo del addon en la ventana corta tras nuestro intento:
-    -- NO filtrar por nombre de funcion — el evento puede llegar atribuido a pcall()
+    -- NO filtrar por nombre de funcion: el evento puede llegar atribuido a pcall()
     -- (la pila del taint.log llega encabezada por pcall) y no a RegisterEvent
     if not combatLogAttemptAt then return end
     if blockedAddon ~= addonName then return end
