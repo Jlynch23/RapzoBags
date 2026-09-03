@@ -7,17 +7,22 @@
 
 - Repositorio actual: `https://github.com/Jlynch23/RapzoQoL`
 - Nombre anterior del repositorio: `Jlynch23/RapzoBags` (GitHub redirige al nombre nuevo).
-- Rama activa de desarrollo: `feature/afk-screen-alpha5`
-- Commit de referencia al redactar este documento: `b431295a05549b1c34de8ae8ff3e47d506a92b05`
+- Rama unica de trabajo: `main`
 - Fecha del snapshot: 2026-09-03
 - Version declarada por el addon: `3.0.0-alpha5`
 - Ultimo tag publicado visible: `v3.0.0-alpha3`
 - WoW Retail Interface: `120100` (Retail 12.1.0)
 
-La rama `main` todavia contiene la arquitectura antigua de varias carpetas `RapzoBags_*`.
-Antes de crear este archivo, `feature/afk-screen-alpha5` estaba 168 commits por delante de
-`main`. No desarrolles sobre `main`, no copies su estructura y no mezcles el `CLAUDE.md` viejo de
-la rama `docs/claude-md`: ese documento describe seis addons separados y esta obsoleto.
+Flujo de trabajo con una sola rama:
+
+1. Al empezar cualquier sesion, leer este CLAUDE.md completo para saber donde quedamos.
+2. Desarrollar y commitear directamente en `main`; no crear ramas nuevas salvo peticion
+   explicita de Rapzo.
+3. Al terminar, actualizar este CLAUDE.md: sumar lo nuevo, borrar lo obsoleto y dejar solo lo
+   util. Despues subir todo a `main`.
+
+Los documentos historicos (`AGENTS.md`, `CODEX_HANDOFF.md`) pueden estar atrasados; el codigo
+actual y este archivo mandan.
 
 Comandos de comprobacion obligatorios antes de trabajar:
 
@@ -30,7 +35,7 @@ git log -5 --oneline
 La rama esperada es:
 
 ```text
-feature/afk-screen-alpha5
+main
 ```
 
 ## 2. Objetivo del proyecto
@@ -55,7 +60,7 @@ Interface/AddOns/RapzoQoL/
 ```
 
 No vuelvas a separar el proyecto en `RapzoBags_Core`, `RapzoBags_HUD`, etc. Esos nombres solo
-pertenecen a la historia del proyecto y a `main`, que esta atrasado.
+pertenecen a la historia del proyecto.
 
 ## 3. Forma de trabajar con el propietario
 
@@ -63,12 +68,12 @@ El propietario es Rapzo. Cuando pida una correccion o funcion:
 
 1. Haz el cambio directamente en el repositorio si tienes acceso de escritura.
 2. No le pidas que copie y pegue Lua, TOC o HTML si puedes editarlo tu.
-3. Trabaja en `feature/afk-screen-alpha5` hasta que Rapzo decida promoverla.
+3. Trabaja directamente en `main`; el repositorio usa una sola rama.
 4. Conserva lo que funciona; no hagas refactors masivos sin necesidad.
 5. Revisa diff, rama, commit final y estado de Git antes de declarar que terminaste.
 6. Rapzo normalmente solo debe hacer `git pull`, `/reload` y probar dentro de WoW.
 7. No pidas una segunda confirmacion cuando la instruccion ya es clara.
-8. No fusiones a `main`, no crees tags y no publiques releases sin una peticion explicita.
+8. No crees tags ni publiques releases sin una peticion explicita.
 
 Para cambios visuales del HUD, conserva siempre que sea posible dos vias de prueba:
 
@@ -426,6 +431,23 @@ evento, avisa una vez al entrar y solo queda operativo el modo test. El toggle d
 `settings.modules.reflectHerald`. Como el filtro de expansion, por ahora se controla solo por
 slash command, sin checkbox propio en Config.
 
+Plan de desarrollo del modulo, en orden:
+
+1. **Validacion en juego del flujo base** (pendiente): `/rapzo reflect test` dentro y fuera de
+   grupo, un reflejo real con Spell Reflection en mazmorra, y el aviso unico cuando el cliente
+   no expone el combat log.
+2. **Estadisticas persistentes**: acumular reflejos por hechizo en `settings.reflectHerald`
+   ademas del contador de sesion, con `/rapzo reflect stats` mostrando sesion e historico.
+3. **Anti-spam de grupo**: minimo configurable de segundos entre anuncios al grupo, para
+   packs que revientan varios casts seguidos contra el reflejo.
+4. **Opciones de anuncio**: canal configurable (party/instance/say/emote), y mensaje epico
+   personalizable o aleatorio entre varias frases.
+5. **Resumen post-run**: donde Midnight bloquee el CLEU en vivo, explorar un conteo diferido
+   al terminar la instancia si alguna API lo permite; si no es viable, documentarlo y cerrar.
+6. **Checkbox en Config** cuando el modulo quede estable, junto al resto de toggles.
+
+Cada fase se valida en juego antes de pasar a la siguiente; no adelantar fases sin necesidad.
+
 ## 9. HUD: arquitectura y reglas criticas
 
 El HUD es la zona mas sensible del addon. Antes de cambiarlo, leer juntos los seis archivos:
@@ -754,8 +776,8 @@ No asumir que "implementado" equivale a "visualmente perfecto". Pendientes actua
 5. Seguir afinando visualmente V2 con capturas reales; el preview no reemplaza el juego.
 6. Verificar el filtro de AH y Customer Orders tras cada cambio de Blizzard.
 7. Probar Vendor en Compra/Recompra y con filtros antes de modificar su layout.
-8. Actualizar `CODEX_HANDOFF.md` cuando un cambio importante deje este snapshot atrasado.
-9. Promover la rama a `main` solo cuando Rapzo lo decida.
+8. Mantener este CLAUDE.md al dia al cierre de cada sesion: sumar lo nuevo, borrar lo obsoleto.
+9. Validar ReflectHerald en juego y avanzar su plan de desarrollo (seccion 8.10).
 10. Crear tag/release alpha5 solo por peticion explicita; el ultimo tag observado sigue siendo
     `v3.0.0-alpha3` aunque el codigo declara alpha5.
 
@@ -802,6 +824,14 @@ Despues de cambios AFK:
 4. Probar AFK real y regreso a activo.
 5. Confirmar color de clase correcto, incluido Evoker.
 
+Despues de cambios ReflectHerald:
+
+1. Probar `/rapzo reflect test` fuera de grupo y dentro de un grupo.
+2. Probar `/rapzo reflect party on|off` y su persistencia tras `/rl`.
+3. Provocar un reflejo real con Spell Reflection (guerrero) en una mazmorra.
+4. Verificar un solo aviso por reflejo y el contador de `/rapzo reflect stats`.
+5. Probar el alias `/rh`.
+
 ## 14. Release e instalacion
 
 El workflow `.github/workflows/release.yml` se ejecuta al empujar tags `v*`. Crea un ZIP llamado:
@@ -826,6 +856,7 @@ No asumas que una ruta de IRONSIDE existe en TEXTIL LAURA ni viceversa.
 ## 15. Reglas finales de continuidad
 
 - Codigo actual > este documento > documentos historicos.
+- Una sola rama de trabajo: `main`. Este CLAUDE.md se actualiza al cierre de cada sesion.
 - Un solo addon `RapzoQoL`.
 - `RapzoBagsDB` no se renombra.
 - V1 no se elimina.
