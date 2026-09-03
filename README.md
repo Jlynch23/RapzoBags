@@ -17,6 +17,7 @@ Internal modules:
 - AFK — fullscreen AFK screen.
 - HUD — cursor ring, square minimap and minimalist Player/Target/Focus visuals.
 - QoL — "current expansion only" filter preset for the Auction House and customer Crafting Orders searches.
+- ReflectHerald — announces the spell you bounced back with Spell Reflection.
 - Config — runtime module controls.
 
 ## Installation
@@ -39,6 +40,7 @@ The legacy `RapzoBags_*` folders are no longer separate addons.
 - `/rapzo hud preview` — toggles the in-game fake/demo unit-frame preview.
 - `/rapzo hud preview on|off`
 - `/rapzo expfilter on|off` — "current expansion only" preset in AH/Crafting Orders searches.
+- `/rapzo reflect [status|on|off|party|test|stats]` — Spell Reflection announcer (short alias: `/rh`).
 
 Legacy aliases `/rbags` and `/rapzobags` remain available, and `/rqol` is a short alias for `/rapzo`. The addon also registers `/rl` as a quick `/reload` shortcut (another addon registering `/rl` may take precedence depending on load order).
 

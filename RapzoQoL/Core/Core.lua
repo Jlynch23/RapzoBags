@@ -88,6 +88,7 @@ function RB:EnsureDB()
     if modules.afk == nil then modules.afk = true end
     if modules.hud == nil then modules.hud = true end
     if modules.expansionFilters == nil then modules.expansionFilters = true end
+    if modules.reflectHerald == nil then modules.reflectHerald = true end
     if modules.config == nil then modules.config = true end
 
     self.db = db

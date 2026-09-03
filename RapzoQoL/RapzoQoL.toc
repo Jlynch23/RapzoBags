@@ -17,6 +17,7 @@ Modules\Vendor\Vendor.lua
 Modules\QoL\ExpansionFilters.lua
 Modules\AFK\AFK.lua
 Modules\AFK\AFKBrand.lua
+Modules\ReflectHerald\ReflectHerald.lua
 Modules\HUD\HUD.lua
 Modules\HUD\HUDFixes.lua
 Modules\HUD\HUDStyles.lua

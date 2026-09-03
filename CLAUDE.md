@@ -103,6 +103,7 @@ Modules/Vendor/Vendor.lua
 Modules/QoL/ExpansionFilters.lua
 Modules/AFK/AFK.lua
 Modules/AFK/AFKBrand.lua
+Modules/ReflectHerald/ReflectHerald.lua
 
 Modules/HUD/HUD.lua
 Modules/HUD/HUDFixes.lua
@@ -168,6 +169,7 @@ vendor
 collections
 expansionFilters
 afk
+reflectHerald
 hud
 config
 ```
@@ -204,7 +206,8 @@ RapzoBagsDB
     ├── theme.accent
     ├── vendor
     ├── afk
-    └── hud
+    ├── hud
+    └── reflectHerald
 ```
 
 Regla de migracion: completar campos faltantes solo cuando sean `nil`. Nunca reemplazar de golpe
@@ -406,6 +409,22 @@ Controles actuales principales:
 Los indicadores de estado de Vendor y HUD fueron corregidos recientemente: Vendor tolera que
 `settings.vendor` aun no exista y HUD muestra el switch real de Unit Frames, no el contenedor
 `modules.hud` que permanece ON.
+
+### 8.10 ReflectHerald — `Modules/ReflectHerald/ReflectHerald.lua`
+
+Anuncia el hechizo devuelto por Spell Reflection:
+
+- aviso grande en pantalla (RaidWarningFrame);
+- linea en el chat propio via `RB:Print`;
+- aviso opcional al grupo/instancia en ingles (default ON, `settings.reflectHerald.party`);
+- contador de reflejos por sesion.
+
+Detecta `SPELL_MISSED` con `missType == "REFLECT"` sobre el jugador en
+`COMBAT_LOG_EVENT_UNFILTERED`. Todo el handler va dentro de `pcall` porque en contenido
+restringido de Midnight los valores del combat log pueden ser secretos; si el cliente no expone el
+evento, avisa una vez al entrar y solo queda operativo el modo test. El toggle del modulo es
+`settings.modules.reflectHerald`. Como el filtro de expansion, por ahora se controla solo por
+slash command, sin checkbox propio en Config.
 
 ## 9. HUD: arquitectura y reglas criticas
 
@@ -651,6 +670,16 @@ Filtro de expansion:
 /rapzo expfilter on|off
 ```
 
+ReflectHerald (alias corto `/rh`):
+
+```text
+/rapzo reflect status
+/rapzo reflect on|off
+/rapzo reflect party [on|off]
+/rapzo reflect test
+/rapzo reflect stats
+```
+
 AFK:
 
 ```text
@@ -698,6 +727,7 @@ Ya esta implementado en codigo:
 - Tooltip, Search, Collections y Vendor integrados;
 - pantalla AFK grande y tematizada por clase;
 - filtro de expansion actual para AH y Customer Orders;
+- modulo ReflectHerald: anuncio de hechizos devueltos con Spell Reflection;
 - `/rl` como reload rapido;
 - HUD con partes independientes: frames, minimapa y cursor;
 - V1 preservado y V2 ToxiUI seleccionable;
