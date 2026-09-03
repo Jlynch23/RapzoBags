@@ -463,7 +463,7 @@ vacias) y el guion largo falla segun la fuente; limite de macros: 255 caracteres
 ```text
 #showtooltip
 /cast Spell Reflection
-/p Spell Reflection UP - do NOT kick, I send it back! FOR THE ALLIANCE!
+/p Spell Reflection UP - do NOT kick! By Varian's blade, it comes BACK!
 ```
 
 Plan de desarrollo del modulo, en orden:
